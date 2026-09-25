@@ -162,10 +162,8 @@ function recordControl(m,details){
 }
 function renderProjectContext(){
   const el=$('#projectContext');if(!el)return
-  el.innerHTML=`<div><span class="eyebrow">${project.projectId?'Projet ART':'Espace de préparation'}</span><h1>${esc(project.projectId?(project.projectName||project.projectId):'Préparer le terrain')}</h1><p>${project.projectId?`${esc(project.projectType||'Projet')} · Réf. ${esc(project.projectId)}`:'Inventaire, kits et contrôles de mise.'}</p></div>
-    ${project.returnUrl?`<a class="returnLink" href="${esc(project.returnUrl)}">Retour au projet</a>`:''}
-    <p class="projectNote">Data Bruitage reste la source globale. ${project.projectId?'Les mises sont liées à ce projet, quelle que soit sa date de création.':'Les mises peuvent être liées depuis un projet ART.'}</p>
-    ${projectSyncFailed?'<p class="syncWarning" role="alert">Mise enregistrée sur cet appareil. Transmission locale à ART impossible : autorisez le stockage local puis rechargez cette page.</p>':''}`
+  el.hidden=true;el.innerHTML=''
+  if(projectSyncFailed)toast('Mise enregistrée ici · synchronisation ART à vérifier')
 }
 
 const caseBy=id=>cases.find(c=>c.id===id)
@@ -183,13 +181,6 @@ const dataBruitageCorpus=[
 ].filter(safeExternal)
 const external=dataBruitageCorpus
 const intents=seed.intent_packs||[]
-const corpusSummary=[
-  `${(seed.sources||[]).length} sources structurées`,
-  `${(seed.resource_index||[]).length} documents indexés`,
-  `${(seed.objects||[]).length} objets`,
-  `${(seed.sounds||[]).length} sons`
-].join(' · ')
-
 function expandQuery(q){
   const nq=norm(q), extra=[]
   for(const i of intents){
@@ -317,20 +308,20 @@ $('#app').innerHTML=`
     <div class="wordmark">M<span class="logo-i"><b></b><i></i></span>SE <span class="bang"><b></b><i></i></span></div>
     <div class="sub">QR CASE FINDER</div>
     <div class="tag">Cherche ta mise</div>
-    <div class="corpusMeta"><b>Data Bruitage</b><span>${esc(corpusSummary)}</span></div>
   </div>
   <div class="headerTools">
     <span id="networkStatus" class="status" role="status"></span>
-    <button id="accountBtn" class="headerChip" type="button">Google · Non connecté</button>
+    <button id="preferencesBtn" class="headerChip" type="button">Préférences</button>
     <button id="printerBtn" class="headerChip" type="button">Imprimante · À connecter</button>
     <button id="manualBtn" class="headerIcon" type="button" aria-label="Mini-manuel">?</button>
-    <button id="backupBtn" class="headerIcon" type="button" aria-label="Sauvegarder">⇩</button>
+    <button id="backupBtn" class="headerIcon" type="button" aria-label="Sauvegarder" hidden>⇩</button>
+    <button id="accountBtn" class="headerChip" type="button" hidden>Google · Non connecté</button>
   </div>
 </header>
 <main>
 <section id="projectContext" class="projectContext" aria-label="Contexte du projet"></section>
 <section class="hero">
-  <label class="searchLabel" for="q">Recherche dans Data Bruitage</label>
+  <label class="searchLabel" for="q">Rechercher</label>
   <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance ou contenant"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
   <div class="quick">
     <button data-action="search">Rechercher</button>
@@ -341,16 +332,16 @@ $('#app').innerHTML=`
 </section>
 <div class="goalNav" aria-label="Navigation MISE">
  <details open><summary>Trouver & créer</summary><div><button data-tab="search" class="active">Recherche</button><button data-tab="creator">Créateur d’ambiance</button><button id="goalGroupPhoto" type="button">Photo de groupe</button><button id="goalChallenge" type="button">Défi bruitage</button></div></details>
- <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises & contrôles</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
+ <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Partager & outils</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Imprimer série QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="search" class="tab active"><div id="searchResults"></div></section>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
 <section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
-<section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation issu de Data Bruitage : spectacle, atelier, tournée ou besoin ponctuel. Data Bruitage reste le corpus global.</p><div id="kitCards" class="cards"></div></section>
-<section id="mises" class="tab"><div class="sectionhead"><h2>Mises & contrôles</h2><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards"></div></section>
+<section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit regroupe les objets utiles pour un spectacle, un atelier, une tournée ou un besoin ponctuel.</p><div id="kitCards" class="cards"></div></section>
+<section id="mises" class="tab"><div class="sectionhead"><h2>Mises</h2><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards"></div></section>
 <section id="creator" class="tab">
-  <div class="panel"><h2>Créateur de bruitage</h2><p>Décrivez une ambiance ou un son pour explorer Data Bruitage, votre parc et les références.</p>
+  <div class="panel"><h2>Créateur de bruitage</h2><p>Décrivez une ambiance ou un son pour explorer vos objets, vos sons et les références.</p>
   <div class="row"><button data-preset="mer" class="ghost">Mer</button><button data-preset="forêt" class="ghost">Forêt</button><button data-preset="feu" class="ghost">Feu</button><button data-preset="orage" class="ghost">Orage</button></div></div>
   <div id="creatorResults"></div>
 </section>
@@ -363,6 +354,11 @@ $('#app').innerHTML=`
 <dialog id="modal"></dialog>
 <dialog id="scanDlg"><div class="dialoghead"><strong>Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline></video><p class="hint">Cadre le QR d'une valise ou d'une caisse.</p></dialog>
 <dialog id="printDlg"></dialog>
+<dialog id="preferencesDlg"><div class="form"><div class="dialoghead"><div><b>Préférences</b><small>Connexions & données</small></div><button id="closePreferences" class="ghost" type="button">×</button></div>
+  <button id="preferencesGoogle" type="button">Raccorder Google Drive</button>
+  <div id="folderDropZone" class="folderDropZone" tabindex="0"><b>Raccorder un dossier</b><span>Glisse-dépose un dossier ou des fichiers ici.</span><input id="folderDropInput" type="file" webkitdirectory multiple hidden><button id="chooseFolder" type="button" class="ghost">Choisir un dossier</button></div>
+  <div class="row"><button id="preferencesBackup" type="button" class="ghost">Sauvegarder</button><button id="preferencesRestore" type="button" class="ghost">Importer une sauvegarde</button></div>
+</div></dialog>
 <dialog id="manualDlg"><div class="manual"><div class="dialoghead"><div><b>MISE ! · Mini-manuel</b><small>QR Case Finder · prise en main rapide</small></div><button id="closeManual" class="ghost" type="button">×</button></div>
 <div class="manualSteps">
 <article><b>1 · Chercher une ambiance</b><span>Écris ou dicte « mer », « forêt », « vieille maison »… MISE ! remonte vers tes sons, objets, photos et valises.</span></article>
@@ -406,7 +402,7 @@ function renderSearch(target='#searchResults'){
     <div class="resultActions"><button data-fav="${o.id}" class="miniAction" title="Favori">${o.favorite?'★':'☆'}</button><button data-alt="${o.id}" class="miniAction" title="Alternatives">≈</button><button data-add="${o.id}" class="plus">+</button></div></article>`).join('')
   if(ideas.length) h+=`<h3 class="ideaTitle">Idées à ajouter à ton parc</h3>`+ideas.map(i=>`<article class="result idea">
     <div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p>
-    <small>Référence externe · ${esc(i.source||'base de référence')}</small></div><button class="plus" data-idea="${esc(i.name)}">+</button></article>`).join('')
+    <small>Référence</small></div><button class="plus" data-idea="${esc(i.name)}">+</button></article>`).join('')
   $(target).innerHTML=h
   $$('[data-add]',$(target)).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.add))
   $$('[data-fav]',$(target)).forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.fav))
@@ -467,7 +463,7 @@ function openMisePhotoControl(m,file){
     if(finished)return
     detectedObjects=proposals;analysisStatus='available';analysedAt=new Date().toISOString()
     $('#analysisStatus').textContent=proposals.length?`${proposals.length} proposition(s) à examiner. Aucune n’est validée automatiquement.`:'Aucun objet proposé par le service. Poursuivez avec la liste manuelle.'
-    $('#detectedProposals').innerHTML=proposals.length?`<h3>Propositions du service</h3><div class="proposals">${proposals.map((o,i)=>`<label class="check"><input type="checkbox" data-proposal="${i}"><span>${esc(o.label)} <small>· ${esc(o.category)} · ×${o.quantity}${o.confidence!==undefined?` · score ${Math.round(o.confidence*100)} %`:''}</small><small class="proposalNote">Confirmer cet objet visible · proposition non ajoutée automatiquement à Data Bruitage</small></span></label>`).join('')}</div><p class="hint">Ces propositions ne modifient pas Data Bruitage.</p>`:''
+    $('#detectedProposals').innerHTML=proposals.length?`<h3>Propositions du service</h3><div class="proposals">${proposals.map((o,i)=>`<label class="check"><input type="checkbox" data-proposal="${i}"><span>${esc(o.label)} <small>· ${esc(o.category)} · ×${o.quantity}${o.confidence!==undefined?` · score ${Math.round(o.confidence*100)} %`:''}</small><small class="proposalNote">Confirmer cet objet visible · aucune proposition n’est ajoutée automatiquement</small></span></label>`).join('')}</div><p class="hint">Ces propositions ne modifient pas vos données.</p>`:''
     $('#savePhotoControl').textContent='Valider et enregistrer le contrôle'
   }).catch(error=>{
     if(finished)return
@@ -609,7 +605,7 @@ function openMise(m){
   const d=$('#modal')
   d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><b>${miseBy(m.id)?'Modifier':'Créer'} une mise</b><button value="cancel" class="ghost">×</button></div>
   <label>Nom<input id="mName" value="${esc(m.name)}" placeholder="Atelier mer demain"></label>
-  <p class="hint">${m.projectId?`Projet lié : ${esc(m.projectName||m.projectId)}`:'Mise indépendante · Data Bruitage global'}</p>
+  <p class="hint">${m.projectId?`Projet lié : ${esc(m.projectName||m.projectId)}`:'Mise indépendante'}</p>
   <label>Partir d'un kit<select id="mKit"><option value="">Aucun</option>${kits.map(k=>`<option value="${k.id}" ${m.kitId===k.id?'selected':''}>${esc(k.name)}</option>`)}</select></label>
   <button id="saveMise">Créer / enregistrer</button></form>`
   d.showModal()
@@ -805,6 +801,23 @@ function startVoice(){
   r.start()
 }
 $('#mic').onclick=startVoice
+$('#preferencesBtn').onclick=()=>$('#preferencesDlg').showModal()
+$('#closePreferences').onclick=()=>$('#preferencesDlg').close()
+$('#preferencesGoogle').onclick=()=>connectGoogle()
+$('#preferencesBackup').onclick=()=>$('#backupBtn').click()
+$('#preferencesRestore').onclick=()=>$('#restoreInput').click()
+$('#chooseFolder').onclick=()=>$('#folderDropInput').click()
+const folderDropZone=$('#folderDropZone')
+function folderSelection(files){
+  const list=[...(files||[])];if(!list.length)return
+  const root=(list[0].webkitRelativePath||list[0].name).split('/')[0]
+  db.put('settings',{id:'linked-folder',name:root,fileCount:list.length,linkedAt:new Date().toISOString()})
+  toast(`${root} · ${list.length} fichier${list.length>1?'s':''} sélectionné${list.length>1?'s':''}`)
+}
+$('#folderDropInput').onchange=e=>{folderSelection(e.target.files);e.target.value=''}
+for(const name of ['dragenter','dragover'])folderDropZone.addEventListener(name,e=>{e.preventDefault();folderDropZone.classList.add('dragging')})
+for(const name of ['dragleave','drop'])folderDropZone.addEventListener(name,e=>{e.preventDefault();folderDropZone.classList.remove('dragging')})
+folderDropZone.addEventListener('drop',e=>folderSelection(e.dataTransfer.files))
 $('#accountBtn').onclick=connectGoogle
 $('#goalGoogle').onclick=connectGoogle
 $('#printerBtn').onclick=pairPrinter
@@ -838,10 +851,10 @@ $$('[data-preset]').forEach(b=>b.onclick=()=>{
 
 function renderCreator(){
   const q=$('#q').value.trim()||'mer'
-  $('#creatorResults').innerHTML='<div class="panel"><b>Ton parc</b></div><div id="creatorOwned"></div><div class="panel"><b>Autres pistes</b><p class="hint">Suggestions, jamais confondues avec ton inventaire.</p></div><div id="creatorIdeas"></div>'
+  $('#creatorResults').innerHTML='<div class="panel"><b>Ton parc</b></div><div id="creatorOwned"></div><div class="panel"><b>Autres pistes</b><p class="hint">Suggestions séparées de tes objets.</p></div><div id="creatorIdeas"></div>'
   renderSearch('#creatorOwned')
   const ideas=searchExternal(q)
-  $('#creatorIdeas').innerHTML=ideas.length?ideas.map(i=>`<article class="result idea"><div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p><small>${esc(i.source||'référence')}</small></div></article>`).join(''):'<div class="empty">Pas encore d’autre piste indexée pour cette recherche.</div>'
+  $('#creatorIdeas').innerHTML=ideas.length?ideas.map(i=>`<article class="result idea"><div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p><small>Référence</small></div></article>`).join(''):'<div class="empty">Pas encore d’autre piste indexée pour cette recherche.</div>'
 }
 
 function render(){
@@ -853,8 +866,7 @@ function render(){
   $('#caseCards').innerHTML=cases.map(c=>`<button class="card caseCard" data-case="${c.id}"><b>${esc(caseName(c))}</b><span>${objects.filter(o=>(o.caseId||o.container_id)===c.id).length} objets</span><small>QR prêt</small></button>`).join('')
   $$('[data-case]').forEach(b=>b.onclick=()=>showCase(b.dataset.case))
 
-  $('#kitCards').innerHTML=kits.map(k=>`<article class="card"><b>${esc(k.name)}</b><span>${(k.objectIds||[]).length} objets · ${esc((k.contexts||[]).join(' · ')||'indépendant')}</span><small>${esc(k.source||'manuel')}</small>
-    <div class="row"><button data-prep="${k.id}">Préparer demain</button><button data-editkit="${k.id}" class="ghost">Modifier</button></div></article>`).join('')
+  $('#kitCards').innerHTML=kits.map(k=>`<article class="card"><b>${esc(k.name)}</b><span>${(k.objectIds||[]).length} objets · ${esc((k.contexts||[]).join(' · ')||'indépendant')}</span><div class="row"><button data-prep="${k.id}">Préparer demain</button><button data-editkit="${k.id}" class="ghost">Modifier</button></div></article>`).join('')
   $$('[data-prep]').forEach(b=>b.onclick=()=>createMiseFromKit(kitBy(b.dataset.prep)))
   $$('[data-editkit]').forEach(b=>b.onclick=()=>openKit(kitBy(b.dataset.editkit)))
 
