@@ -40,22 +40,38 @@ async function seedPersonal(){
       ...o,id:o.id,name:o.name,detectedName:'',
       sounds:unique(soundsByObject.get(o.id)||[]),
       tags:unique(o.aliases||[]),contexts:[],
-      photo:'',source:'documents personnels',owned:true,
+      photo:'',source:'Data Bruitage · corpus agrégé',owned:true,
       status:o.status||'available',family:'À classer',
       caseId:o.container_id||''
     }
     await db.put('objects',item); ids.push(item.id)
   }
-  await db.put('kits',{
-    id:'kit-acoustique',name:'Kit Acoustique',
-    description:'Kit personnel de bruitage / ateliers',
-    objectIds:ids,contexts:['atelier','bruitage'],showId:null,
-    source:'02_MalettePedago CDRIC V.20.25.docx',
-    updatedAt:new Date().toISOString()
-  })
   await db.put('settings',{id:'seeded-v3',at:new Date().toISOString()})
 }
 await seedPersonal()
+
+async function migrateDataBruitage(){
+  if(await db.get('settings','data-bruitage-v1')) return
+  const seededIds=new Set((seed.objects||[]).map(o=>o.id))
+  const autoKit=await db.get('kits','kit-acoustique')
+  if(autoKit && autoKit.source==='02_MalettePedago CDRIC V.20.25.docx'){
+    const ids=autoKit.objectIds||[]
+    if(ids.length && ids.every(id=>seededIds.has(id))) await db.delete('kits','kit-acoustique')
+  }
+  for(const o of await db.getAll('objects')){
+    if(seededIds.has(o.id) && o.source==='documents personnels'){
+      o.source='Data Bruitage · corpus agrégé'
+      await db.put('objects',o)
+    }
+  }
+  await db.put('settings',{
+    id:'data-bruitage-v1',
+    at:new Date().toISOString(),
+    sourceCount:(seed.sources||[]).length,
+    resourceCount:(seed.resource_index||[]).length
+  })
+}
+await migrateDataBruitage()
 
 let objects=[],cases=[],kits=[],mises=[],activeMise=null, scanner=null
 async function refresh(){
@@ -71,8 +87,22 @@ const caseBy=id=>cases.find(c=>c.id===id)
 const kitBy=id=>kits.find(k=>k.id===id)
 const miseBy=id=>mises.find(m=>m.id===id)
 const caseName=c=>c?`${c.name}${c.part&&c.total?` · ${c.part}/${c.total}`:''}`:'Sans contenant'
-const external=(seed.web_reference_ideas||[]).filter(safeExternal)
+const dataBruitageCorpus=[
+  ...(seed.web_reference_ideas||[]).map(x=>({...x,kind:'Idée / référence'})),
+  ...(seed.pedagogy_patterns||[]).map(x=>({name:x.name,summary:x.summary,sounds:[],source:'Data Bruitage · pratiques',kind:'Pratique'})),
+  ...(seed.intent_packs||[]).map(x=>({name:x.name,sounds:x.sound_queries||[],aliases:x.aliases||[],source:'Data Bruitage · intentions',kind:'Intention'})),
+  ...(seed.sounds||[]).map(x=>({name:x.name,sounds:unique([...(x.aliases||[]),...(x.tags||[]),...(x.families||[])]),source:'Data Bruitage · lexique sonore',kind:'Son'})),
+  ...(seed.musiques_en_jeux_game_index||[]).map(x=>({name:x.title,sounds:[],source:'Data Bruitage · jeux',kind:'Jeu'})),
+  ...(seed.resource_index||[]).map(x=>({name:x.name,summary:x.indexed_text?'Document indexé':'Ressource',sounds:[],source:'Data Bruitage · documents',kind:'Document'}))
+].filter(safeExternal)
+const external=dataBruitageCorpus
 const intents=seed.intent_packs||[]
+const corpusSummary=[
+  `${(seed.sources||[]).length} sources structurées`,
+  `${(seed.resource_index||[]).length} documents indexés`,
+  `${(seed.objects||[]).length} objets`,
+  `${(seed.sounds||[]).length} sons`
+].join(' · ')
 
 function expandQuery(q){
   const nq=norm(q), extra=[]
@@ -104,7 +134,7 @@ function searchOwned(q){
 }
 function searchExternal(q){
   if(!q.trim()) return []
-  return new Fuse(external,{keys:['name','sounds','source'],threshold:.44,ignoreLocation:true})
+  return new Fuse(external,{keys:['name','sounds','aliases','summary','source','kind'],threshold:.44,ignoreLocation:true})
     .search(expandQuery(q)).slice(0,8).map(x=>x.item)
 }
 function chip(s){return `<span class="chip">${esc(s)}</span>`}
@@ -115,6 +145,7 @@ $('#app').innerHTML=`
   <div class="brand">
     <div class="wordmark">M<span class="logo-i">I<i></i></span>SE <span class="bang">!<i></i></span></div>
     <div class="sub">QR CASE FINDER</div><div class="tag">Cherche ta mise</div>
+    <div class="corpusMeta"><b>Data Bruitage</b><span>${esc(corpusSummary)}</span></div>
   </div>
   <button id="backupBtn" class="ghost">Sauvegarde</button>
 </header>
@@ -139,10 +170,10 @@ $('#app').innerHTML=`
 <section id="search" class="tab active"><div id="searchResults"></div></section>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
 <section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
-<section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Personnel, pédagogique ou lié à un spectacle. Le spectacle reste facultatif.</p><div id="kitCards" class="cards"></div></section>
+<section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation issu de Data Bruitage : spectacle, atelier, tournée ou besoin ponctuel. Data Bruitage reste le corpus global.</p><div id="kitCards" class="cards"></div></section>
 <section id="mises" class="tab"><div class="sectionhead"><h2>Mises & contrôles</h2><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards"></div></section>
 <section id="creator" class="tab">
-  <div class="panel"><h2>Créateur de bruitage</h2><p>Décris une ambiance ou un son : MISE ! croise ton parc et les références.</p>
+  <div class="panel"><h2>Créateur de bruitage</h2><p>Décris une ambiance ou un son : MISE ! croise Data Bruitage, ton parc, tes pratiques et les références.</p>
   <div class="row"><button data-preset="mer">🌊 Mer</button><button data-preset="forêt">🌿 Forêt</button><button data-preset="feu">🔥 Feu</button><button data-preset="orage">⛈ Orage</button></div></div>
   <div id="creatorResults"></div>
 </section>
@@ -268,7 +299,7 @@ function openKit(k){
   k=k||{id:uid('kit'),name:'',description:'',objectIds:[],contexts:[],showId:null,source:'manuel'}
   const m=$('#modal')
   m.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><b>${kitBy(k.id)?'Modifier':'Créer'} un kit</b><button value="cancel" class="ghost">×</button></div>
-  <label>Nom<input id="kName" value="${esc(k.name)}" placeholder="Kit Acoustique"></label>
+  <label>Nom<input id="kName" value="${esc(k.name)}" placeholder="Kit spectacle / atelier"></label>
   <label>Description<input id="kDesc" value="${esc(k.description||'')}" placeholder="Kit perso, atelier…"></label>
   <label>Contexte (facultatif)<input id="kCtx" value="${esc((k.contexts||[]).join(', '))}" placeholder="atelier, #spectacle…"></label>
   <div class="checklist">${objects.map(o=>`<label class="check"><input type="checkbox" value="${o.id}" ${(k.objectIds||[]).includes(o.id)?'checked':''}><span>${esc(o.name)}</span></label>`).join('')}</div>
