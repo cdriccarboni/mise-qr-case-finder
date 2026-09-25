@@ -73,7 +73,7 @@ async function migrateDataBruitage(){
 }
 await migrateDataBruitage()
 
-let objects=[],cases=[],kits=[],mises=[],activeMise=null, scanner=null
+let objects=[],cases=[],kits=[],mises=[],activeMise=null, scanner=null, photoTargetMiseId=null
 async function refresh(){
   objects=await db.getAll('objects')
   cases=await db.getAll('cases')
@@ -227,7 +227,20 @@ async function resizePhoto(file){
 }
 async function photoFlow(file){
   const photo=await resizePhoto(file)
+  if(photoTargetMiseId){
+    const mise=miseBy(photoTargetMiseId);photoTargetMiseId=null
+    if(mise){openMisePhotoControl(mise,photo);return}
+  }
   openObject({photo,source:'photo',owned:true})
+}
+function openMisePhotoControl(m,photo){
+  const d=$('#modal'),expected=(m.objectIds||[]).map(id=>objects.find(o=>o.id===id)).filter(Boolean)
+  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Contrôle photo · bêta</b><small>${esc(m.name)}</small></div><button value="cancel" class="ghost">×</button></div>
+  <img class="photoPreview" src="${photo}"><p class="hint">La photo sert de repère. MISE ! ne prétend pas reconnaître automatiquement les objets : coche ce que tu vois réellement.</p>
+  <div class="checklist">${expected.map(o=>`<label class="check"><input type="checkbox" value="${o.id}" ${(m.checked||[]).includes(o.id)?'checked':''}><span>${esc(o.name)} <small>· ${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></span></label>`).join('')}</div>
+  <button id="savePhotoControl">Valider le contrôle</button></form>`
+  d.showModal()
+  $('#savePhotoControl').onclick=async e=>{e.preventDefault();m.checked=$$('.check input:checked',d).map(x=>x.value);m.controlPhoto=photo;m.controlledAt=new Date().toISOString();await db.put('mises',m);d.close();await refresh();render();toast('Contrôle de mise enregistré')}
 }
 $('#photoInput').onchange=e=>e.target.files[0]&&photoFlow(e.target.files[0])
 $('#galleryInput').onchange=e=>e.target.files[0]&&photoFlow(e.target.files[0])
@@ -445,12 +458,12 @@ function render(){
     <div class="miseTitle"><b>${esc(m.name)}</b><button class="link" data-active="${m.id}">${activeMise===m.id?'Active':'Activer'}</button></div>
     <span>${(m.objectIds||[]).length} objets · ${(m.checked||[]).length} contrôlés</span>
     <div class="checklist">${(m.objectIds||[]).map(id=>objects.find(o=>o.id===id)).filter(Boolean).map(o=>`<label class="check"><input type="checkbox" data-mise="${m.id}" value="${o.id}" ${(m.checked||[]).includes(o.id)?'checked':''}><span>${esc(o.name)} <small>· ${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></span></label>`).join('')}</div>
-    <div class="row"><button data-control="${m.id}">📷 Contrôle photo</button><button data-editmise="${m.id}" class="ghost">Modifier</button></div>
+    <div class="row"><button data-control="${m.id}">📷 Contrôle photo · bêta</button><button data-editmise="${m.id}" class="ghost">Modifier</button></div>
   </article>`).join(''):'<div class="empty">Crée une mise ou ouvre un kit puis « Préparer demain ».</div>'
   $$('[data-active]').forEach(b=>b.onclick=()=>{activeMise=b.dataset.active;render()})
   $$('#miseCards .check input').forEach(x=>x.onchange=()=>toggleCheck(miseBy(x.dataset.mise),x.value,x.checked))
   $$('[data-editmise]').forEach(b=>b.onclick=()=>openMise(miseBy(b.dataset.editmise)))
-  $$('[data-control]').forEach(b=>b.onclick=()=>{activeMise=b.dataset.control;$('#photoInput').click();toast('Photo de contrôle : ajoute/valide les objets visibles')})
+  $$('[data-control]').forEach(b=>b.onclick=()=>{activeMise=b.dataset.control;photoTargetMiseId=b.dataset.control;$('#photoInput').click()})
 }
 render()
 
