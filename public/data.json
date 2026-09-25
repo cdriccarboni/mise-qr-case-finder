@@ -1,0 +1,5292 @@
+{
+  "schema": "mise-meta-db/v1",
+  "version": "1.1.0",
+  "generated_on": "2026-09-25",
+  "principles": {
+    "personal_sources_first": true,
+    "reference_never_equals_owned": true,
+    "local_first": true,
+    "bidirectional_search": true
+  },
+  "sources": [
+    {
+      "id": "src-02-malettepedago-cdric-v-20-25-docx",
+      "path": "02_MalettePedago CDRIC V.20.25.docx",
+      "kind": "personal_inventory",
+      "priority": "primary",
+      "note": "Inventaire personnel de mallette pédagogique, source prioritaire pour possession/emplacement."
+    },
+    {
+      "id": "src-didascalies-bruitages-docx",
+      "path": "_DIDASCALIES BRUITAGES.docx",
+      "kind": "personal_usage",
+      "priority": "primary",
+      "note": "Usages réels de bruitages en spectacle, source prioritaire pour associations objet-son."
+    },
+    {
+      "id": "src-03-conduites-paysages-sonores-v2-docx",
+      "path": "03_CONDUITES PAYSAGES SONORES V2.docx",
+      "kind": "personal_workshop",
+      "priority": "primary",
+      "note": "Paysages sonores utilisés en atelier."
+    },
+    {
+      "id": "src-04-conduite-paysages-sonore-v3-docx",
+      "path": "04_CONDUITE PAYSAGES SONORE V3.docx",
+      "kind": "personal_workshop",
+      "priority": "primary",
+      "note": "Tempête en mer et conduite de paysage sonore."
+    },
+    {
+      "id": "src-exemple-ateliers-bruitage-2h-docx",
+      "path": "Exemple ateliers bruitage 2h.docx",
+      "kind": "personal_pedagogy",
+      "priority": "primary",
+      "note": "Méthode d’atelier, blind test et création de paysages sonores."
+    },
+    {
+      "id": "src-01-ateliers-acoustiques-cm-docx",
+      "path": "01_Ateliers acoustiques CM.docx",
+      "kind": "personal_pedagogy",
+      "priority": "primary",
+      "note": "Présentation et démonstration d’objets de bruitage."
+    },
+    {
+      "id": "src-eac-ifdb-2h-v2-docx",
+      "path": "EAC IFDB 2H V2.docx",
+      "kind": "personal_pedagogy",
+      "priority": "primary",
+      "note": "Atelier de bruitage synchronisé sur film."
+    },
+    {
+      "id": "src-eac-ifdb-2h-docx",
+      "path": "EAC IFDB 2H.docx",
+      "kind": "personal_pedagogy",
+      "priority": "primary",
+      "note": "Structure pédagogique et repérage des familles de sons."
+    },
+    {
+      "id": "src-le-bruitage-selon-louis-matabon-pdf",
+      "path": "Le bruitage selon Louis Matabon.pdf",
+      "kind": "reference_recipe",
+      "priority": "reference",
+      "note": "Recettes de bruitage de référence; seules les techniques sûres sont indexées comme suggestions."
+    },
+    {
+      "id": "src-xx-inventaire-grande-mallette-bruitage-1-pdf",
+      "path": "xx_inventaire-grande-mallette-bruitage (1).pdf",
+      "kind": "reference_inventory",
+      "priority": "reference",
+      "note": "Inventaire externe de grande mallette; objets non considérés comme possédés."
+    },
+    {
+      "id": "src-atelier-bruitage-tuto-pdf-pdf",
+      "path": "Atelier bruitage TUTO PDF.pdf",
+      "kind": "reference_pedagogy",
+      "priority": "reference",
+      "note": "Tutoriel d’atelier bruitage."
+    },
+    {
+      "id": "src-musique-en-jeu-x-lekit-livret-pdf",
+      "path": "Musique en Jeu(X)/lekit_livret.pdf",
+      "kind": "pedagogy_inspiration",
+      "priority": "reference",
+      "note": "Inspiration pour mallette pédagogique: jeu coopératif, écoute active, cartes, QR, parcours."
+    },
+    {
+      "id": "src-musique-en-jeu-x-mmc-lexique-sonore-pdf",
+      "path": "Musique en Jeu(X)/MMC-Lexique_sonore.pdf",
+      "kind": "lexicon",
+      "priority": "reference",
+      "note": "Lexique de types, textures et actions du son."
+    },
+    {
+      "id": "src-instrumentsmusiquepapier-carton-pdf",
+      "path": "InstrumentsMusiquePapier&Carton.pdf",
+      "kind": "pedagogy_reference",
+      "priority": "reference",
+      "note": "Livre visuel de fabrication/expérimentation d’instruments papier-carton; indexé comme ressource, pas comme possession."
+    },
+    {
+      "id": "src-instrumentsmusiqueverre-plastique-pdf",
+      "path": "InstrumentsMusiqueVerre&Plastique.pdf",
+      "kind": "pedagogy_reference",
+      "priority": "reference",
+      "note": "Livre visuel de fabrication/expérimentation d’instruments verre-plastique; indexé comme ressource, pas comme possession."
+    }
+  ],
+  "containers": [
+    {
+      "id": "case-sac-01",
+      "name": "Sac numéro 01",
+      "type": "sac",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "qr_ready": true
+    },
+    {
+      "id": "case-tote-sac-01",
+      "name": "Tote bag – Sac numéro 01",
+      "type": "tote_bag",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "qr_ready": true
+    },
+    {
+      "id": "case-trousse",
+      "name": "Trousse",
+      "type": "trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "parent_id": "case-tote-sac-01",
+      "qr_ready": true
+    },
+    {
+      "id": "case-trousse-feu",
+      "name": "Trousse feu",
+      "type": "trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "parent_id": "case-tote-sac-01",
+      "qr_ready": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "obj-bidon-mailloche",
+      "name": "Bidon + « Mailloche »)",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-bouteilles-frangees",
+      "name": "Bouteilles frangées",
+      "quantity": 3,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-bouteille-billes",
+      "name": "Bouteille billes",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-bouteille-froissees",
+      "name": "Bouteille froissées",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-boite-avec-billes",
+      "name": "Boite avec billes",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-tuyau-melodique-tournoyant-et-soufflant",
+      "name": "Tuyau mélodique – tournoyant et soufflant –",
+      "quantity": 3,
+      "category": "instrument_controleur",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-mini-tuyau-melodique",
+      "name": "Mini tuyau mélodique",
+      "quantity": 4,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-regle-avec-ficelle",
+      "name": "Règle avec ficelle",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-regle-musicale",
+      "name": "Règle musicale",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Champlat X1 associé dans l’inventaire"
+      ],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachets-bleu-dore",
+      "name": "Sachets bleu-doré",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [
+        "Bande Revox"
+      ],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachets-blanc-dore",
+      "name": "Sachets blanc-doré",
+      "quantity": 3,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [
+        "Bande VHS"
+      ],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachet-gris",
+      "name": "Sachet gris",
+      "quantity": 4,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [
+        "Macaroni"
+      ],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachet-carreaux-bleu-blanc",
+      "name": "Sachet carreaux bleu-blanc",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [
+        "Lentilles"
+      ],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachet-carreaux-blanc-traits-bleu",
+      "name": "Sachet carreaux blanc traits bleu",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [
+        "Maizena"
+      ],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachets-orange-dore",
+      "name": "Sachets orange-doré",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [
+        "Purée lyophilisé"
+      ],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachet-fleur-bleu",
+      "name": "Sachet fleur bleu",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [
+        "Petits bouchons"
+      ],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachet-carreaux-rouge-blanc",
+      "name": "Sachet carreaux rouge blanc",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [
+        "Bambous"
+      ],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachet-carreaux-vert-blanc",
+      "name": "Sachet carreaux vert-blanc",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [
+        "Bouchons de lait"
+      ],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachet-pixel-vert",
+      "name": "Sachet pixel vert",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [
+        "Bouchons petits pots"
+      ],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachet-jaune",
+      "name": "Sachet jaune",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [
+        "Capsules"
+      ],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sachet-blanc-etoile-noir",
+      "name": "Sachet blanc étoile noir",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-planchettes-en-bois",
+      "name": "Planchettes en bois",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-balais-brosse",
+      "name": "Balais brosse",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-plaque-plexi",
+      "name": "Plaque plexi",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-bouillotte",
+      "name": "Bouillotte",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-tote-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-boite-tonnerre",
+      "name": "Boite tonnerre",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-tote-sac-01",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-kazoo",
+      "name": "Kazoo",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sifflets",
+      "name": "Sifflets",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sifflet-oiseaux",
+      "name": "Sifflet oiseaux",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sifflet-train",
+      "name": "Sifflet train",
+      "quantity": 1,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sifflet-crayon",
+      "name": "Sifflet crayon",
+      "quantity": 1,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sifflet-turbine",
+      "name": "Sifflet turbine",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sifflet-turbine",
+      "name": "Sifflet turbine",
+      "quantity": 1,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sifflet-bouche",
+      "name": "Sifflet bouche",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sifflet-ballon",
+      "name": "Sifflet ballon",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sifflet-ballon-grand-modele",
+      "name": "Sifflet ballon - Grand modèle",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-sifflet-mouches",
+      "name": "Sifflet mouches",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-flute-coulissante",
+      "name": "Flute coulissante",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-ocarina",
+      "name": "Ocarina",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-cuica-grenouille-baton",
+      "name": "Cuica grenouille + Bâton",
+      "quantity": 3,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-cuilleres-musicales-avec-couteau",
+      "name": "Cuillères musicales avec couteau",
+      "quantity": 1,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-mini-crecelle",
+      "name": "Mini Crécelle",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-mini-crecelle-impression-3d",
+      "name": "Mini Crécelle impression 3D",
+      "quantity": 2,
+      "category": "instrument_controleur",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-gants-mapa",
+      "name": "Gants mapa",
+      "quantity": 2,
+      "category": "bruitage",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-plus-divers-pailles",
+      "name": "Plus divers pailles",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-trousse",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-couverture-de-survie",
+      "name": "Couverture de survie",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-trousse-feu",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-papier-bulles",
+      "name": "Papier bulles",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-trousse-feu",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-brindilles",
+      "name": "Brindilles",
+      "quantity": 1,
+      "category": "bruitage",
+      "container_id": "case-trousse-feu",
+      "ownership_status": "confirmed_from_personal_inventory",
+      "personal_priority": 100,
+      "source_ids": [
+        "src-02-malettepedago-cdric-v-20-25-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "available"
+    },
+    {
+      "id": "obj-tambour-de-locean",
+      "name": "Tambour de l’océan",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-mini-marteau",
+      "name": "Mini marteau",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-couteau-de-peintre",
+      "name": "Couteau de peintre",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-essoreuse-a-salade",
+      "name": "Essoreuse à salade",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-mini-corne-de-brume",
+      "name": "Mini corne de brume",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-grande-plaque-pvc",
+      "name": "Grande plaque PVC",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-harpiano",
+      "name": "Harpiano",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-brigadier",
+      "name": "Brigadier",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-archet-boite-a-son",
+      "name": "Archet boîte à son",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-theremine",
+      "name": "Thérémine",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-boite-a-musique",
+      "name": "Boîte à musique",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-triangle-musical",
+      "name": "Triangle musical",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-hochet-denfant",
+      "name": "Hochet d’enfant",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-rape-a-fromage",
+      "name": "Râpe à fromage",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-telephone-bleu",
+      "name": "Téléphone bleu",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-sonnette-groom",
+      "name": "Sonnette groom",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-appeau-merle",
+      "name": "Appeau merle",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-appeau-rouge-gorge",
+      "name": "Appeau rouge-gorge",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-appeau-moineau",
+      "name": "Appeau moineau",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-des-a-coudre",
+      "name": "Dés à coudre",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-accordeon",
+      "name": "Accordéon",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-xylophone",
+      "name": "Xylophone",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-checkers-ufs",
+      "name": "Checkers œufs",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "obj-parapluie",
+      "name": "Parapluie",
+      "quantity": null,
+      "category": "bruitage",
+      "container_id": null,
+      "ownership_status": "used_in_personal_work_not_location_confirmed",
+      "personal_priority": 80,
+      "source_ids": [
+        "src-didascalies-bruitages-docx"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [],
+      "status": "location_to_confirm"
+    },
+    {
+      "id": "refobj-demi-noix-de-coco",
+      "name": "Demi noix de coco",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-chaine-en-metal",
+      "name": "Chaîne en métal",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-jazzo-flute-flute-a-coulisse",
+      "name": "Jazzo-flûte / flûte à coulisse",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-clochette",
+      "name": "Clochette",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-verre-a-pied",
+      "name": "Verre à pied",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-couvercles-de-casseroles",
+      "name": "Couvercles de casseroles",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-balle-de-ping-pong",
+      "name": "Balle de ping-pong",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-paire-de-gants-de-vaisselle",
+      "name": "Paire de gants de vaisselle",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-baton-de-pluie",
+      "name": "Bâton de pluie",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-flexatone",
+      "name": "Flexatone",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-pailles-en-plastique",
+      "name": "Pailles en plastique",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-sifflet-de-train",
+      "name": "Sifflet de train",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-sifflet-trompette",
+      "name": "Sifflet trompette",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    },
+    {
+      "id": "refobj-balle-de-golf-dans-tambourin",
+      "name": "Balle de golf dans tambourin",
+      "quantity": null,
+      "category": "reference_object",
+      "container_id": null,
+      "ownership_status": "reference_only_not_owned",
+      "personal_priority": 10,
+      "source_ids": [
+        "src-xx-inventaire-grande-mallette-bruitage-1-pdf"
+      ],
+      "aliases": [],
+      "contents": [],
+      "notes": [
+        "Ne pas afficher dans “Mon inventaire” tant que non ajouté par l’utilisateur."
+      ],
+      "status": "reference_only"
+    }
+  ],
+  "sounds": [
+    {
+      "id": "snd-percussion",
+      "name": "Percussion",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-vent",
+      "name": "Vent",
+      "aliases": [],
+      "tags": [
+        "air",
+        "forêt",
+        "météo",
+        "nature"
+      ],
+      "families": [
+        "air"
+      ],
+      "source_count": 3
+    },
+    {
+      "id": "snd-pluie",
+      "name": "Pluie",
+      "aliases": [],
+      "tags": [
+        "eau",
+        "météo"
+      ],
+      "families": [
+        "eau"
+      ],
+      "source_count": 3
+    },
+    {
+      "id": "snd-mer",
+      "name": "Mer",
+      "aliases": [],
+      "tags": [
+        "atelier mer",
+        "eau",
+        "extérieur",
+        "nature",
+        "océan"
+      ],
+      "families": [
+        "eau"
+      ],
+      "source_count": 2
+    },
+    {
+      "id": "snd-ressac",
+      "name": "Ressac",
+      "aliases": [],
+      "tags": [
+        "eau",
+        "mer",
+        "vagues"
+      ],
+      "families": [
+        "eau"
+      ],
+      "source_count": 2
+    },
+    {
+      "id": "snd-une-petite-une-grande",
+      "name": "Une petite & une grande",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-tambour-de-locean",
+      "name": "« Tambour de l’océan »",
+      "aliases": [],
+      "tags": [
+        "eau",
+        "mer"
+      ],
+      "families": [
+        "eau"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-musique-etrange",
+      "name": "Musique étrange",
+      "aliases": [],
+      "tags": [
+        "fantastique",
+        "tension"
+      ],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-zip",
+      "name": "Zip",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-helice",
+      "name": "Hélice",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-avion",
+      "name": "Avion",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-helico",
+      "name": "Hélico",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-chute",
+      "name": "Chute",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-pan",
+      "name": "Pan",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-pas",
+      "name": "Pas",
+      "aliases": [],
+      "tags": [
+        "extérieur",
+        "hiver",
+        "pas",
+        "plage",
+        "sol"
+      ],
+      "families": [
+        "pas"
+      ],
+      "source_count": 2
+    },
+    {
+      "id": "snd-vent-dans-les-feuilles",
+      "name": "Vent dans les feuilles",
+      "aliases": [],
+      "tags": [
+        "air",
+        "camp",
+        "crépitement",
+        "forêt",
+        "foyer",
+        "météo",
+        "nature"
+      ],
+      "families": [
+        "air"
+      ],
+      "source_count": 2
+    },
+    {
+      "id": "snd-feu",
+      "name": "Feu",
+      "aliases": [],
+      "tags": [
+        "air",
+        "camp",
+        "crépitement",
+        "forêt",
+        "foyer",
+        "nature"
+      ],
+      "families": [],
+      "source_count": 6
+    },
+    {
+      "id": "snd-pas-dans-les-graviers",
+      "name": "Pas dans les graviers",
+      "aliases": [],
+      "tags": [
+        "extérieur",
+        "pas",
+        "sol"
+      ],
+      "families": [
+        "pas"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-cailloux",
+      "name": "Cailloux",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-pas-dans-la-neige",
+      "name": "Pas dans la neige",
+      "aliases": [],
+      "tags": [
+        "hiver",
+        "pas",
+        "sol"
+      ],
+      "families": [
+        "pas"
+      ],
+      "source_count": 3
+    },
+    {
+      "id": "snd-pas-dans-le-sable",
+      "name": "Pas dans le sable",
+      "aliases": [],
+      "tags": [
+        "pas",
+        "plage",
+        "sol"
+      ],
+      "families": [
+        "pas"
+      ],
+      "source_count": 3
+    },
+    {
+      "id": "snd-eau",
+      "name": "Eau",
+      "aliases": [],
+      "tags": [
+        "animal",
+        "bateau",
+        "bois",
+        "forêt",
+        "mer",
+        "mécanique",
+        "nature"
+      ],
+      "families": [
+        "eau"
+      ],
+      "source_count": 4
+    },
+    {
+      "id": "snd-cascade",
+      "name": "Cascade",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "eau"
+      ],
+      "source_count": 2
+    },
+    {
+      "id": "snd-charrette",
+      "name": "Charrette",
+      "aliases": [],
+      "tags": [
+        "mécanique",
+        "transport"
+      ],
+      "families": [],
+      "source_count": 4
+    },
+    {
+      "id": "snd-coquillages",
+      "name": "Coquillages",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-allumettes-pour-feu",
+      "name": "Allumettes pour feu",
+      "aliases": [],
+      "tags": [
+        "camp",
+        "crépitement",
+        "foyer"
+      ],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-feuilles",
+      "name": "Feuilles",
+      "aliases": [],
+      "tags": [
+        "air",
+        "camp",
+        "crépitement",
+        "forêt",
+        "foyer",
+        "nature"
+      ],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-bulles-magiques",
+      "name": "Bulles magiques",
+      "aliases": [],
+      "tags": [
+        "fantastique",
+        "magie"
+      ],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-flute-coulissante",
+      "name": "Flute coulissante",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-boulon",
+      "name": "Boulon",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-whizz",
+      "name": "Whizz",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-whizz-differents-moins-tenu",
+      "name": "Whizz différents moins tenu",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-klaxon",
+      "name": "Klaxon",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-corne-de-brume",
+      "name": "Corne de brume",
+      "aliases": [],
+      "tags": [
+        "bateau",
+        "mer",
+        "signal"
+      ],
+      "families": [],
+      "source_count": 3
+    },
+    {
+      "id": "snd-chouettes",
+      "name": "Chouettes",
+      "aliases": [],
+      "tags": [
+        "forêt",
+        "nuit",
+        "oiseau"
+      ],
+      "families": [
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-grenouilles",
+      "name": "Grenouilles",
+      "aliases": [],
+      "tags": [
+        "animal",
+        "eau",
+        "nuit"
+      ],
+      "families": [
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-crapauds",
+      "name": "Crapauds",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-horloge",
+      "name": "Horloge",
+      "aliases": [],
+      "tags": [
+        "maison",
+        "mécanique",
+        "tic-tac"
+      ],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-secateur",
+      "name": "Sécateur",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-canne-a-peche",
+      "name": "Canne à pêche",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-ailes-oiseaux",
+      "name": "Ailes oiseaux",
+      "aliases": [],
+      "tags": [
+        "animal",
+        "forêt",
+        "nature"
+      ],
+      "families": [
+        "eau",
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-ocean",
+      "name": "océan",
+      "aliases": [],
+      "tags": [
+        "eau",
+        "mer"
+      ],
+      "families": [
+        "eau"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-forge",
+      "name": "forge",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-impact-metal",
+      "name": "impact métal",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-decoupe-simulee",
+      "name": "découpe simulée",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-train",
+      "name": "train",
+      "aliases": [],
+      "tags": [
+        "mécanique",
+        "transport"
+      ],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-mecanique",
+      "name": "mécanique",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "texture_mécanique"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-roulement",
+      "name": "roulement",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-sifflet-bateau",
+      "name": "sifflet bateau",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "eau"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-ailes-de-fee",
+      "name": "ailes de fée",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-battement",
+      "name": "battement",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-woosh",
+      "name": "woosh",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-scintillement",
+      "name": "scintillement",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-magie",
+      "name": "magie",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-glissando",
+      "name": "glissando",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-toc-porte",
+      "name": "toc porte",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-coups-a-la-porte",
+      "name": "coups à la porte",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-grincement-de-porte",
+      "name": "grincement de porte",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "texture_mécanique"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-grincement",
+      "name": "grincement",
+      "aliases": [],
+      "tags": [
+        "bateau",
+        "bois",
+        "mer",
+        "mécanique"
+      ],
+      "families": [
+        "texture_mécanique"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-mouvement-robotique",
+      "name": "mouvement robotique",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-claquement-stylise",
+      "name": "claquement stylisé",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-fantastique",
+      "name": "fantastique",
+      "aliases": [],
+      "tags": [
+        "magie",
+        "étrange"
+      ],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-mecanisme",
+      "name": "mécanisme",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "texture_mécanique"
+      ],
+      "source_count": 4
+    },
+    {
+      "id": "snd-musique",
+      "name": "musique",
+      "aliases": [],
+      "tags": [
+        "fantastique",
+        "tension"
+      ],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-claquement",
+      "name": "claquement",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-chting",
+      "name": "chting",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-tintement",
+      "name": "tintement",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-hochet",
+      "name": "hochet",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-bebe",
+      "name": "bébé",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-grincement-mecanique",
+      "name": "grincement mécanique",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "texture_mécanique"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-sonnerie-telephone",
+      "name": "sonnerie téléphone",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-sonnette",
+      "name": "sonnette",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-merle",
+      "name": "merle",
+      "aliases": [],
+      "tags": [
+        "atelier mer",
+        "eau",
+        "extérieur",
+        "nature",
+        "océan"
+      ],
+      "families": [
+        "eau",
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-oiseau",
+      "name": "oiseau",
+      "aliases": [],
+      "tags": [
+        "animal",
+        "forêt",
+        "nature"
+      ],
+      "families": [
+        "eau",
+        "animal"
+      ],
+      "source_count": 3
+    },
+    {
+      "id": "snd-rouge-gorge",
+      "name": "rouge-gorge",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-moineau",
+      "name": "moineau",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "eau",
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-pas-doiseau",
+      "name": "pas d’oiseau",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "pas",
+        "eau",
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-petits-pas",
+      "name": "petits pas",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "pas"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-ouverture-bouche",
+      "name": "ouverture bouche",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-soufflet",
+      "name": "soufflet",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "air"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-impact-leger",
+      "name": "impact léger",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-danse",
+      "name": "danse",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-percussion-legere",
+      "name": "percussion légère",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-dragon-qui-vole",
+      "name": "dragon qui vole",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-ailes",
+      "name": "ailes",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-tempete",
+      "name": "tempête",
+      "aliases": [],
+      "tags": [
+        "mer",
+        "météo",
+        "orage",
+        "pluie",
+        "vent"
+      ],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-pluie-battante",
+      "name": "pluie battante",
+      "aliases": [],
+      "tags": [
+        "eau",
+        "météo"
+      ],
+      "families": [
+        "eau"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-pluie-legere",
+      "name": "pluie légère",
+      "aliases": [],
+      "tags": [
+        "eau",
+        "météo"
+      ],
+      "families": [
+        "eau"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-vent-se-leve",
+      "name": "vent se lève",
+      "aliases": [],
+      "tags": [
+        "air",
+        "météo"
+      ],
+      "families": [
+        "air"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-clapotis-des-vagues",
+      "name": "clapotis des vagues",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "eau"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-remous",
+      "name": "remous",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-grincement-bateau",
+      "name": "grincement bateau",
+      "aliases": [],
+      "tags": [
+        "bateau",
+        "bois",
+        "mer",
+        "mécanique"
+      ],
+      "families": [
+        "texture_mécanique",
+        "eau"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-grincement-bois",
+      "name": "grincement bois",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "texture_mécanique"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-pas-dans-les-feuilles",
+      "name": "pas dans les feuilles",
+      "aliases": [],
+      "tags": [
+        "camp",
+        "crépitement",
+        "foyer"
+      ],
+      "families": [
+        "pas"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-graviers",
+      "name": "graviers",
+      "aliases": [],
+      "tags": [
+        "extérieur",
+        "pas",
+        "sol"
+      ],
+      "families": [
+        "pas"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-eau-au-lointain",
+      "name": "eau au lointain",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "eau"
+      ],
+      "source_count": 2
+    },
+    {
+      "id": "snd-allumettes",
+      "name": "allumettes",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-depart-feu-simule",
+      "name": "départ feu simulé",
+      "aliases": [],
+      "tags": [
+        "camp",
+        "crépitement",
+        "foyer"
+      ],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-crepitement",
+      "name": "crépitement",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "texture_mécanique"
+      ],
+      "source_count": 3
+    },
+    {
+      "id": "snd-orage",
+      "name": "orage",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-tonnerre",
+      "name": "tonnerre",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-oiseaux",
+      "name": "oiseaux",
+      "aliases": [],
+      "tags": [
+        "animal",
+        "forêt",
+        "nature"
+      ],
+      "families": [
+        "eau",
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-ambiance-foret",
+      "name": "ambiance forêt",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-bateau",
+      "name": "bateau",
+      "aliases": [],
+      "tags": [
+        "bateau",
+        "bois",
+        "mer",
+        "mécanique"
+      ],
+      "families": [
+        "eau"
+      ],
+      "source_count": 2
+    },
+    {
+      "id": "snd-chouette",
+      "name": "chouette",
+      "aliases": [],
+      "tags": [
+        "forêt",
+        "nuit",
+        "oiseau"
+      ],
+      "families": [
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-ambiance-nuit",
+      "name": "ambiance nuit",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-grenouille",
+      "name": "grenouille",
+      "aliases": [],
+      "tags": [
+        "animal",
+        "eau",
+        "nuit"
+      ],
+      "families": [
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-crapaud",
+      "name": "crapaud",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-ambiance-nature",
+      "name": "ambiance nature",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-tic-tac",
+      "name": "tic-tac",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "texture_mécanique"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-moulinet",
+      "name": "moulinet",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 2
+    },
+    {
+      "id": "snd-envol-oiseau",
+      "name": "envol oiseau",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "eau",
+        "animal"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-craquement-bois",
+      "name": "craquement bois",
+      "aliases": [],
+      "tags": [],
+      "families": [
+        "texture_mécanique"
+      ],
+      "source_count": 1
+    },
+    {
+      "id": "snd-sabots-de-cheval",
+      "name": "sabots de cheval",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-trot",
+      "name": "trot",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-galop",
+      "name": "galop",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-bruits-metalliques",
+      "name": "bruits métalliques",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-fantome",
+      "name": "fantôme",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-chute-cartoon",
+      "name": "chute cartoon",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-depart-rapide",
+      "name": "départ rapide",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-troupeau",
+      "name": "troupeau",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-porte",
+      "name": "porte",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-vaisselle",
+      "name": "vaisselle",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-resonance-aigue",
+      "name": "résonance aiguë",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-metal",
+      "name": "métal",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-cymbale",
+      "name": "cymbale",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-armure",
+      "name": "armure",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-rebond",
+      "name": "rebond",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-cliquetis",
+      "name": "cliquetis",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-bulles",
+      "name": "bulles",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-insectes",
+      "name": "insectes",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    },
+    {
+      "id": "snd-mouette",
+      "name": "mouette",
+      "aliases": [],
+      "tags": [],
+      "families": [],
+      "source_count": 1
+    }
+  ],
+  "object_sound_links": [
+    {
+      "object_id": "obj-bidon-mailloche",
+      "sound_id": "snd-percussion",
+      "sound_name": "Percussion",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteilles-frangees",
+      "sound_id": "snd-vent",
+      "sound_name": "Vent",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteilles-frangees",
+      "sound_id": "snd-pluie",
+      "sound_name": "Pluie",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteille-billes",
+      "sound_id": "snd-mer",
+      "sound_name": "Mer",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteille-billes",
+      "sound_id": "snd-ressac",
+      "sound_name": "Ressac",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteille-froissees",
+      "sound_id": "snd-une-petite-une-grande",
+      "sound_name": "Une petite & une grande",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-boite-avec-billes",
+      "sound_id": "snd-tambour-de-locean",
+      "sound_name": "« Tambour de l’océan »",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-tuyau-melodique-tournoyant-et-soufflant",
+      "sound_id": "snd-vent",
+      "sound_name": "Vent",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-tuyau-melodique-tournoyant-et-soufflant",
+      "sound_id": "snd-musique-etrange",
+      "sound_name": "Musique étrange",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-tuyau-melodique",
+      "sound_id": "snd-zip",
+      "sound_name": "Zip",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-tuyau-melodique",
+      "sound_id": "snd-musique-etrange",
+      "sound_name": "Musique étrange",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-regle-avec-ficelle",
+      "sound_id": "snd-helice",
+      "sound_name": "Hélice",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-regle-avec-ficelle",
+      "sound_id": "snd-avion",
+      "sound_name": "Avion",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-regle-avec-ficelle",
+      "sound_id": "snd-helico",
+      "sound_name": "Hélico",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-regle-musicale",
+      "sound_id": "snd-chute",
+      "sound_name": "Chute",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-regle-musicale",
+      "sound_id": "snd-pan",
+      "sound_name": "Pan",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachets-bleu-dore",
+      "sound_id": "snd-pas",
+      "sound_name": "Pas",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachets-bleu-dore",
+      "sound_id": "snd-vent-dans-les-feuilles",
+      "sound_name": "Vent dans les feuilles",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachets-bleu-dore",
+      "sound_id": "snd-feu",
+      "sound_name": "Feu",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachets-blanc-dore",
+      "sound_id": "snd-pas",
+      "sound_name": "Pas",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachets-blanc-dore",
+      "sound_id": "snd-vent-dans-les-feuilles",
+      "sound_name": "Vent dans les feuilles",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachets-blanc-dore",
+      "sound_id": "snd-feu",
+      "sound_name": "Feu",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-gris",
+      "sound_id": "snd-pas-dans-les-graviers",
+      "sound_name": "Pas dans les graviers",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-gris",
+      "sound_id": "snd-cailloux",
+      "sound_name": "Cailloux",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-carreaux-bleu-blanc",
+      "sound_id": "snd-pas-dans-la-neige",
+      "sound_name": "Pas dans la neige",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-carreaux-bleu-blanc",
+      "sound_id": "snd-pas-dans-le-sable",
+      "sound_name": "Pas dans le sable",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-carreaux-blanc-traits-bleu",
+      "sound_id": "snd-pas-dans-la-neige",
+      "sound_name": "Pas dans la neige",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-carreaux-blanc-traits-bleu",
+      "sound_id": "snd-pas-dans-le-sable",
+      "sound_name": "Pas dans le sable",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachets-orange-dore",
+      "sound_id": "snd-pas-dans-la-neige",
+      "sound_name": "Pas dans la neige",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachets-orange-dore",
+      "sound_id": "snd-pas-dans-le-sable",
+      "sound_name": "Pas dans le sable",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-fleur-bleu",
+      "sound_id": "snd-eau",
+      "sound_name": "Eau",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-fleur-bleu",
+      "sound_id": "snd-pluie",
+      "sound_name": "Pluie",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-fleur-bleu",
+      "sound_id": "snd-cascade",
+      "sound_name": "Cascade",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-carreaux-rouge-blanc",
+      "sound_id": "snd-eau",
+      "sound_name": "Eau",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-carreaux-rouge-blanc",
+      "sound_id": "snd-pluie",
+      "sound_name": "Pluie",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-carreaux-rouge-blanc",
+      "sound_id": "snd-cascade",
+      "sound_name": "Cascade",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-carreaux-vert-blanc",
+      "sound_id": "snd-eau",
+      "sound_name": "Eau",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-carreaux-vert-blanc",
+      "sound_id": "snd-charrette",
+      "sound_name": "Charrette",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-pixel-vert",
+      "sound_id": "snd-eau",
+      "sound_name": "Eau",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-pixel-vert",
+      "sound_id": "snd-charrette",
+      "sound_name": "Charrette",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-jaune",
+      "sound_id": "snd-charrette",
+      "sound_name": "Charrette",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-blanc-etoile-noir",
+      "sound_id": "snd-coquillages",
+      "sound_name": "Coquillages",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-planchettes-en-bois",
+      "sound_id": "snd-allumettes-pour-feu",
+      "sound_name": "Allumettes pour feu",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-balais-brosse",
+      "sound_id": "snd-feu",
+      "sound_name": "Feu",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-balais-brosse",
+      "sound_id": "snd-feuilles",
+      "sound_name": "Feuilles",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-plaque-plexi",
+      "sound_id": "snd-vent",
+      "sound_name": "vent",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-plaque-plexi",
+      "sound_id": "snd-bulles-magiques",
+      "sound_name": "Bulles magiques",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-crayon",
+      "sound_id": "snd-flute-coulissante",
+      "sound_name": "Flute coulissante",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-turbine",
+      "sound_id": "snd-boulon",
+      "sound_name": "Boulon",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-turbine",
+      "sound_id": "snd-whizz",
+      "sound_name": "Whizz",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-turbine",
+      "sound_id": "snd-whizz-differents-moins-tenu",
+      "sound_name": "Whizz différents moins tenu",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-ballon",
+      "sound_id": "snd-klaxon",
+      "sound_name": "Klaxon",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-ballon-grand-modele",
+      "sound_id": "snd-corne-de-brume",
+      "sound_name": "Corne de brume",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-ballon-grand-modele",
+      "sound_id": "snd-klaxon",
+      "sound_name": "Klaxon",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-ocarina",
+      "sound_id": "snd-chouettes",
+      "sound_name": "Chouettes",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-cuica-grenouille-baton",
+      "sound_id": "snd-grenouilles",
+      "sound_name": "Grenouilles",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-cuica-grenouille-baton",
+      "sound_id": "snd-crapauds",
+      "sound_name": "Crapauds",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-cuilleres-musicales-avec-couteau",
+      "sound_id": "snd-horloge",
+      "sound_name": "Horloge",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-cuilleres-musicales-avec-couteau",
+      "sound_id": "snd-secateur",
+      "sound_name": "Sécateur",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-crecelle",
+      "sound_id": "snd-canne-a-peche",
+      "sound_name": "Canne à pêche",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-crecelle-impression-3d",
+      "sound_id": "snd-canne-a-peche",
+      "sound_name": "Canne à pêche",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-gants-mapa",
+      "sound_id": "snd-ailes-oiseaux",
+      "sound_name": "Ailes oiseaux",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-couverture-de-survie",
+      "sound_id": "snd-feu",
+      "sound_name": "Feu",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-couverture-de-survie",
+      "sound_id": "snd-feuilles",
+      "sound_name": "Feuilles",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-papier-bulles",
+      "sound_id": "snd-feu",
+      "sound_name": "Feu",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-brindilles",
+      "sound_id": "snd-feu",
+      "sound_name": "Feu",
+      "confidence": 1.0,
+      "provenance": "personal_inventory",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-tambour-de-locean",
+      "sound_id": "snd-ocean",
+      "sound_name": "océan",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-tambour-de-locean",
+      "sound_id": "snd-mer",
+      "sound_name": "mer",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-tambour-de-locean",
+      "sound_id": "snd-ressac",
+      "sound_name": "ressac",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-marteau",
+      "sound_id": "snd-forge",
+      "sound_name": "forge",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-marteau",
+      "sound_id": "snd-impact-metal",
+      "sound_name": "impact métal",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-couteau-de-peintre",
+      "sound_id": "snd-forge",
+      "sound_name": "forge",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-couteau-de-peintre",
+      "sound_id": "snd-decoupe-simulee",
+      "sound_name": "découpe simulée",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-essoreuse-a-salade",
+      "sound_id": "snd-train",
+      "sound_name": "train",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-essoreuse-a-salade",
+      "sound_id": "snd-mecanique",
+      "sound_name": "mécanique",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-essoreuse-a-salade",
+      "sound_id": "snd-roulement",
+      "sound_name": "roulement",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-corne-de-brume",
+      "sound_id": "snd-sifflet-bateau",
+      "sound_name": "sifflet bateau",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-corne-de-brume",
+      "sound_id": "snd-corne-de-brume",
+      "sound_name": "corne de brume",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-grande-plaque-pvc",
+      "sound_id": "snd-ailes-de-fee",
+      "sound_name": "ailes de fée",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-grande-plaque-pvc",
+      "sound_id": "snd-battement",
+      "sound_name": "battement",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-grande-plaque-pvc",
+      "sound_id": "snd-woosh",
+      "sound_name": "woosh",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-harpiano",
+      "sound_id": "snd-scintillement",
+      "sound_name": "scintillement",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-harpiano",
+      "sound_id": "snd-magie",
+      "sound_name": "magie",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-harpiano",
+      "sound_id": "snd-glissando",
+      "sound_name": "glissando",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-brigadier",
+      "sound_id": "snd-toc-porte",
+      "sound_name": "toc porte",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-brigadier",
+      "sound_id": "snd-coups-a-la-porte",
+      "sound_name": "coups à la porte",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-archet-boite-a-son",
+      "sound_id": "snd-grincement-de-porte",
+      "sound_name": "grincement de porte",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-archet-boite-a-son",
+      "sound_id": "snd-grincement",
+      "sound_name": "grincement",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-theremine",
+      "sound_id": "snd-mouvement-robotique",
+      "sound_name": "mouvement robotique",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-theremine",
+      "sound_id": "snd-claquement-stylise",
+      "sound_name": "claquement stylisé",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-theremine",
+      "sound_id": "snd-fantastique",
+      "sound_name": "fantastique",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-boite-a-musique",
+      "sound_id": "snd-mecanisme",
+      "sound_name": "mécanisme",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-boite-a-musique",
+      "sound_id": "snd-musique",
+      "sound_name": "musique",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-boite-a-musique",
+      "sound_id": "snd-claquement",
+      "sound_name": "claquement",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-triangle-musical",
+      "sound_id": "snd-chting",
+      "sound_name": "chting",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-triangle-musical",
+      "sound_id": "snd-tintement",
+      "sound_name": "tintement",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-hochet-denfant",
+      "sound_id": "snd-hochet",
+      "sound_name": "hochet",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-hochet-denfant",
+      "sound_id": "snd-bebe",
+      "sound_name": "bébé",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-rape-a-fromage",
+      "sound_id": "snd-charrette",
+      "sound_name": "charrette",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-rape-a-fromage",
+      "sound_id": "snd-grincement-mecanique",
+      "sound_name": "grincement mécanique",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-telephone-bleu",
+      "sound_id": "snd-sonnerie-telephone",
+      "sound_name": "sonnerie téléphone",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sonnette-groom",
+      "sound_id": "snd-sonnette",
+      "sound_name": "sonnette",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-appeau-merle",
+      "sound_id": "snd-merle",
+      "sound_name": "merle",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-appeau-merle",
+      "sound_id": "snd-oiseau",
+      "sound_name": "oiseau",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-appeau-rouge-gorge",
+      "sound_id": "snd-rouge-gorge",
+      "sound_name": "rouge-gorge",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-appeau-rouge-gorge",
+      "sound_id": "snd-oiseau",
+      "sound_name": "oiseau",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-appeau-moineau",
+      "sound_id": "snd-moineau",
+      "sound_name": "moineau",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-appeau-moineau",
+      "sound_id": "snd-oiseau",
+      "sound_name": "oiseau",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-des-a-coudre",
+      "sound_id": "snd-pas-doiseau",
+      "sound_name": "pas d’oiseau",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-des-a-coudre",
+      "sound_id": "snd-petits-pas",
+      "sound_name": "petits pas",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-accordeon",
+      "sound_id": "snd-ouverture-bouche",
+      "sound_name": "ouverture bouche",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-accordeon",
+      "sound_id": "snd-soufflet",
+      "sound_name": "soufflet",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-accordeon",
+      "sound_id": "snd-mecanisme",
+      "sound_name": "mécanisme",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-xylophone",
+      "sound_id": "snd-cailloux",
+      "sound_name": "cailloux",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-xylophone",
+      "sound_id": "snd-impact-leger",
+      "sound_name": "impact léger",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-checkers-ufs",
+      "sound_id": "snd-danse",
+      "sound_name": "danse",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-checkers-ufs",
+      "sound_id": "snd-percussion-legere",
+      "sound_name": "percussion légère",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-parapluie",
+      "sound_id": "snd-dragon-qui-vole",
+      "sound_name": "dragon qui vole",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-parapluie",
+      "sound_id": "snd-ailes",
+      "sound_name": "ailes",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-parapluie",
+      "sound_id": "snd-battement",
+      "sound_name": "battement",
+      "confidence": 0.95,
+      "provenance": "personal_usage",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteilles-frangees",
+      "sound_id": "snd-tempete",
+      "sound_name": "tempête",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteilles-frangees",
+      "sound_id": "snd-pluie-battante",
+      "sound_name": "pluie battante",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteilles-frangees",
+      "sound_id": "snd-pluie-legere",
+      "sound_name": "pluie légère",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteilles-frangees",
+      "sound_id": "snd-vent-se-leve",
+      "sound_name": "vent se lève",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteille-billes",
+      "sound_id": "snd-clapotis-des-vagues",
+      "sound_name": "clapotis des vagues",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteille-billes",
+      "sound_id": "snd-remous",
+      "sound_name": "remous",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteille-froissees",
+      "sound_id": "snd-grincement-bateau",
+      "sound_name": "grincement bateau",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-bouteille-froissees",
+      "sound_id": "snd-grincement-bois",
+      "sound_name": "grincement bois",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-tuyau-melodique-tournoyant-et-soufflant",
+      "sound_id": "snd-fantastique",
+      "sound_name": "fantastique",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachets-bleu-dore",
+      "sound_id": "snd-pas-dans-les-feuilles",
+      "sound_name": "pas dans les feuilles",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-gris",
+      "sound_id": "snd-graviers",
+      "sound_name": "graviers",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-fleur-bleu",
+      "sound_id": "snd-eau-au-lointain",
+      "sound_name": "eau au lointain",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sachet-carreaux-rouge-blanc",
+      "sound_id": "snd-eau-au-lointain",
+      "sound_name": "eau au lointain",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-planchettes-en-bois",
+      "sound_id": "snd-allumettes",
+      "sound_name": "allumettes",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-planchettes-en-bois",
+      "sound_id": "snd-depart-feu-simule",
+      "sound_name": "départ feu simulé",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-balais-brosse",
+      "sound_id": "snd-crepitement",
+      "sound_name": "crépitement",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-plaque-plexi",
+      "sound_id": "snd-orage",
+      "sound_name": "orage",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-plaque-plexi",
+      "sound_id": "snd-tonnerre",
+      "sound_name": "tonnerre",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-boite-tonnerre",
+      "sound_id": "snd-orage",
+      "sound_name": "orage",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-boite-tonnerre",
+      "sound_id": "snd-tonnerre",
+      "sound_name": "tonnerre",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-boite-tonnerre",
+      "sound_id": "snd-tempete",
+      "sound_name": "tempête",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-oiseaux",
+      "sound_id": "snd-oiseaux",
+      "sound_name": "oiseaux",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-oiseaux",
+      "sound_id": "snd-ambiance-foret",
+      "sound_name": "ambiance forêt",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-train",
+      "sound_id": "snd-train",
+      "sound_name": "train",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-ballon",
+      "sound_id": "snd-corne-de-brume",
+      "sound_name": "corne de brume",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-ballon",
+      "sound_id": "snd-bateau",
+      "sound_name": "bateau",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-sifflet-ballon-grand-modele",
+      "sound_id": "snd-bateau",
+      "sound_name": "bateau",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-ocarina",
+      "sound_id": "snd-chouette",
+      "sound_name": "chouette",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-ocarina",
+      "sound_id": "snd-ambiance-nuit",
+      "sound_name": "ambiance nuit",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-cuica-grenouille-baton",
+      "sound_id": "snd-grenouille",
+      "sound_name": "grenouille",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-cuica-grenouille-baton",
+      "sound_id": "snd-crapaud",
+      "sound_name": "crapaud",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-cuica-grenouille-baton",
+      "sound_id": "snd-ambiance-nature",
+      "sound_name": "ambiance nature",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-cuilleres-musicales-avec-couteau",
+      "sound_id": "snd-tic-tac",
+      "sound_name": "tic-tac",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-crecelle",
+      "sound_id": "snd-moulinet",
+      "sound_name": "moulinet",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-crecelle",
+      "sound_id": "snd-mecanisme",
+      "sound_name": "mécanisme",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-crecelle-impression-3d",
+      "sound_id": "snd-moulinet",
+      "sound_name": "moulinet",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-mini-crecelle-impression-3d",
+      "sound_id": "snd-mecanisme",
+      "sound_name": "mécanisme",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-gants-mapa",
+      "sound_id": "snd-envol-oiseau",
+      "sound_name": "envol oiseau",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-couverture-de-survie",
+      "sound_id": "snd-crepitement",
+      "sound_name": "crépitement",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-papier-bulles",
+      "sound_id": "snd-crepitement",
+      "sound_name": "crépitement",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "obj-brindilles",
+      "sound_id": "snd-craquement-bois",
+      "sound_name": "craquement bois",
+      "confidence": 0.95,
+      "provenance": "personal_workshop",
+      "auto_suggest": true,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-demi-noix-de-coco",
+      "sound_id": "snd-sabots-de-cheval",
+      "sound_name": "sabots de cheval",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-demi-noix-de-coco",
+      "sound_id": "snd-pas",
+      "sound_name": "pas",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-demi-noix-de-coco",
+      "sound_id": "snd-trot",
+      "sound_name": "trot",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-demi-noix-de-coco",
+      "sound_id": "snd-galop",
+      "sound_name": "galop",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-chaine-en-metal",
+      "sound_id": "snd-bruits-metalliques",
+      "sound_name": "bruits métalliques",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-chaine-en-metal",
+      "sound_id": "snd-fantome",
+      "sound_name": "fantôme",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-chaine-en-metal",
+      "sound_id": "snd-roulement",
+      "sound_name": "roulement",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-jazzo-flute-flute-a-coulisse",
+      "sound_id": "snd-chute-cartoon",
+      "sound_name": "chute cartoon",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-jazzo-flute-flute-a-coulisse",
+      "sound_id": "snd-depart-rapide",
+      "sound_name": "départ rapide",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-jazzo-flute-flute-a-coulisse",
+      "sound_id": "snd-glissando",
+      "sound_name": "glissando",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-clochette",
+      "sound_id": "snd-troupeau",
+      "sound_name": "troupeau",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-clochette",
+      "sound_id": "snd-porte",
+      "sound_name": "porte",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-verre-a-pied",
+      "sound_id": "snd-vaisselle",
+      "sound_name": "vaisselle",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-verre-a-pied",
+      "sound_id": "snd-resonance-aigue",
+      "sound_name": "résonance aiguë",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-couvercles-de-casseroles",
+      "sound_id": "snd-metal",
+      "sound_name": "métal",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-couvercles-de-casseroles",
+      "sound_id": "snd-cymbale",
+      "sound_name": "cymbale",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-couvercles-de-casseroles",
+      "sound_id": "snd-armure",
+      "sound_name": "armure",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-balle-de-ping-pong",
+      "sound_id": "snd-rebond",
+      "sound_name": "rebond",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-balle-de-ping-pong",
+      "sound_id": "snd-roulement",
+      "sound_name": "roulement",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-paire-de-gants-de-vaisselle",
+      "sound_id": "snd-envol-oiseau",
+      "sound_name": "envol oiseau",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-baton-de-pluie",
+      "sound_id": "snd-pluie",
+      "sound_name": "pluie",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-baton-de-pluie",
+      "sound_id": "snd-cliquetis",
+      "sound_name": "cliquetis",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-flexatone",
+      "sound_id": "snd-vent",
+      "sound_name": "vent",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-flexatone",
+      "sound_id": "snd-fantastique",
+      "sound_name": "fantastique",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-pailles-en-plastique",
+      "sound_id": "snd-bulles",
+      "sound_name": "bulles",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-pailles-en-plastique",
+      "sound_id": "snd-insectes",
+      "sound_name": "insectes",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-sifflet-de-train",
+      "sound_id": "snd-train",
+      "sound_name": "train",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-sifflet-trompette",
+      "sound_id": "snd-mouette",
+      "sound_name": "mouette",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    },
+    {
+      "object_id": "refobj-balle-de-golf-dans-tambourin",
+      "sound_id": "snd-orage",
+      "sound_name": "orage",
+      "confidence": 0.65,
+      "provenance": "reference_inventory",
+      "auto_suggest": false,
+      "safety": "safe"
+    }
+  ],
+  "intent_packs": [
+    {
+      "id": "intent-mer",
+      "name": "Mer / bord de mer",
+      "aliases": [
+        "atelier mer",
+        "océan",
+        "bord de mer",
+        "plage"
+      ],
+      "sound_queries": [
+        "mer",
+        "ressac",
+        "clapotis des vagues",
+        "oiseaux",
+        "corne de brume",
+        "vent"
+      ],
+      "source": "personal_workshop",
+      "priority": 100
+    },
+    {
+      "id": "intent-tempete-mer",
+      "name": "Tempête en mer",
+      "aliases": [
+        "orage en mer",
+        "tempête",
+        "mer agitée"
+      ],
+      "sound_queries": [
+        "oiseaux",
+        "clapotis des vagues",
+        "vent se lève",
+        "grincement bateau",
+        "tonnerre",
+        "pluie",
+        "mouette",
+        "corne de brume"
+      ],
+      "source": "personal_workshop",
+      "priority": 100
+    },
+    {
+      "id": "intent-foret",
+      "name": "Forêt / nature",
+      "aliases": [
+        "atelier forêt",
+        "forêt",
+        "nature"
+      ],
+      "sound_queries": [
+        "vent dans les feuilles",
+        "oiseaux",
+        "chouette",
+        "grenouille",
+        "pas dans les feuilles"
+      ],
+      "source": "personal_workshop",
+      "priority": 100
+    },
+    {
+      "id": "intent-rentrer-chez-soi",
+      "name": "Rentrer chez soi",
+      "aliases": [
+        "maison",
+        "rentrer chez soi"
+      ],
+      "sound_queries": [
+        "ambiance nature",
+        "pas dans les feuilles",
+        "pas dans les graviers",
+        "clés",
+        "ouverture porte",
+        "horloge",
+        "eau",
+        "feu"
+      ],
+      "source": "personal_workshop",
+      "priority": 100
+    },
+    {
+      "id": "intent-fantastique",
+      "name": "Fantastique / rêve / nuit",
+      "aliases": [
+        "film fantastique",
+        "rêve",
+        "nuit",
+        "peur"
+      ],
+      "sound_queries": [
+        "musique étrange",
+        "fantastique",
+        "chouette",
+        "grenouille",
+        "grincement",
+        "vent",
+        "bulles magiques"
+      ],
+      "source": "personal_usage",
+      "priority": 90
+    }
+  ],
+  "pedagogy_patterns": [
+    {
+      "id": "ped-blind-test",
+      "name": "Blind test des objets",
+      "origin": "personal",
+      "summary": "Faire écouter un objet sans le montrer, récolter plusieurs interprétations, puis contextualiser le même son."
+    },
+    {
+      "id": "ped-paysage-sonore",
+      "name": "Paysage sonore collectif",
+      "origin": "personal",
+      "summary": "Construire une scène par couches: ambiance, actions ponctuelles, fil rouge et transitions; répéter puis enregistrer."
+    },
+    {
+      "id": "ped-synchro-film",
+      "name": "Bruitage synchronisé sur image",
+      "origin": "personal",
+      "summary": "Repérer les cues d’une séquence muette, répartir les rôles, travailler le timing puis enregistrer une bande son."
+    },
+    {
+      "id": "ped-ecoute-active",
+      "name": "Écoute active",
+      "origin": "personal+reference",
+      "summary": "Passer de “entendre” à “écouter”: isoler, décrire et comparer les sons et leurs évocations."
+    },
+    {
+      "id": "ped-cartes-mise",
+      "name": "Cartes de mise",
+      "origin": "inspired_by_musiques_en_jeux",
+      "summary": "Créer des cartes courtes par mission sonore avec difficulté, outils, objectif, durée et questions de retour d’écoute."
+    },
+    {
+      "id": "ped-play-listen-discuss",
+      "name": "Jouer · écouter · discuter",
+      "origin": "inspired_by_musiques_en_jeux",
+      "summary": "Après une expérimentation, écouter le résultat, verbaliser les sensations et faire des liens avec d’autres pratiques sonores."
+    },
+    {
+      "id": "ped-roles",
+      "name": "Rôles tournants",
+      "origin": "web_reference",
+      "summary": "Faire tourner les rôles de bruiteur·euse, interprète, pilote et auditeur·ice pour structurer une séance."
+    },
+    {
+      "id": "ped-spotting",
+      "name": "Feuille de spotting",
+      "origin": "web_reference",
+      "summary": "Avant de bruiter une vidéo, lister les événements sonores, leur timing, le prop prévu et le statut prêt/manquant."
+    }
+  ],
+  "musiques_en_jeux_game_index": [
+    {
+      "number": 1,
+      "title": "Papier"
+    },
+    {
+      "number": 2,
+      "title": "Improvisation Dirigee"
+    },
+    {
+      "number": 3,
+      "title": "Amplification"
+    },
+    {
+      "number": 4,
+      "title": "Glissando"
+    },
+    {
+      "number": 5,
+      "title": "Hoquet"
+    },
+    {
+      "number": 6,
+      "title": "Polyrythmie"
+    },
+    {
+      "number": 7,
+      "title": "Souffle"
+    },
+    {
+      "number": 8,
+      "title": "Spatialisation"
+    },
+    {
+      "number": 9,
+      "title": "Larsen"
+    },
+    {
+      "number": 10,
+      "title": "Modes De Jeu"
+    },
+    {
+      "number": 11,
+      "title": "Points"
+    },
+    {
+      "number": 12,
+      "title": "Paysage Sonore"
+    },
+    {
+      "number": 13,
+      "title": "Zapping"
+    },
+    {
+      "number": 14,
+      "title": "Drone"
+    },
+    {
+      "number": 15,
+      "title": "Transformation"
+    },
+    {
+      "number": 16,
+      "title": "Série"
+    },
+    {
+      "number": 17,
+      "title": "Effacement"
+    },
+    {
+      "number": 18,
+      "title": "Heterophonie"
+    },
+    {
+      "number": 19,
+      "title": "Speechmelody"
+    },
+    {
+      "number": 20,
+      "title": "Battement"
+    },
+    {
+      "number": 21,
+      "title": "Spectre"
+    },
+    {
+      "number": 22,
+      "title": "Stridence"
+    },
+    {
+      "number": 23,
+      "title": "Parasites"
+    },
+    {
+      "number": 24,
+      "title": "Phonemes"
+    },
+    {
+      "number": 25,
+      "title": "Silence"
+    },
+    {
+      "number": 26,
+      "title": "Granulation"
+    },
+    {
+      "number": 27,
+      "title": "Partition Graphique"
+    },
+    {
+      "number": 28,
+      "title": "Saturation"
+    },
+    {
+      "number": 29,
+      "title": "Boucle"
+    },
+    {
+      "number": 30,
+      "title": "Ouverture"
+    }
+  ],
+  "sonic_lexicon": {
+    "types": [
+      "bourdonnement",
+      "bruissement",
+      "clapotis",
+      "claquement",
+      "craquement",
+      "crépitement",
+      "crissement",
+      "frottement",
+      "froissement",
+      "grincement",
+      "grondement",
+      "murmure",
+      "pétillement",
+      "ronflement",
+      "roulement",
+      "ruissellement",
+      "sifflement",
+      "souffle",
+      "tintement",
+      "vibration",
+      "vrombissement"
+    ],
+    "textures": [
+      "aérien",
+      "aigu",
+      "amorti",
+      "doux",
+      "dur",
+      "étouffé",
+      "feutré",
+      "fort",
+      "grave",
+      "léger",
+      "liquide",
+      "lourd",
+      "métallique",
+      "rythmé",
+      "saccadé",
+      "sec",
+      "sourd",
+      "strident",
+      "tenu",
+      "ténu",
+      "voilé"
+    ],
+    "actions": [
+      "amplifier",
+      "bourdonner",
+      "claquer",
+      "crépiter",
+      "craquer",
+      "crisser",
+      "écouter",
+      "frotter",
+      "gratter",
+      "grincer",
+      "murmurer",
+      "pétiller",
+      "racler",
+      "résonner",
+      "tinter",
+      "vibrer",
+      "vrombir"
+    ]
+  },
+  "web_reference_ideas": [
+    {
+      "name": "Corde à sauter / corde",
+      "sounds": [
+        "whoosh",
+        "passage rapide"
+      ],
+      "source": "ACTF Sound Design Resource",
+      "ownership_status": "reference_only"
+    },
+    {
+      "name": "Pomme de pin",
+      "sounds": [
+        "craquement",
+        "texture naturelle"
+      ],
+      "source": "Foley Bursts activity",
+      "ownership_status": "reference_only"
+    },
+    {
+      "name": "Bol de gravier",
+      "sounds": [
+        "pas sur gravier",
+        "roulement de pierres"
+      ],
+      "source": "Foley Bursts activity",
+      "ownership_status": "reference_only"
+    },
+    {
+      "name": "Jeu de cartes",
+      "sounds": [
+        "battement léger",
+        "frottement papier"
+      ],
+      "source": "Foley Bursts activity",
+      "ownership_status": "reference_only"
+    },
+    {
+      "name": "Bol métallique",
+      "sounds": [
+        "impact métallique",
+        "résonance"
+      ],
+      "source": "Foley Bursts activity",
+      "ownership_status": "reference_only"
+    },
+    {
+      "name": "Mode saison / paysage sonore",
+      "sounds": [
+        "vent",
+        "vagues",
+        "mouettes",
+        "orage",
+        "pluie",
+        "oiseaux"
+      ],
+      "source": "Philharmonie de Paris – Bruit-collage",
+      "ownership_status": "reference_only",
+      "use": "Créer des packs pédagogiques saisonniers et des recherches par ambiance."
+    },
+    {
+      "name": "Valises sonores interactives",
+      "sounds": [
+        "bruitage synchronisé",
+        "écoute comparative"
+      ],
+      "source": "Philharmonie de Paris – L’atelier Bruit-collage",
+      "ownership_status": "reference_only",
+      "use": "Inspirer une interface où l’on ouvre une valise virtuelle pour écouter/choisir des bruitages."
+    },
+    {
+      "name": "Spotting / repérage des événements sonores",
+      "sounds": [
+        "cue",
+        "timing",
+        "bruitage synchronisé"
+      ],
+      "source": "BBC Blast – Sound Design lesson plan",
+      "ownership_status": "reference_only",
+      "use": "Ajouter une fiche de repérage cue → objet → statut → interprète pour bruitage sur image."
+    },
+    {
+      "name": "Bibliothèque de catégories sonores",
+      "sounds": [
+        "animaux",
+        "foley",
+        "pas",
+        "liquides",
+        "météo",
+        "transport",
+        "technologie"
+      ],
+      "source": "Adobe Audition Sound Effects taxonomy",
+      "ownership_status": "reference_only",
+      "use": "Taxonomie de métadonnées uniquement; ne signifie pas que les sons/fichiers sont possédés."
+    }
+  ],
+  "safety": {
+    "default_mode": "workshop_safe",
+    "rules": [
+      "Ne proposer automatiquement que des techniques à objets usuels et manipulation non dangereuse.",
+      "Aucune flamme réelle, matière explosive, arme réelle ou technique de casse dangereuse dans les suggestions automatiques.",
+      "Les recettes historiques ou de référence à risque restent au niveau source, non actionnable, et nécessitent revue adulte hors mode atelier.",
+      "Le moteur distingue toujours “je possède” de “idée de référence”."
+    ],
+    "blocked_auto_tags": [
+      "flamme_réelle",
+      "explosif",
+      "arme",
+      "verre_à_casser",
+      "impact_dangereux"
+    ]
+  },
+  "resource_index": [
+    {
+      "name": "01_Ateliers acoustiques CM",
+      "chars": 1944,
+      "indexed_text": true
+    },
+    {
+      "name": "02_MalettePedago CDRIC V.20.25",
+      "chars": 2324,
+      "indexed_text": true
+    },
+    {
+      "name": "02_MalettePedago V.20.23",
+      "chars": 1541,
+      "indexed_text": true
+    },
+    {
+      "name": "02_MalettePedago V.20.24",
+      "chars": 1488,
+      "indexed_text": true
+    },
+    {
+      "name": "03_CONDUITES PAYSAGES SONORES V2",
+      "chars": 1756,
+      "indexed_text": true
+    },
+    {
+      "name": "04_CONDUITE PAYSAGES SONORE V3",
+      "chars": 1425,
+      "indexed_text": true
+    },
+    {
+      "name": "Atelier bruitage TUTO PDF",
+      "chars": 9100,
+      "indexed_text": true
+    },
+    {
+      "name": "À la découverte du son",
+      "chars": 6711,
+      "indexed_text": true
+    },
+    {
+      "name": "EAC IFDB 2H V2",
+      "chars": 5495,
+      "indexed_text": true
+    },
+    {
+      "name": "EAC IFDB 2H",
+      "chars": 3917,
+      "indexed_text": true
+    },
+    {
+      "name": "Exemple ateliers bruitage 2h",
+      "chars": 4903,
+      "indexed_text": true
+    },
+    {
+      "name": "Initiation aux bruitages",
+      "chars": 6,
+      "indexed_text": false
+    },
+    {
+      "name": "InstrumentsMusiquePapier&Carton",
+      "chars": 60,
+      "indexed_text": false
+    },
+    {
+      "name": "InstrumentsMusiqueVerre&Plastique",
+      "chars": 64,
+      "indexed_text": false
+    },
+    {
+      "name": "Le bruitage selon Louis MATABON",
+      "chars": 14898,
+      "indexed_text": true
+    },
+    {
+      "name": "Le bruitage selon Louis Matabon",
+      "chars": 14904,
+      "indexed_text": true
+    },
+    {
+      "name": "Les petits bruitages d",
+      "chars": 158,
+      "indexed_text": true
+    },
+    {
+      "name": "MMC-Lamusiquecontemporaine",
+      "chars": 7017,
+      "indexed_text": true
+    },
+    {
+      "name": "MMC-Lexique_musique_contemporaine",
+      "chars": 20286,
+      "indexed_text": true
+    },
+    {
+      "name": "MMC-Lexique_sonore",
+      "chars": 2779,
+      "indexed_text": true
+    },
+    {
+      "name": "ODIA_MUSIQUESENJEUX_DP_ECRAN",
+      "chars": 7881,
+      "indexed_text": true
+    },
+    {
+      "name": "RENTRER CHEZ SOI conduite ",
+      "chars": 437,
+      "indexed_text": true
+    },
+    {
+      "name": "STUDIO 113 - Le bruitage",
+      "chars": 8,
+      "indexed_text": false
+    },
+    {
+      "name": "_Conduite Ateliers Seance 1",
+      "chars": 2466,
+      "indexed_text": true
+    },
+    {
+      "name": "_DIDASCALIES BRUITAGES",
+      "chars": 11784,
+      "indexed_text": true
+    },
+    {
+      "name": "index_jeux",
+      "chars": 518,
+      "indexed_text": true
+    },
+    {
+      "name": "lekit_livret",
+      "chars": 27224,
+      "indexed_text": true
+    },
+    {
+      "name": "lekit_livret_accessible",
+      "chars": 24493,
+      "indexed_text": true
+    },
+    {
+      "name": "xx_inventaire-grande-mallette-bruitage (1)",
+      "chars": 3907,
+      "indexed_text": true
+    }
+  ],
+  "delivery_architecture": {
+    "single_source_of_truth": "PWA codebase and local data model",
+    "surfaces": [
+      {
+        "id": "pwa",
+        "role": "primary",
+        "status": "beta_priority",
+        "notes": "Installable mobile-first PWA; offline-first; same business logic/data model."
+      },
+      {
+        "id": "mobile_app",
+        "role": "native_shell",
+        "status": "planned_from_same_core",
+        "notes": "Android/mobile wrapper around the same core; native bridges reserved for Bluetooth thermal printing and deeper camera/device integration."
+      },
+      {
+        "id": "art_page",
+        "role": "integration_surface",
+        "status": "prepared_not_modified",
+        "notes": "Future ART page/tool points to or embeds MISE !; ART itself is not modified in this phase."
+      }
+    ],
+    "rule": "No duplicated inventory/search logic between PWA, native app and ART integration."
+  },
+  "pedagogy_mode": {
+    "name": "Mallette pédagogique",
+    "purpose": "Use the same object/sound database as a teaching kit for bruitage, listening, sound creation and noise-based experimentation.",
+    "entry_points": [
+      "Défi bruitage",
+      "Paysage sonore",
+      "Bruitage sur image",
+      "Écoute active",
+      "Jeu de textures",
+      "Créer une mise pédagogique"
+    ],
+    "principles": [
+      "jeu coopératif",
+      "écoute active",
+      "expérimentation",
+      "objets sonores",
+      "rôles tournants",
+      "cartes de jeu",
+      "QR vers fiche/consigne/ressource"
+    ],
+    "reference_inspiration": [
+      "Musiques en jeu(x) – LE KIT",
+      "Philharmonie de Paris – Bruit-collage"
+    ]
+  },
+  "provenance_rules": {
+    "personal_document_priority": [
+      "personal_inventory",
+      "personal_usage",
+      "personal_workshop",
+      "personal_pedagogy"
+    ],
+    "external_reference_never_sets_owned": true,
+    "photo_detection_requires_user_confirmation_before_merging_existing_personal_object": true,
+    "suggested_sound_links": "Keep source_id / origin and confidence; user corrections override inferred links."
+  }
+}
