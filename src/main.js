@@ -162,10 +162,8 @@ function recordControl(m,details){
 }
 function renderProjectContext(){
   const el=$('#projectContext');if(!el)return
-  el.innerHTML=`<div><span class="eyebrow">${project.projectId?'Projet ART':'Espace de préparation'}</span><h1>${esc(project.projectId?(project.projectName||project.projectId):'Préparer le terrain')}</h1><p>${project.projectId?`${esc(project.projectType||'Projet')} · Réf. ${esc(project.projectId)}`:'Inventaire, kits et contrôles de mise.'}</p></div>
-    ${project.returnUrl?`<a class="returnLink" href="${esc(project.returnUrl)}">Retour au projet</a>`:''}
-    <p class="projectNote">Data Bruitage reste la source globale. ${project.projectId?'Les mises sont liées à ce projet, quelle que soit sa date de création.':'Les mises peuvent être liées depuis un projet ART.'}</p>
-    ${projectSyncFailed?'<p class="syncWarning" role="alert">Mise enregistrée sur cet appareil. Transmission locale à ART impossible : autorisez le stockage local puis rechargez cette page.</p>':''}`
+  el.hidden=true
+  el.innerHTML=''
 }
 
 const caseBy=id=>cases.find(c=>c.id===id)
@@ -313,24 +311,23 @@ async function openSharedPackage(fileId){
 
 $('#app').innerHTML=`
 <header>
-  <div class="brand">
-    <div class="wordmark">M<span class="logo-i"><b></b><i></i></span>SE <span class="bang"><b></b><i></i></span></div>
-    <div class="sub">QR CASE FINDER</div>
-    <div class="tag">Cherche ta mise</div>
-    <div class="corpusMeta"><b>Data Bruitage</b><span>${esc(corpusSummary)}</span></div>
+  <div class="brand miseBrand">
+    <span class="miseLogo4" aria-hidden="true"><svg viewBox="0 0 64 64"><path class="box" d="M12 22 32 11l20 11v27L32 59 12 49V22Z"/><path d="M12 22l20 12 20-12M32 34v25"/><path class="flap" d="m12 22 11-11h9l-9 17M52 22 41 11h-9l9 17"/><path class="wave" d="M20 38v7m5-11v15m5-9v5m8-7v7m5-11v15"/></svg></span>
+    <div class="miseBrandCopy"><div class="wordmark">MISE <span class="bang"><b></b><i></i></span></div><div class="sub">QR CASE FINDER</div><div class="tag">Cherche ta mise</div></div>
   </div>
   <div class="headerTools">
     <span id="networkStatus" class="status" role="status"></span>
-    <button id="accountBtn" class="headerChip" type="button">Google · Non connecté</button>
     <button id="printerBtn" class="headerChip" type="button">Imprimante · À connecter</button>
+    <button id="preferencesBtn" class="headerIcon" type="button" aria-label="Préférences">⚙</button>
     <button id="manualBtn" class="headerIcon" type="button" aria-label="Mini-manuel">?</button>
-    <button id="backupBtn" class="headerIcon" type="button" aria-label="Sauvegarder">⇩</button>
+    <button id="accountBtn" type="button" hidden>Google · Non connecté</button>
+    <button id="backupBtn" type="button" hidden aria-label="Sauvegarder">⇩</button>
   </div>
 </header>
 <main>
-<section id="projectContext" class="projectContext" aria-label="Contexte du projet"></section>
+<section id="projectContext" class="projectContext" aria-label="Contexte du projet" hidden></section>
 <section class="hero">
-  <label class="searchLabel" for="q">Recherche dans Data Bruitage</label>
+  <label class="searchLabel" for="q">Rechercher</label>
   <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance ou contenant"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
   <div class="quick">
     <button data-action="search">Rechercher</button>
@@ -341,16 +338,16 @@ $('#app').innerHTML=`
 </section>
 <div class="goalNav" aria-label="Navigation MISE">
  <details open><summary>Trouver & créer</summary><div><button data-tab="search" class="active">Recherche</button><button data-tab="creator">Créateur d’ambiance</button><button id="goalGroupPhoto" type="button">Photo de groupe</button><button id="goalChallenge" type="button">Défi bruitage</button></div></details>
- <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises & contrôles</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
+ <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Partager & outils</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Imprimer série QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="search" class="tab active"><div id="searchResults"></div></section>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
 <section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
-<section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation issu de Data Bruitage : spectacle, atelier, tournée ou besoin ponctuel. Data Bruitage reste le corpus global.</p><div id="kitCards" class="cards"></div></section>
-<section id="mises" class="tab"><div class="sectionhead"><h2>Mises & contrôles</h2><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards"></div></section>
+<section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation : spectacle, atelier, tournée ou besoin ponctuel.</p><div id="kitCards" class="cards"></div></section>
+<section id="mises" class="tab"><div class="miseSectionHead"><div><small>MISE ET CONTRÔLE</small><h2>Mise et contrôle</h2><p>Préparer, ouvrir et vérifier la mise du spectacle.</p></div><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards miseCards"></div></section>
 <section id="creator" class="tab">
-  <div class="panel"><h2>Créateur de bruitage</h2><p>Décrivez une ambiance ou un son pour explorer Data Bruitage, votre parc et les références.</p>
+  <div class="panel"><h2>Créateur de bruitage</h2><p>Décrivez une ambiance ou un son pour explorer votre parc et les références.</p>
   <div class="row"><button data-preset="mer" class="ghost">Mer</button><button data-preset="forêt" class="ghost">Forêt</button><button data-preset="feu" class="ghost">Feu</button><button data-preset="orage" class="ghost">Orage</button></div></div>
   <div id="creatorResults"></div>
 </section>
@@ -363,6 +360,13 @@ $('#app').innerHTML=`
 <dialog id="modal"></dialog>
 <dialog id="scanDlg"><div class="dialoghead"><strong>Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline></video><p class="hint">Cadre le QR d'une valise ou d'une caisse.</p></dialog>
 <dialog id="printDlg"></dialog>
+<dialog id="preferencesDlg"><div class="form"><div class="dialoghead"><div><b>Préférences</b><small>Affichage · connexions · données</small></div><button id="closePreferences" class="ghost" type="button">×</button></div>
+  <div class="grid2"><label><span>Affichage</span><select id="displayMode"><option value="auto">Auto</option><option value="desktop">Ordinateur</option><option value="mobile">Mobile</option></select></label><label><span>Thème</span><select id="themeMode"><option value="system">Système</option><option value="dark">Sombre</option><option value="light">Clair</option><option value="regie">Mode régie</option></select></label></div>
+  <div id="preferencesGoogleState" class="preferenceState"><b>Google Drive</b><span>Non connecté</span></div>
+  <button id="preferencesGoogle" type="button">Raccorder Google Drive</button>
+  <div id="folderDropZone" class="folderDropZone" tabindex="0"><b>Dossier de travail</b><span id="folderLinkState">Choisis un dossier local de référence. MISE mémorise son nom sur cet appareil ; l’import automatique viendra dans une prochaine passe.</span><input id="folderDropInput" type="file" webkitdirectory multiple hidden><button id="chooseFolder" type="button" class="ghost">Choisir un dossier</button></div>
+  <div class="row"><button id="preferencesBackup" type="button" class="ghost">Sauvegarder</button><button id="preferencesRestore" type="button" class="ghost">Importer une sauvegarde</button></div>
+</div></dialog>
 <dialog id="manualDlg"><div class="manual"><div class="dialoghead"><div><b>MISE ! · Mini-manuel</b><small>QR Case Finder · prise en main rapide</small></div><button id="closeManual" class="ghost" type="button">×</button></div>
 <div class="manualSteps">
 <article><b>1 · Chercher une ambiance</b><span>Écris ou dicte « mer », « forêt », « vieille maison »… MISE ! remonte vers tes sons, objets, photos et valises.</span></article>
@@ -390,7 +394,7 @@ function setTab(t){
   $$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))
   render()
 }
-$$('[data-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab))
+$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
 
 function renderSearch(target='#searchResults'){
   const q=$('#q').value.trim(), own=searchOwned(q), ideas=searchExternal(q)
@@ -413,7 +417,7 @@ function renderSearch(target='#searchResults'){
   $$('[data-alt]',$(target)).forEach(b=>b.onclick=()=>openAlternatives(b.dataset.alt))
   $$('[data-idea]',$(target)).forEach(b=>b.onclick=()=>openObject({name:b.dataset.idea,source:'suggestion externe',owned:false}))
 }
-$('#q').addEventListener('input',()=>renderSearch())
+$('#q').addEventListener('input',()=>{setTab('search');renderSearch()})
 $('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){setTab('search');renderSearch()}})
 
 async function resizePhoto(file){
@@ -629,7 +633,7 @@ async function addToActiveMise(id){
   let m=miseBy(activeMise)
   if(!m){m=linkToProject({id:uid('mise'),name:'Mise rapide',kitId:null,objectIds:[],checked:[],createdAt:new Date().toISOString()})}
   m.objectIds=unique([...(m.objectIds||[]),id])
-  await saveMise(m);activeMise=m.id;await refresh();render();toast('Ajouté à la mise')
+  await saveMise(m);activeMise=m.id;await refresh();render();toast('Ajouté à '+(m.name||'la mise'))
 }
 async function toggleCheck(m,id,yes){
   m.checked=m.checked||[]
@@ -799,12 +803,53 @@ function startVoice(){
   $('#mic').classList.add('listening')
   r.onresult=e=>{
     let t='';for(const x of e.results)t+=x[0].transcript+' '
-    $('#q').value=t.trim();renderSearch()
+    $('#q').value=t.trim();setTab('search');renderSearch()
   }
   r.onend=()=>$('#mic').classList.remove('listening')
   r.start()
 }
 $('#mic').onclick=startVoice
+const DISPLAY_KEY='mise-display-mode',THEME_KEY='mise-theme-mode'
+function applyUiPreferences(){
+  const display=localStorage.getItem(DISPLAY_KEY)||'auto',theme=localStorage.getItem(THEME_KEY)||'system'
+  document.documentElement.dataset.display=display
+  document.documentElement.dataset.theme=theme
+  const displaySelect=$('#displayMode'),themeSelect=$('#themeMode')
+  if(displaySelect)displaySelect.value=display
+  if(themeSelect)themeSelect.value=theme
+  const googleState=$('#preferencesGoogleState')
+  if(googleState){
+    const account=$('#accountBtn')?.textContent||''
+    const connected=/connecté|reconnecter/i.test(account)&&!/non connecté/i.test(account)
+    googleState.innerHTML=`<b>Google Drive</b><span>${connected?esc(account):'Non connecté'}</span>`
+    $('#preferencesGoogle').textContent=connected?'Reconnecter Google Drive':'Raccorder Google Drive'
+  }
+  db.get('settings','linked-folder').then(linked=>{
+    const state=$('#folderLinkState');if(!state||!linked)return
+    state.textContent=`Dossier repéré sur cet appareil : ${linked.name||'dossier'} · ${linked.fileCount||0} fichier(s). Import automatique à venir.`
+  }).catch(()=>{})
+}
+applyUiPreferences()
+$('#preferencesBtn').onclick=()=>{applyUiPreferences();$('#preferencesDlg').showModal()}
+$('#displayMode').onchange=e=>{localStorage.setItem(DISPLAY_KEY,e.target.value);applyUiPreferences()}
+$('#themeMode').onchange=e=>{localStorage.setItem(THEME_KEY,e.target.value);applyUiPreferences()}
+$('#closePreferences').onclick=()=>$('#preferencesDlg').close()
+$('#preferencesGoogle').onclick=()=>connectGoogle()
+$('#preferencesBackup').onclick=()=>$('#backupBtn').click()
+$('#preferencesRestore').onclick=()=>$('#restoreInput').click()
+$('#chooseFolder').onclick=()=>$('#folderDropInput').click()
+const folderDropZone=$('#folderDropZone')
+function folderSelection(files){
+  const list=[...(files||[])];if(!list.length)return
+  const root=(list[0].webkitRelativePath||list[0].name).split('/')[0]
+  db.put('settings',{id:'linked-folder',name:root,fileCount:list.length,linkedAt:new Date().toISOString()})
+  applyUiPreferences()
+  toast(`${root} · ${list.length} fichier${list.length>1?'s':''} sélectionné${list.length>1?'s':''}`)
+}
+$('#folderDropInput').onchange=e=>{folderSelection(e.target.files);e.target.value=''}
+for(const name of ['dragenter','dragover'])folderDropZone.addEventListener(name,e=>{e.preventDefault();folderDropZone.classList.add('dragging')})
+for(const name of ['dragleave','drop'])folderDropZone.addEventListener(name,e=>{e.preventDefault();folderDropZone.classList.remove('dragging')})
+folderDropZone.addEventListener('drop',e=>folderSelection(e.dataTransfer.files))
 $('#accountBtn').onclick=connectGoogle
 $('#goalGoogle').onclick=connectGoogle
 $('#printerBtn').onclick=pairPrinter
