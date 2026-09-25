@@ -11,6 +11,7 @@ export function readProjectContext(search, href) {
     projectId: (params.get('projectId') || '').trim(),
     projectName: (params.get('projectName') || '').trim(),
     projectType: (params.get('projectType') || '').trim(),
+    companyId: (params.get('companyId') || '').trim(),
     returnUrl
   }
 }
@@ -56,6 +57,7 @@ export function makeControlSummary(mise, objects, details = {}, now = new Date()
     projectId: mise.projectId || null,
     projectName: mise.projectName || '',
     projectType: mise.projectType || '',
+    ...(mise.companyId ? { companyId: mise.companyId } : {}),
     miseId: mise.id,
     miseName: mise.name,
     objectCount: ids.length,
@@ -75,6 +77,7 @@ export function makeProjectSummary(mise) {
     projectId: mise.projectId,
     projectName: mise.projectName || '',
     projectType: mise.projectType || '',
+    ...(mise.companyId ? { companyId: mise.companyId } : {}),
     miseId: mise.id,
     miseName: mise.name,
     objectCount: ids.length,

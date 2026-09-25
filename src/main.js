@@ -6,6 +6,7 @@ import { BrowserQRCodeReader } from '@zxing/browser'
 import { openDB } from 'idb'
 import { registerSW } from 'virtual:pwa-register'
 import { readProjectContext, requestPhotoAnalysis, makeControlSummary, makeProjectSummary } from './project-control.js'
+import { artGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState } from './google-sync.js'
 
 registerSW({ immediate:true })
 
@@ -88,8 +89,52 @@ async function refresh(){
 }
 await refresh()
 
+let driveSyncTimer=0,driveSyncBusy=false
+async function privateStatePayload(){
+  return {version:1,exportedAt:new Date().toISOString(),objects:await db.getAll('objects'),cases:await db.getAll('cases'),kits:await db.getAll('kits'),mises:await db.getAll('mises')}
+}
+async function applyPrivateState(payload){
+  if(!payload||typeof payload!=='object')throw new Error('Sauvegarde MISE ! invalide')
+  for(const store of ['objects','cases','kits','mises']){
+    await db.clear(store)
+    for(const item of Array.isArray(payload[store])?payload[store]:[]) if(item?.id) await db.put(store,item)
+  }
+  activeMise=null;await refresh();render()
+}
+async function updateAccountStatus(){
+  const saved=await db.get('settings','google-account'),session=artGoogleSession(),button=$('#accountBtn')
+  if(!button)return
+  button.textContent=saved?.email?(session?`Google · ${saved.email}`:'Google · Reconnecter'):'Google · À connecter'
+  button.classList.toggle('connected',Boolean(saved&&session))
+}
+async function connectGoogle(){
+  try{
+    const profile=await connectedGoogleProfile(),email=String(profile?.email||'').trim()
+    if(!email)throw new Error('Compte Google non identifiable')
+    if(!confirm(`Utiliser ce compte Google pour la base privée MISE ! ?\n\n${email}\n\nRien ne sera partagé publiquement.`))return
+    await db.put('settings',{id:'google-account',email,name:profile?.name||'',confirmedAt:new Date().toISOString()})
+    await updateAccountStatus();toast('Compte validé · vérification du Drive privé…')
+    const remote=await loadPrivateState(),localCount=objects.length+cases.length+kits.length+mises.length
+    if(remote.payload){
+      if(localCount===0||confirm('Une sauvegarde MISE ! privée existe sur Drive. La charger sur cet appareil ?')){await applyPrivateState(remote.payload);toast('Base privée chargée depuis Drive')}
+    }else{
+      await savePrivateState(await privateStatePayload());toast('Base privée créée dans Drive / _ART / MISE !')
+    }
+  }catch(error){toast(error instanceof Error?error.message:'Connexion Google impossible')}
+}
+function scheduleDriveSync(){
+  clearTimeout(driveSyncTimer)
+  driveSyncTimer=setTimeout(async()=>{
+    const account=await db.get('settings','google-account');if(!account||!artGoogleSession()||driveSyncBusy)return
+    driveSyncBusy=true
+    try{const result=await savePrivateState(await privateStatePayload());await db.put('settings',{id:'drive-sync',at:new Date().toISOString(),fileId:result.file?.id||'',folderId:result.folder?.id||''})}
+    catch{}finally{driveSyncBusy=false;updateAccountStatus()}
+  },1200)
+}
+
 function linkToProject(m){
   if(project.projectId) Object.assign(m,{projectId:project.projectId,projectName:project.projectName,projectType:project.projectType})
+  if(project.companyId) m.companyId=project.companyId
   return m
 }
 function publishProject(m){
@@ -107,7 +152,7 @@ async function saveMise(m){
   m.checked=unique(m.checked||[]).filter(id=>m.objectIds.includes(id))
   m.updatedAt=new Date().toISOString()
   await db.put('mises',m)
-  publishProject(m)
+  publishProject(m);scheduleDriveSync()
 }
 function recordControl(m,details){
   m.latestControl=makeControlSummary(m,objects,details)
@@ -181,11 +226,18 @@ function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');se
 $('#app').innerHTML=`
 <header>
   <div class="brand">
-    <div class="wordmark">MISE<span class="brandDot" aria-hidden="true"></span></div>
-    <div class="sub">Préparation & contrôle terrain</div>
+    <div class="wordmark">M<span class="logo-i"><b></b><i></i></span>SE <span class="bang"><b></b><i></i></span></div>
+    <div class="sub">QR CASE FINDER</div>
+    <div class="tag">Cherche ta mise</div>
     <div class="corpusMeta"><b>Data Bruitage</b><span>${esc(corpusSummary)}</span></div>
   </div>
-  <div class="headerTools"><span id="networkStatus" class="status" role="status"></span><button id="backupBtn" class="ghost">Sauvegarder</button></div>
+  <div class="headerTools">
+    <span id="networkStatus" class="status" role="status"></span>
+    <button id="accountBtn" class="headerChip" type="button">Google · Non connecté</button>
+    <button id="printerBtn" class="headerChip" type="button">Imprimante · À connecter</button>
+    <button id="manualBtn" class="headerIcon" type="button" aria-label="Mini-manuel">?</button>
+    <button id="backupBtn" class="headerIcon" type="button" aria-label="Sauvegarder">⇩</button>
+  </div>
 </header>
 <main>
 <section id="projectContext" class="projectContext" aria-label="Contexte du projet"></section>
@@ -199,14 +251,11 @@ $('#app').innerHTML=`
     <button data-action="scan">Scanner un QR</button>
   </div>
 </section>
-<nav>
- <button data-tab="search" class="active">Recherche</button>
- <button data-tab="inventory">Inventaire</button>
- <button data-tab="cases">Valises</button>
- <button data-tab="kits">Kits</button>
- <button data-tab="mises">Mises</button>
- <button data-tab="creator">Créateur</button>
-</nav>
+<div class="goalNav" aria-label="Navigation MISE">
+ <details open><summary>Trouver & créer</summary><div><button data-tab="search" class="active">Recherche</button><button data-tab="creator">Créateur d’ambiance</button></div></details>
+ <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises & contrôles</button></div></details>
+ <details><summary>Partager & outils</summary><div><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button></div></details>
+</div>
 <section id="search" class="tab active"><div id="searchResults"></div></section>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
 <section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
@@ -225,6 +274,16 @@ $('#app').innerHTML=`
 <dialog id="modal"></dialog>
 <dialog id="scanDlg"><div class="dialoghead"><strong>Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline></video><p class="hint">Cadre le QR d'une valise ou d'une caisse.</p></dialog>
 <dialog id="printDlg"></dialog>
+<dialog id="manualDlg"><div class="manual"><div class="dialoghead"><div><b>MISE ! · Mini-manuel</b><small>QR Case Finder · prise en main rapide</small></div><button id="closeManual" class="ghost" type="button">×</button></div>
+<div class="manualSteps">
+<article><b>1 · Chercher une ambiance</b><span>Écris ou dicte « mer », « forêt », « vieille maison »… MISE ! remonte vers tes sons, objets, photos et valises.</span></article>
+<article><b>2 · Ajouter un objet</b><span>Photographie-le ou importe une photo, donne-lui ton nom personnel, ses sons et son contenant.</span></article>
+<article><b>3 · Ranger</b><span>Crée une valise ou une caisse, nomme-la clairement puis imprime son QR.</span></article>
+<article><b>4 · Préparer</b><span>Crée un kit ou une mise, éventuellement rattachée à un spectacle/EAC ART, puis coche ce qui est prêt.</span></article>
+<article><b>5 · Contrôler</b><span>Scanne les QR ou utilise le contrôle photo avant départ / avant jeu. Toute proposition photo reste à valider humainement.</span></article>
+<article><b>6 · Imprimer</b><span>Ouvre une valise → Étiquette / imprimer. L’impression système fonctionne partout ; Bluetooth direct dépend du protocole de l’imprimante.</span></article>
+<article><b>7 · Confidentialité</b><span>Ta base personnelle n’est jamais incluse dans l’application publique. Les données de projet restent privées tant que tu ne les partages pas explicitement.</span></article>
+</div><p class="manualNote">Le bouton ⇩ crée une sauvegarde locale de ta base.</p></div></dialog>
 <div id="toast" role="status"></div>`
 
 renderProjectContext()
@@ -237,10 +296,10 @@ window.addEventListener('offline',renderNetworkStatus)
 
 function setTab(t){
   $$('.tab').forEach(x=>x.classList.toggle('active',x.id===t))
-  $$('nav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))
+  $$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))
   render()
 }
-$$('nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab))
+$$('[data-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab))
 
 function renderSearch(target='#searchResults'){
   const q=$('#q').value.trim(), own=searchOwned(q), ideas=searchExternal(q)
@@ -364,7 +423,7 @@ function openObject(p={}){
       sounds:$('#fSounds').value.split(',').map(x=>x.trim()).filter(Boolean),
       tags,contexts:tags,updatedAt:new Date().toISOString()
     })
-    await db.put('objects',o);m.close();await refresh();render();toast('Objet enregistré')
+    await db.put('objects',o);scheduleDriveSync();m.close();await refresh();render();toast('Objet enregistré')
   }
 }
 $('#addObject').onclick=()=>openObject()
@@ -381,7 +440,7 @@ function openCase(c){
   $('#saveCase').onclick=async e=>{
     e.preventDefault()
     Object.assign(c,{name:$('#cName').value.trim()||'Contenant',part:+$('#cPart').value||null,total:+$('#cTotal').value||null,type:$('#cType').value})
-    await db.put('cases',c);m.close();await refresh();render();toast(caseName(c)+' enregistré')
+    await db.put('cases',c);scheduleDriveSync();m.close();await refresh();render();toast(caseName(c)+' enregistré')
   }
 }
 $('#addCase').onclick=()=>openCase()
@@ -419,7 +478,7 @@ function openKit(k){
     k.contexts=$('#kCtx').value.split(',').map(x=>x.trim()).filter(Boolean)
     k.objectIds=$$('.check input:checked',m).map(x=>x.value)
     k.updatedAt=new Date().toISOString()
-    await db.put('kits',k);m.close();await refresh();render();toast('Kit enregistré')
+    await db.put('kits',k);scheduleDriveSync();m.close();await refresh();render();toast('Kit enregistré')
   }
 }
 $('#addKit').onclick=()=>openKit()
@@ -488,12 +547,21 @@ function openPrint(c,qr){
   $('#systemPrint').onclick=()=>window.print()
   $('#btPrint').onclick=pairPrinter
 }
+async function updatePrinterStatus(){
+  const saved=await db.get('settings','printer')
+  const label=saved?.name?`Imprimante · ${saved.name}`:'Imprimante · À connecter'
+  const button=$('#printerBtn');if(button){button.textContent=label;button.classList.toggle('connected',Boolean(saved))}
+}
 async function pairPrinter(){
-  if(!navigator.bluetooth){toast('Web Bluetooth non disponible ici');return}
+  if(!navigator.bluetooth){toast('Bluetooth web indisponible ici · utilise l’impression système ou l’app Android');return}
   try{
+    toast('Choisis ton imprimante Bluetooth')
     const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:['battery_service']})
-    await db.put('settings',{id:'printer',name:device.name||'Imprimante Bluetooth',deviceId:device.id})
-    toast(`Imprimante détectée : ${device.name||'Bluetooth'}`)
+    let gattConnected=false
+    try{if(device.gatt){await device.gatt.connect();gattConnected=device.gatt.connected}}catch{}
+    await db.put('settings',{id:'printer',name:device.name||'Bluetooth',deviceId:device.id,pairedAt:new Date().toISOString(),gattConnected})
+    await updatePrinterStatus()
+    toast(gattConnected?'Bluetooth connecté · impression directe à tester':'Imprimante autorisée · protocole direct à identifier')
   }catch(e){if(e.name!=='NotFoundError') toast('Connexion Bluetooth impossible')}
 }
 
@@ -532,6 +600,16 @@ function startVoice(){
   r.start()
 }
 $('#mic').onclick=startVoice
+$('#accountBtn').onclick=connectGoogle
+$('#goalGoogle').onclick=connectGoogle
+$('#printerBtn').onclick=pairPrinter
+$('#goalPrinter').onclick=pairPrinter
+$('#manualBtn').onclick=()=>$('#manualDlg').showModal()
+$('#goalManual').onclick=()=>$('#manualDlg').showModal()
+$('#closeManual').onclick=()=>$('#manualDlg').close()
+$('#goalBackup').onclick=()=>$('#backupBtn').click()
+$('#goalRestore').onclick=()=>$('#restoreInput').click()
+updatePrinterStatus();updateAccountStatus()
 
 $$('[data-action]').forEach(b=>b.onclick=()=>{
   const a=b.dataset.action
@@ -583,6 +661,11 @@ $('#backupBtn').onclick=async()=>{
   const payload={version:1,exportedAt:new Date().toISOString(),objects:await db.getAll('objects'),cases:await db.getAll('cases'),kits:await db.getAll('kits'),mises:await db.getAll('mises')}
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'})
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='MISE-backup.json';a.click();URL.revokeObjectURL(a.href)
+}
+
+$('#restoreInput').onchange=async event=>{
+  const file=event.target.files?.[0];if(!file)return
+  try{const payload=JSON.parse(await file.text());if(!confirm('Importer cette sauvegarde MISE ! et remplacer les données locales de cet appareil ?'))return;await applyPrivateState(payload);scheduleDriveSync();toast('Sauvegarde importée')}catch(error){toast(error instanceof Error?error.message:'Import impossible')}finally{event.target.value=''}
 }
 
 if(params.get('case')) setTimeout(()=>showCase(params.get('case')),250)
