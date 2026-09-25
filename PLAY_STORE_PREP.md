@@ -56,3 +56,14 @@ MISE ! est pensée pour une utilisation mobile, y compris sur le terrain et en r
 7. Politique de confidentialité publique.
 8. Fiche Store + captures écran.
 9. Test fermé avant production.
+
+## Google OAuth autonome
+
+MISE ! possède maintenant son propre flux Google Identity Services et conserve la compatibilité avec une session ART lorsqu’elle est disponible.
+
+Avant le premier test public de la connexion Google, ajouter dans le client OAuth Web utilisé par ART/MISE les origines JavaScript autorisées correspondant aux surfaces réellement publiées :
+
+- l’origine GitHub Pages actuelle de MISE ! pendant la bêta ;
+- le futur domaine stable MISE ! lorsqu’il est activé.
+
+Ne pas créer de Client Secret dans le navigateur. Le Client ID Web peut être public ; les jetons restent des jetons utilisateur de courte durée en session.
