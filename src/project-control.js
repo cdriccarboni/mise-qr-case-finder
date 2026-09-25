@@ -4,7 +4,8 @@ export function readProjectContext(search, href) {
   let returnUrl = ''
   try {
     const url = new URL(params.get('return') || '', href)
-    if (params.get('return') && ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password) returnUrl = url.href
+    const current = new URL(href)
+    if (params.get('return') && ['http:', 'https:'].includes(url.protocol) && url.origin === current.origin && !url.username && !url.password) returnUrl = url.href
   } catch { /* An invalid return address must not block field work. */ }
   return {
     projectId: (params.get('projectId') || '').trim(),
@@ -18,11 +19,16 @@ export function normalizeDetectedObjects(payload) {
   const items = Array.isArray(payload) ? payload : payload?.detectedObjects ?? payload?.objects ?? payload?.detections
   if (!Array.isArray(items)) throw new Error('Réponse d’analyse non exploitable')
   return items.map(item => {
-    const name = typeof item === 'string' ? item : item?.name ?? item?.label ?? item?.class
-    if (typeof name !== 'string' || !name.trim()) throw new Error('Proposition sans nom exploitable')
+    const label = typeof item === 'string' ? item : item?.label ?? item?.name ?? item?.class
+    if (typeof label !== 'string' || !label.trim()) throw new Error('Proposition sans nom exploitable')
+    const category = typeof item === 'object' && typeof item.category === 'string' && item.category.trim() ? item.category.trim() : 'autre'
+    const quantityRaw = typeof item === 'object' ? item.quantity : 1
+    const quantity = Number.isSafeInteger(quantityRaw) && quantityRaw > 0 ? quantityRaw : 1
     const confidence = typeof item === 'object' ? item.confidence ?? item.score : undefined
     return {
-      name: name.trim(),
+      label: label.trim(),
+      category,
+      quantity,
       ...(typeof confidence === 'number' && Number.isFinite(confidence) && confidence >= 0 && confidence <= 1 ? { confidence } : {}),
       validated: false
     }
@@ -73,7 +79,14 @@ export function makeProjectSummary(mise) {
     miseName: mise.name,
     objectCount: ids.length,
     checkedCount: [...new Set(mise.checked || [])].filter(id => ids.includes(id)).length,
-    detectedObjects: mise.latestControl?.detectedObjects || [],
+    detectedObjects: (mise.latestControl?.detectedObjects || [])
+      .filter(item => item?.validated)
+      .map(item => ({
+        label: item.label,
+        category: item.category || 'autre',
+        quantity: Number.isSafeInteger(item.quantity) && item.quantity > 0 ? item.quantity : 1,
+        ...(typeof item.confidence === 'number' ? { confidence: item.confidence } : {})
+      })),
     controlledAt: mise.controlledAt || null,
     updatedAt: mise.updatedAt
   }
