@@ -304,10 +304,11 @@ async function openSharedPackage(fileId){
 
 $('#app').innerHTML=`
 <header>
-  <div class="brand">
-    <div class="wordmark">M<span class="logo-i"><b></b><i></i></span>SE <span class="bang"><b></b><i></i></span></div>
+  <div class="brand miseBrand">
+    <span class="miseLogo4" aria-hidden="true"><svg viewBox="0 0 64 64"><path class="box" d="M12 22 32 11l20 11v27L32 59 12 49V22Z"/><path d="M12 22l20 12 20-12M32 34v25"/><path class="flap" d="m12 22 11-11 9 0-9 17M52 22 41 11h-9l9 17"/><path class="wave" d="M20 38v7m5-11v15m5-9v5m8-7v7m5-11v15"/></svg></span>
+    <div><div class="wordmark">MISE <span class="bang"><b></b><i></i></span></div>
     <div class="sub">QR CASE FINDER</div>
-    <div class="tag">Cherche ta mise</div>
+    <div class="tag">Cherche ta mise</div></div>
   </div>
   <div class="headerTools">
     <span id="networkStatus" class="status" role="status"></span>
@@ -339,7 +340,7 @@ $('#app').innerHTML=`
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
 <section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
 <section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit regroupe les objets utiles pour un spectacle, un atelier, une tournée ou un besoin ponctuel.</p><div id="kitCards" class="cards"></div></section>
-<section id="mises" class="tab"><div class="sectionhead"><h2>Mises</h2><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards"></div></section>
+<section id="mises" class="tab"><div class="miseSectionHead"><div><small>MISE ET CONTRÔLE</small><h2>Mise et contrôle</h2><p>Préparer, ouvrir et vérifier la mise du spectacle.</p></div><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards miseCards"></div></section>
 <section id="creator" class="tab">
   <div class="panel"><h2>Créateur de bruitage</h2><p>Décrivez une ambiance ou un son pour explorer vos objets, vos sons et les références.</p>
   <div class="row"><button data-preset="mer" class="ghost">Mer</button><button data-preset="forêt" class="ghost">Forêt</button><button data-preset="feu" class="ghost">Feu</button><button data-preset="orage" class="ghost">Orage</button></div></div>
@@ -354,7 +355,8 @@ $('#app').innerHTML=`
 <dialog id="modal"></dialog>
 <dialog id="scanDlg"><div class="dialoghead"><strong>Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline></video><p class="hint">Cadre le QR d'une valise ou d'une caisse.</p></dialog>
 <dialog id="printDlg"></dialog>
-<dialog id="preferencesDlg"><div class="form"><div class="dialoghead"><div><b>Préférences</b><small>Connexions & données</small></div><button id="closePreferences" class="ghost" type="button">×</button></div>
+<dialog id="preferencesDlg"><div class="form"><div class="dialoghead"><div><b>Préférences</b><small>Affichage · connexions · données</small></div><button id="closePreferences" class="ghost" type="button">×</button></div>
+  <div class="grid2"><label><span>Affichage</span><select id="displayMode"><option value="auto">Auto</option><option value="desktop">Ordinateur</option><option value="mobile">Mobile</option></select></label><label><span>Thème</span><select id="themeMode"><option value="system">Système</option><option value="dark">Sombre</option><option value="light">Clair</option><option value="regie">Mode régie</option></select></label></div>
   <button id="preferencesGoogle" type="button">Raccorder Google Drive</button>
   <div id="folderDropZone" class="folderDropZone" tabindex="0"><b>Raccorder un dossier</b><span>Glisse-dépose un dossier ou des fichiers ici.</span><input id="folderDropInput" type="file" webkitdirectory multiple hidden><button id="chooseFolder" type="button" class="ghost">Choisir un dossier</button></div>
   <div class="row"><button id="preferencesBackup" type="button" class="ghost">Sauvegarder</button><button id="preferencesRestore" type="button" class="ghost">Importer une sauvegarde</button></div>
@@ -801,7 +803,19 @@ function startVoice(){
   r.start()
 }
 $('#mic').onclick=startVoice
-$('#preferencesBtn').onclick=()=>$('#preferencesDlg').showModal()
+const DISPLAY_KEY='mise-display-mode',THEME_KEY='mise-theme-mode'
+function applyUiPreferences(){
+  const display=localStorage.getItem(DISPLAY_KEY)||'auto',theme=localStorage.getItem(THEME_KEY)||'system'
+  document.documentElement.dataset.display=display
+  document.documentElement.dataset.theme=theme
+  const displaySelect=$('#displayMode'),themeSelect=$('#themeMode')
+  if(displaySelect)displaySelect.value=display
+  if(themeSelect)themeSelect.value=theme
+}
+applyUiPreferences()
+$('#preferencesBtn').onclick=()=>{applyUiPreferences();$('#preferencesDlg').showModal()}
+$('#displayMode').onchange=e=>{localStorage.setItem(DISPLAY_KEY,e.target.value);applyUiPreferences()}
+$('#themeMode').onchange=e=>{localStorage.setItem(THEME_KEY,e.target.value);applyUiPreferences()}
 $('#closePreferences').onclick=()=>$('#preferencesDlg').close()
 $('#preferencesGoogle').onclick=()=>connectGoogle()
 $('#preferencesBackup').onclick=()=>$('#backupBtn').click()
@@ -875,7 +889,7 @@ function render(){
     <span>${(m.objectIds||[]).length} objets · ${(m.checked||[]).length} contrôlés</span>
     <div class="checklist">${(m.objectIds||[]).map(id=>objects.find(o=>o.id===id)).filter(Boolean).map(o=>`<label class="check"><input type="checkbox" data-mise="${m.id}" value="${o.id}" ${(m.checked||[]).includes(o.id)?'checked':''}><span>${esc(o.name)} <small>· ${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></span></label>`).join('')}</div>
     <div class="row"><button data-control="${m.id}">📷 Contrôle photo · bêta</button><button data-editmise="${m.id}" class="ghost">Modifier</button></div>
-  </article>`).join(''):'<div class="empty">Crée une mise ou ouvre un kit puis « Préparer demain ».</div>'
+  </article>`).join(''):'<div class="empty"><b>Aucune mise pour le moment.</b><span>Crée une mise ou ouvre un kit pour préparer le spectacle.</span></div>'
   $$('[data-active]').forEach(b=>b.onclick=()=>{activeMise=b.dataset.active;render()})
   $$('#miseCards .check input').forEach(x=>x.onchange=()=>toggleCheck(miseBy(x.dataset.mise),x.value,x.checked))
   $$('[data-editmise]').forEach(b=>b.onclick=()=>openMise(miseBy(b.dataset.editmise)))
