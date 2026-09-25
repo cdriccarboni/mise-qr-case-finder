@@ -342,7 +342,7 @@ $('#app').innerHTML=`
 <div class="goalNav" aria-label="Navigation MISE">
  <details open><summary>Trouver & créer</summary><div><button data-tab="search" class="active">Recherche</button><button data-tab="creator">Créateur d’ambiance</button><button id="goalGroupPhoto" type="button">Photo de groupe</button><button id="goalChallenge" type="button">Défi bruitage</button></div></details>
  <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises & contrôles</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
- <details><summary>Partager & outils</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Imprimer série QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button></div></details>
+ <details><summary>Partager & outils</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Imprimer série QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="search" class="tab active"><div id="searchResults"></div></section>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
@@ -373,8 +373,8 @@ $('#app').innerHTML=`
 <article><b>6 · Imprimer</b><span>Ouvre une valise → Étiquette / imprimer. L’impression système fonctionne partout ; Bluetooth direct dépend du protocole de l’imprimante.</span></article>
 <article><b>7 · Travailler plus vite</b><span>Favoris, alternatives, photo de groupe, mémo sonore, déplacement par scans et impression en série sont dans les trois menus par objectif.</span></article>
 <article><b>8 · Partager</b><span>« Partager par QR » crée un paquet séparé sur Drive avec seulement ce que tu sélectionnes. Photos et mémos sonores sont optionnels.</span></article>
-<article><b>9 · Confidentialité</b><span>Ta base personnelle n’est jamais incluse dans l’application publique. Les données de projet restent privées tant que tu ne les partages pas explicitement.</span></article>
-</div><p class="manualNote">Le bouton ⇩ crée une sauvegarde locale de ta base.</p></div></dialog>
+<article id="manualIos"><b>9 · iPhone / iPad</b><span>Dans Safari : bouton Partager → « Sur l’écran d’accueil » → garder « Ouvrir comme app Web » activé. Si ta base était déjà dans Safari, reconnecte Google ou importe une sauvegarde dans l’app installée.</span></article><article><b>10 · Confidentialité</b><span>Ta base personnelle n’est jamais incluse dans l’application publique. Les données de projet restent privées tant que tu ne les partages pas explicitement.</span></article>
+</div><p class="manualNote">Le bouton ⇩ crée une sauvegarde locale de ta base.</p><p class="manualJoke">Toi aussi, tu as acheté une mini-imprimante thermique avec des oreilles de chat pour ta fille… puis tu t’es rendu compte que ce serait incroyablement pratique au boulot ? Voilà. MISE ! est née à peu près comme ça.</p></div></dialog>
 <div id="toast" role="status"></div>`
 
 renderProjectContext()
@@ -654,15 +654,66 @@ function showLatestControl(m){
   d.showModal();$('#closeControl').onclick=()=>d.close()
 }
 
+function hasNativePrinter(){return Boolean(window.MiseAndroidPrinter&&typeof window.MiseAndroidPrinter.listPairedPrinters==='function')}
+function nativePrinterDevices(){
+  if(!hasNativePrinter())return[]
+  try{return JSON.parse(window.MiseAndroidPrinter.listPairedPrinters()||'[]').sort((a,b)=>Number(b.likelyPrinter)-Number(a.likelyPrinter))}catch{return[]}
+}
+function loadImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src})}
+function wrapCanvasText(ctx,text,maxWidth){
+  const words=String(text||'').split(/\s+/),lines=[];let line=''
+  for(const word of words){const next=(line+' '+word).trim();if(line&&ctx.measureText(next).width>maxWidth){lines.push(line);line=word}else line=next}
+  if(line)lines.push(line);return lines
+}
+async function makeThermalLabel({title='MISE !',qrDataUrl='',subtitle='',logoOnly=false}){
+  const canvas=document.createElement('canvas');canvas.width=384;canvas.height=logoOnly?190:500
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#000';ctx.textAlign='center'
+  ctx.font='900 70px Arial, sans-serif';ctx.fillText('MISE !',192,82)
+  ctx.font='700 18px Arial, sans-serif';ctx.fillText('QR CASE FINDER',192,112)
+  if(logoOnly){ctx.font='16px Arial, sans-serif';ctx.fillText('Test imprimante · MISE !',192,154);return canvas.toDataURL('image/png')}
+  ctx.fillRect(28,132,328,3)
+  if(title&&title!=='MISE !'){ctx.font='700 22px Arial, sans-serif';const lines=wrapCanvasText(ctx,title,330).slice(0,2);lines.forEach((line,i)=>ctx.fillText(line,192,168+i*26))}
+  let qrTop=title&&title!=='MISE !'?220:165
+  if(qrDataUrl){const qr=await loadImage(qrDataUrl);ctx.imageSmoothingEnabled=false;ctx.drawImage(qr,72,qrTop,240,240)}
+  if(subtitle){ctx.font='14px Arial, sans-serif';const lines=wrapCanvasText(ctx,subtitle,340).slice(0,2);lines.forEach((line,i)=>ctx.fillText(line,192,qrTop+270+i*18))}
+  return canvas.toDataURL('image/png')
+}
+async function makePrinterTestImages(){
+  const target='https://art.acousmatic-theatre.fr/mise-app/'
+  const qr=await QRCode.toDataURL(target,{width:280,margin:1,errorCorrectionLevel:'M'})
+  return [await makeThermalLabel({logoOnly:true}),await makeThermalLabel({title:'MISE !',qrDataUrl:qr,subtitle:'Scanne pour ouvrir MISE !'})]
+}
+async function nativePrint(address,images){
+  if(!hasNativePrinter()){toast('Le pilote natif est disponible dans l’app Android MISE !');return false}
+  if(!address){toast('Choisis d’abord une imprimante');return false}
+  try{window.MiseAndroidPrinter.printImages(address,JSON.stringify(images));return true}catch(error){toast('Impossible de lancer l’impression native');return false}
+}
+async function openNativePrinterDialog(){
+  const d=$('#modal'),devices=nativePrinterDevices(),saved=await db.get('settings','printer')
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Imprimante thermique</b><small>WalkPrint / YHK · pilote Android expérimental</small></div><button id="closeNativePrinter" class="ghost">×</button></div>
+  <p class="hint">Jumelle d’abord l’imprimante dans Android. Les modèles WalkPrint de cette famille apparaissent souvent comme « YHK-… » ou « Mini Printer ».</p>
+  <div class="printerDevices">${devices.map(device=>`<button class="printerDevice ${saved?.deviceId===device.address?'selected':''}" data-native-printer="${esc(device.address)}" data-native-name="${esc(device.name)}"><b>${device.likelyPrinter?'● ':''}${esc(device.name)}</b><small>${esc(device.address)}${device.likelyPrinter?' · profil probable WalkPrint/YHK':''}</small></button>`).join('')||'<div class="empty">Aucune imprimante appairée détectée.</div>'}</div>
+  <div class="row"><button id="openBtSettings" class="ghost">Réglages Bluetooth Android</button><button id="refreshNativePrinters" class="ghost">Actualiser</button></div>
+  <div class="printerTest"><b>Test prêt</b><span>Étiquette 1 : logo MISE ! · Étiquette 2 : logo + trait + QR vers MISE !</span><button id="runPrinterTest" ${!saved?.deviceId?'disabled':''}>Imprimer les 2 étiquettes test</button></div></div>`
+  d.showModal();$('#closeNativePrinter').onclick=()=>d.close();$('#openBtSettings').onclick=()=>window.MiseAndroidPrinter.openBluetoothSettings();$('#refreshNativePrinters').onclick=()=>{d.close();setTimeout(openNativePrinterDialog,250)}
+  $$('[data-native-printer]',d).forEach(button=>button.onclick=async()=>{await db.put('settings',{id:'printer',name:button.dataset.nativeName,deviceId:button.dataset.nativePrinter,native:true,pairedAt:new Date().toISOString()});await updatePrinterStatus();d.close();setTimeout(openNativePrinterDialog,80);toast(`Imprimante choisie : ${button.dataset.nativeName}`)})
+  $('#runPrinterTest').onclick=async()=>{const current=await db.get('settings','printer');if(!current?.deviceId){toast('Choisis l’imprimante');return}toast('Préparation des 2 étiquettes test…');const images=await makePrinterTestImages();await nativePrint(current.deviceId,images)}
+}
+async function printCaseNative(c,qr){
+  const saved=await db.get('settings','printer');if(!saved?.deviceId||!hasNativePrinter()){await openNativePrinterDialog();return}
+  const image=await makeThermalLabel({title:caseName(c),qrDataUrl:qr,subtitle:c.id});await nativePrint(saved.deviceId,[image])
+}
+
 function openPrint(c,qr){
   const d=$('#printDlg')
   d.innerHTML=`<div class="labelPreview"><strong>${esc(caseName(c))}</strong><img src="${qr}"><small>${esc(c.id)}</small></div>
-  <div class="row"><button id="systemPrint">Impression système</button><button id="btPrint">Bluetooth</button><button id="closePrint" class="ghost">Fermer</button></div>
-  <p class="hint">Bluetooth direct : connexion possible dès maintenant. L'envoi natif d'étiquette dépend du protocole exact de ta petite imprimante.</p>`
+  <div class="row"><button id="systemPrint">Impression système</button><button id="btPrint">${hasNativePrinter()?'Imprimer sur la mini-imprimante':'Bluetooth'}</button><button id="printerTestFromLabel" class="ghost">Test 2 étiquettes</button><button id="closePrint" class="ghost">Fermer</button></div>
+  <p class="hint">${hasNativePrinter()?'Android : pilote direct WalkPrint / YHK expérimental, 384 px.':'PWA : impression système ; le pilote direct WalkPrint / YHK est disponible dans l’app Android.'}</p>`
   d.showModal()
   $('#closePrint').onclick=()=>d.close()
   $('#systemPrint').onclick=()=>window.print()
-  $('#btPrint').onclick=pairPrinter
+  $('#btPrint').onclick=()=>hasNativePrinter()?printCaseNative(c,qr):pairPrinter()
+  $('#printerTestFromLabel').onclick=openNativePrinterDialog
 }
 async function openBatchPrint(){
   const d=$('#printDlg')
@@ -675,7 +726,10 @@ async function updatePrinterStatus(){
   const label=saved?.name?`Imprimante · ${saved.name}`:'Imprimante · À connecter'
   const button=$('#printerBtn');if(button){button.textContent=label;button.classList.toggle('connected',Boolean(saved))}
 }
+window.addEventListener('mise-native-printer-status',event=>{const message=String(event.detail||'');if(message)toast(message)})
+
 async function pairPrinter(){
+  if(hasNativePrinter())return openNativePrinterDialog()
   if(!navigator.bluetooth){toast('Bluetooth web indisponible ici · utilise l’impression système ou l’app Android');return}
   try{
     toast('Choisis ton imprimante Bluetooth')
@@ -765,6 +819,10 @@ $('#goalChallenge').onclick=openChallenge
 $('#goalMove').onclick=startMoveScans
 $('#goalShare').onclick=openShareDialog
 $('#goalBatchPrint').onclick=openBatchPrint
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)
+const isStandalone=window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true
+if(isIOS&&!isStandalone){$('#goalIosInstall').hidden=false;$('#goalIosInstall').onclick=()=>{$('#manualDlg').showModal();setTimeout(()=>$('#manualIos')?.scrollIntoView({block:'center',behavior:'smooth'}),80)}}
+if(isIOS&&isStandalone){setTimeout(async()=>{const account=await db.get('settings','google-account');if(!account&&!objects.length&&!cases.length)toast('MISE ! installée · reconnecte Google ou importe ta sauvegarde si tu en avais une dans Safari')},700)}
 updatePrinterStatus();updateAccountStatus()
 
 $$('[data-action]').forEach(b=>b.onclick=()=>{

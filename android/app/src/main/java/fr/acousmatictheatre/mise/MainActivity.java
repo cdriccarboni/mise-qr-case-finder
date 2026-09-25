@@ -24,6 +24,7 @@ public final class MainActivity extends Activity {
     private static final String MISE_ORIGIN = "https://cdriccarboni.github.io";
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
+    private NativePrinterBridge printerBridge;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -34,6 +35,8 @@ public final class MainActivity extends Activity {
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(11, 11, 13));
         setContentView(webView);
+        printerBridge = new NativePrinterBridge(this, webView);
+        webView.addJavascriptInterface(printerBridge, "MiseAndroidPrinter");
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -50,7 +53,7 @@ public final class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 String host = uri.getHost() == null ? "" : uri.getHost();
-                if ("cdriccarboni.github.io".equalsIgnoreCase(host)) return false;
+                if ("cdriccarboni.github.io".equalsIgnoreCase(host) || "art.acousmatic-theatre.fr".equalsIgnoreCase(host)) return false;
                 openExternal(uri);
                 return true;
             }
@@ -118,4 +121,13 @@ public final class MainActivity extends Activity {
             fileCallback = null;
         }
     }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NativePrinterBridge.BLUETOOTH_PERMISSION_REQUEST && printerBridge != null) {
+            boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            printerBridge.onPermissionResult(granted);
+        }
+    }
+
 }

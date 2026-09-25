@@ -5,9 +5,9 @@ Première enveloppe Android de MISE!, construite à partir de la page Web publi�
 - Application ID : `fr.acousmatictheatre.mise`
 - minSdk : 26
 - targetSdk / compileSdk : 36
-- Source Web actuelle : `https://cdriccarboni.github.io/mise-qr-case-finder/`
+- Source Web actuelle : `https://art.acousmatic-theatre.fr/mise-app/`
 - Les mises à jour de la page restent la source de vérité.
-- Le build cloud produit un APK de test et un AAB release non signé.
+- Le build produit un APK de test et peut produire un AAB release non signé. Le pilote Android inclut un test expérimental WalkPrint/YHK par Bluetooth Classic/RFCOMM.
 
 ## Avant Google Play
 
