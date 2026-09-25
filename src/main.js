@@ -57,7 +57,7 @@ async function seedPersonal(){
 }
 await seedPersonal()
 
-let objects=[],cases=[],kits=[],mises=[],activeMise=null, scanner=null
+let objects=[],cases=[],kits=[],mises=[],activeMise=null, scanner=null, photoTargetMiseId=null
 async function refresh(){
   objects=await db.getAll('objects')
   cases=await db.getAll('cases')
@@ -137,7 +137,7 @@ $('#app').innerHTML=`
  <button data-tab="creator">Créateur</button>
 </nav>
 <section id="search" class="tab active"><div id="searchResults"></div></section>
-<section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
+<section id="inventory" class="tab"><div class="sectionhead"><h2>Data Bruitage</h2><button id="addObject">+ Objet</button></div><p class="hint">Tous tes objets, sons, listes et idées de travail. Les kits et les mises sont des vues pratiques de cette base.</p><div id="objectCards" class="cards"></div></section>
 <section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
 <section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Personnel, pédagogique ou lié à un spectacle. Le spectacle reste facultatif.</p><div id="kitCards" class="cards"></div></section>
 <section id="mises" class="tab"><div class="sectionhead"><h2>Mises & contrôles</h2><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards"></div></section>
@@ -166,7 +166,7 @@ $$('nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab))
 function renderSearch(target='#searchResults'){
   const q=$('#q').value.trim(), own=searchOwned(q), ideas=searchExternal(q)
   if(!q){
-    $(target).innerHTML=`<div class="empty"><b>Écris ce que tu cherches.</b><span>Objet, son, ambiance, marque ou valise.</span><small>Ex. « atelier mer », « bouteille frangée », « forêt ».</small></div>`
+    $(target).innerHTML=`<div class="empty"><b>Écris ce que tu cherches.</b><span>Objet, son, idée, ambiance, valise, kit ou mise.</span><small>Ex. « atelier mer », « bouteille frangée », « forêt ».</small></div>`
     return
   }
   let h=`<div class="resultHead"><b>${own.length} résultat${own.length>1?'s':''} dans ton parc</b><span>Les idées externes restent séparées.</span></div>`
@@ -196,7 +196,20 @@ async function resizePhoto(file){
 }
 async function photoFlow(file){
   const photo=await resizePhoto(file)
+  if(photoTargetMiseId){
+    const mise=miseBy(photoTargetMiseId);photoTargetMiseId=null
+    if(mise){openMisePhotoControl(mise,photo);return}
+  }
   openObject({photo,source:'photo',owned:true})
+}
+function openMisePhotoControl(m,photo){
+  const d=$('#modal'),expected=(m.objectIds||[]).map(id=>objects.find(o=>o.id===id)).filter(Boolean)
+  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Contrôle photo · bêta</b><small>${esc(m.name)}</small></div><button value="cancel" class="ghost">×</button></div>
+  <img class="photoPreview" src="${photo}"><p class="hint">La photo sert de repère. MISE ! ne prétend pas reconnaître automatiquement les objets : coche ce que tu vois réellement.</p>
+  <div class="checklist">${expected.map(o=>`<label class="check"><input type="checkbox" value="${o.id}" ${(m.checked||[]).includes(o.id)?'checked':''}><span>${esc(o.name)}</span></label>`).join('')}</div>
+  <button id="savePhotoControl">Valider le contrôle</button></form>`
+  d.showModal()
+  $('#savePhotoControl').onclick=async e=>{e.preventDefault();m.checked=$$('.check input:checked',d).map(x=>x.value);m.controlPhoto=photo;m.controlledAt=new Date().toISOString();await db.put('mises',m);d.close();await refresh();render();toast('Contrôle de mise enregistré')}
 }
 $('#photoInput').onchange=e=>e.target.files[0]&&photoFlow(e.target.files[0])
 $('#galleryInput').onchange=e=>e.target.files[0]&&photoFlow(e.target.files[0])
