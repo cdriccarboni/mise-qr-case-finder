@@ -302,7 +302,7 @@ function openMisePhotoControl(m,file){
     if(finished)return
     detectedObjects=proposals;analysisStatus='available';analysedAt=new Date().toISOString()
     $('#analysisStatus').textContent=proposals.length?`${proposals.length} proposition(s) à examiner. Aucune n’est validée automatiquement.`:'Aucun objet proposé par le service. Poursuivez avec la liste manuelle.'
-    $('#detectedProposals').innerHTML=proposals.length?`<h3>Propositions du service</h3><div class="proposals">${proposals.map((o,i)=>`<label class="check"><input type="checkbox" data-proposal="${i}"><span>${esc(o.name)}${o.confidence!==undefined?` <small>· score du service ${Math.round(o.confidence*100)} %</small>`:''}<small class="proposalNote">Confirmer cet objet visible · proposition hors inventaire</small></span></label>`).join('')}</div><p class="hint">Ces propositions ne modifient pas Data Bruitage.</p>`:''
+    $('#detectedProposals').innerHTML=proposals.length?`<h3>Propositions du service</h3><div class="proposals">${proposals.map((o,i)=>`<label class="check"><input type="checkbox" data-proposal="${i}"><span>${esc(o.label)} <small>· ${esc(o.category)} · ×${o.quantity}${o.confidence!==undefined?` · score ${Math.round(o.confidence*100)} %`:''}</small><small class="proposalNote">Confirmer cet objet visible · proposition non ajoutée automatiquement à Data Bruitage</small></span></label>`).join('')}</div><p class="hint">Ces propositions ne modifient pas Data Bruitage.</p>`:''
     $('#savePhotoControl').textContent='Valider et enregistrer le contrôle'
   }).catch(error=>{
     if(finished)return
