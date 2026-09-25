@@ -27,7 +27,7 @@ const seed=await fetch('./data.json').then(r=>r.json()).catch(()=>({objects:[],c
 async function seedPersonal(){
   if(await db.get('settings','seeded-v3')) return
   for(const c of seed.containers||[]) {
-    await db.put('cases',{...c,id:c.id,name:c.name||'Valise',part:null,total:null,source:'documents personnels'})
+    await db.put('cases',{...c,id:c.id,name:c.name||'Valise',part:null,total:null,source:'Data Bruitage'})
   }
   const soundsByObject=new Map()
   for(const l of seed.object_sound_links||[]){
@@ -40,7 +40,7 @@ async function seedPersonal(){
       ...o,id:o.id,name:o.name,detectedName:'',
       sounds:unique(soundsByObject.get(o.id)||[]),
       tags:unique(o.aliases||[]),contexts:[],
-      photo:'',source:'documents personnels',owned:true,
+      photo:'',source:'Data Bruitage',owned:true,
       status:o.status||'available',family:'À classer',
       caseId:o.container_id||''
     }
@@ -114,7 +114,7 @@ $('#app').innerHTML=`
 <header>
   <div class="brand">
     <div class="wordmark">M<span class="logo-i">I<i></i></span>SE <span class="bang">!<i></i></span></div>
-    <div class="sub">QR CASE FINDER</div><div class="tag">Cherche ta mise</div>
+    <div class="sub">QR CASE FINDER</div><div class="tag">Data Bruitage · chercher · préparer · contrôler</div>
   </div>
   <button id="backupBtn" class="ghost">Sauvegarde</button>
 </header>
@@ -130,7 +130,7 @@ $('#app').innerHTML=`
 </section>
 <nav>
  <button data-tab="search" class="active">Recherche</button>
- <button data-tab="inventory">Inventaire</button>
+ <button data-tab="inventory">Data Bruitage</button>
  <button data-tab="cases">Valises</button>
  <button data-tab="kits">Kits</button>
  <button data-tab="mises">Mises</button>
