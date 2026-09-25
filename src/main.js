@@ -5,6 +5,7 @@ import QRCode from 'qrcode'
 import { BrowserQRCodeReader } from '@zxing/browser'
 import { openDB } from 'idb'
 import { registerSW } from 'virtual:pwa-register'
+import { readProjectContext, requestPhotoAnalysis, makeControlSummary, makeProjectSummary } from './project-control.js'
 
 registerSW({ immediate:true })
 
@@ -15,6 +16,8 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[’']/g,' ').replace(/[-_/]+/g,' ').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim()
 const unique=a=>[...new Set((a||[]).filter(Boolean))]
 const safeExternal=x=>!/(gun|weapon|arme|fusil|pisto|coup de feu|explosi|knife)/i.test(JSON.stringify(x))
+const params=new URLSearchParams(location.search)
+const project=readProjectContext(location.search,location.href)
 
 const db=await openDB('mise-db',3,{upgrade(d){
   for(const s of ['objects','cases','kits','mises','settings']) {
@@ -74,14 +77,49 @@ async function migrateDataBruitage(){
 await migrateDataBruitage()
 
 let objects=[],cases=[],kits=[],mises=[],activeMise=null, scanner=null, photoTargetMiseId=null
+let projectSyncFailed=false
 async function refresh(){
   objects=await db.getAll('objects')
   cases=await db.getAll('cases')
   kits=await db.getAll('kits')
   mises=await db.getAll('mises')
-  activeMise=activeMise||mises[0]?.id||null
+  const eligible=project.projectId?mises.filter(m=>m.projectId===project.projectId):mises
+  if(!eligible.some(m=>m.id===activeMise)) activeMise=eligible.slice().sort((a,b)=>(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''))[0]?.id||null
 }
 await refresh()
+
+function linkToProject(m){
+  if(project.projectId) Object.assign(m,{projectId:project.projectId,projectName:project.projectName,projectType:project.projectType})
+  return m
+}
+function publishProject(m){
+  if(!m.projectId)return
+  const summary=makeProjectSummary(m)
+  try{
+    localStorage.setItem(`art-mise-project-v1:${m.projectId}`,JSON.stringify(summary))
+    projectSyncFailed=false
+    window.dispatchEvent(new CustomEvent('art-mise-project-change',{detail:summary}))
+  }catch{projectSyncFailed=true}
+  renderProjectContext()
+}
+async function saveMise(m){
+  m.objectIds=unique(m.objectIds||[])
+  m.checked=unique(m.checked||[]).filter(id=>m.objectIds.includes(id))
+  m.updatedAt=new Date().toISOString()
+  await db.put('mises',m)
+  publishProject(m)
+}
+function recordControl(m,details){
+  m.latestControl=makeControlSummary(m,objects,details)
+  m.controlledAt=m.latestControl.controlledAt
+}
+function renderProjectContext(){
+  const el=$('#projectContext');if(!el)return
+  el.innerHTML=`<div><span class="eyebrow">${project.projectId?'Projet ART':'Espace de préparation'}</span><h1>${esc(project.projectId?(project.projectName||project.projectId):'Préparer le terrain')}</h1><p>${project.projectId?`${esc(project.projectType||'Projet')} · Réf. ${esc(project.projectId)}`:'Inventaire, kits et contrôles de mise.'}</p></div>
+    ${project.returnUrl?`<a class="returnLink" href="${esc(project.returnUrl)}">Retour au projet</a>`:''}
+    <p class="projectNote">Data Bruitage reste la source globale. ${project.projectId?'Les mises sont liées à ce projet, quelle que soit sa date de création.':'Les mises peuvent être liées depuis un projet ART.'}</p>
+    ${projectSyncFailed?'<p class="syncWarning" role="alert">Mise enregistrée sur cet appareil. Transmission locale à ART impossible : autorisez le stockage local puis rechargez cette page.</p>':''}`
+}
 
 const caseBy=id=>cases.find(c=>c.id===id)
 const kitBy=id=>kits.find(k=>k.id===id)
@@ -143,20 +181,22 @@ function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');se
 $('#app').innerHTML=`
 <header>
   <div class="brand">
-    <div class="wordmark">M<span class="logo-i">I<i></i></span>SE <span class="bang">!<i></i></span></div>
-    <div class="sub">QR CASE FINDER</div><div class="tag">Cherche ta mise</div>
+    <div class="wordmark">MISE<span class="brandDot" aria-hidden="true"></span></div>
+    <div class="sub">Préparation & contrôle terrain</div>
     <div class="corpusMeta"><b>Data Bruitage</b><span>${esc(corpusSummary)}</span></div>
   </div>
-  <button id="backupBtn" class="ghost">Sauvegarde</button>
+  <div class="headerTools"><span id="networkStatus" class="status" role="status"></span><button id="backupBtn" class="ghost">Sauvegarder</button></div>
 </header>
 <main>
+<section id="projectContext" class="projectContext" aria-label="Contexte du projet"></section>
 <section class="hero">
-  <div class="searchbox"><input id="q" autocomplete="off" placeholder="Demain j'ai la mer à faire…"><button id="mic" title="Parler">🎙</button></div>
+  <label class="searchLabel" for="q">Recherche dans Data Bruitage</label>
+  <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance ou contenant"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
   <div class="quick">
-    <button data-action="search">⌕<span>Rechercher</span></button>
-    <button data-action="speak">🎙<span>Parler</span></button>
-    <button data-action="photo">📷<span>Photographier</span></button>
-    <button data-action="scan">▦<span>Scanner QR</span></button>
+    <button data-action="search">Rechercher</button>
+    <button data-action="speak">Dictée vocale</button>
+    <button data-action="photo">Ajouter une photo</button>
+    <button data-action="scan">Scanner un QR</button>
   </div>
 </section>
 <nav>
@@ -173,8 +213,8 @@ $('#app').innerHTML=`
 <section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation issu de Data Bruitage : spectacle, atelier, tournée ou besoin ponctuel. Data Bruitage reste le corpus global.</p><div id="kitCards" class="cards"></div></section>
 <section id="mises" class="tab"><div class="sectionhead"><h2>Mises & contrôles</h2><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards"></div></section>
 <section id="creator" class="tab">
-  <div class="panel"><h2>Créateur de bruitage</h2><p>Décris une ambiance ou un son : MISE ! croise Data Bruitage, ton parc, tes pratiques et les références.</p>
-  <div class="row"><button data-preset="mer">🌊 Mer</button><button data-preset="forêt">🌿 Forêt</button><button data-preset="feu">🔥 Feu</button><button data-preset="orage">⛈ Orage</button></div></div>
+  <div class="panel"><h2>Créateur de bruitage</h2><p>Décrivez une ambiance ou un son pour explorer Data Bruitage, votre parc et les références.</p>
+  <div class="row"><button data-preset="mer" class="ghost">Mer</button><button data-preset="forêt" class="ghost">Forêt</button><button data-preset="feu" class="ghost">Feu</button><button data-preset="orage" class="ghost">Orage</button></div></div>
   <div id="creatorResults"></div>
 </section>
 </main>
@@ -185,7 +225,15 @@ $('#app').innerHTML=`
 <dialog id="modal"></dialog>
 <dialog id="scanDlg"><div class="dialoghead"><strong>Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline></video><p class="hint">Cadre le QR d'une valise ou d'une caisse.</p></dialog>
 <dialog id="printDlg"></dialog>
-<div id="toast"></div>`
+<div id="toast" role="status"></div>`
+
+renderProjectContext()
+function renderNetworkStatus(){
+  $('#networkStatus').textContent=navigator.onLine?'En ligne':'Hors ligne · données locales'
+}
+renderNetworkStatus()
+window.addEventListener('online',renderNetworkStatus)
+window.addEventListener('offline',renderNetworkStatus)
 
 function setTab(t){
   $$('.tab').forEach(x=>x.classList.toggle('active',x.id===t))
@@ -204,10 +252,10 @@ function renderSearch(target='#searchResults'){
   h+=own.map(o=>`<article class="result">
     <div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div>
     <div><h3>${esc(o.name)}</h3><p>${(o.sounds||[]).slice(0,5).map(chip).join(' ')||'<span class="muted">Son à préciser</span>'}</p>
-    <small>📦 ${esc(caseName(caseBy(o.caseId||o.container_id)))} · ${esc(o.family||'À classer')}</small></div>
+    <small>${esc(caseName(caseBy(o.caseId||o.container_id)))} · ${esc(o.family||'À classer')}</small></div>
     <button data-add="${o.id}" class="plus">+</button></article>`).join('')
   if(ideas.length) h+=`<h3 class="ideaTitle">Idées à ajouter à ton parc</h3>`+ideas.map(i=>`<article class="result idea">
-    <div class="thumb">✦</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p>
+    <div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p>
     <small>Référence externe · ${esc(i.source||'base de référence')}</small></div><button class="plus" data-idea="${esc(i.name)}">+</button></article>`).join('')
   $(target).innerHTML=h
   $$('[data-add]',$(target)).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.add))
@@ -222,28 +270,74 @@ async function resizePhoto(file){
     img.onload=()=>{const max=1200,s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas')
       c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height)
       URL.revokeObjectURL(u);resolve(c.toDataURL('image/jpeg',.76))}
-    img.onerror=reject;img.src=u
+    img.onerror=()=>{URL.revokeObjectURL(u);reject(new Error('Image illisible'))};img.src=u
   })
 }
 async function photoFlow(file){
-  const photo=await resizePhoto(file)
-  if(photoTargetMiseId){
-    const mise=miseBy(photoTargetMiseId);photoTargetMiseId=null
-    if(mise){openMisePhotoControl(mise,photo);return}
-  }
-  openObject({photo,source:'photo',owned:true})
+  const targetId=photoTargetMiseId;photoTargetMiseId=null
+  if(!file.type.startsWith('image/')){toast('Sélectionnez un fichier image');return}
+  const mise=miseBy(targetId)
+  if(mise){openMisePhotoControl(mise,file);return}
+  try{openObject({photo:await resizePhoto(file),source:'photo',owned:true})}
+  catch{toast('Impossible de lire cette image')}
 }
-function openMisePhotoControl(m,photo){
+function openMisePhotoControl(m,file){
   const d=$('#modal'),expected=(m.objectIds||[]).map(id=>objects.find(o=>o.id===id)).filter(Boolean)
-  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Contrôle photo · bêta</b><small>${esc(m.name)}</small></div><button value="cancel" class="ghost">×</button></div>
-  <img class="photoPreview" src="${photo}"><p class="hint">La photo sert de repère. MISE ! ne prétend pas reconnaître automatiquement les objets : coche ce que tu vois réellement.</p>
-  <div class="checklist">${expected.map(o=>`<label class="check"><input type="checkbox" value="${o.id}" ${(m.checked||[]).includes(o.id)?'checked':''}><span>${esc(o.name)} <small>· ${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></span></label>`).join('')}</div>
-  <button id="savePhotoControl">Valider le contrôle</button></form>`
+  const controller=new AbortController(),preview=URL.createObjectURL(file)
+  let detectedObjects=[],analysisStatus='pending',analysisError=null,analysedAt=null,finished=false
+  const cleanup=()=>{finished=true;controller.abort();clearTimeout(timeout);URL.revokeObjectURL(preview)}
+  const timeout=setTimeout(()=>controller.abort(),25000)
+  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Contrôle photo</b><small>${esc(m.name)}</small></div><button value="cancel" class="ghost" aria-label="Fermer">Fermer</button></div>
+  <img class="photoPreview" src="${preview}" alt="Photo du matériel à contrôler">
+  <p class="hint">L’image originale est envoyée au service d’analyse. La reconnaissance peut omettre ou confondre des objets. Seule votre validation fait foi.</p>
+  <div id="analysisStatus" class="analysisStatus" role="status">Analyse en cours. Vous pouvez déjà effectuer le contrôle manuel.</div>
+  <div id="detectedProposals"></div>
+  <h3>Objets attendus · validation humaine</h3><p class="hint">Cochez les objets réellement vérifiés pour ce contrôle. Confirmer une proposition ne coche pas cette liste.</p>
+  <div class="checklist">${expected.map(o=>`<label class="check"><input type="checkbox" value="${esc(o.id)}"><span>${esc(o.name)} <small>· ${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></span></label>`).join('')||'<p class="hint">Aucun objet attendu. Ajoutez des objets à la mise depuis la recherche.</p>'}</div>
+  <p id="controlSaveError" class="syncWarning" role="alert" hidden></p>
+  <button id="savePhotoControl">Enregistrer le contrôle manuel</button></form>`
+  d.addEventListener('close',cleanup,{once:true})
   d.showModal()
-  $('#savePhotoControl').onclick=async e=>{e.preventDefault();m.checked=$$('.check input:checked',d).map(x=>x.value);m.controlPhoto=photo;m.controlledAt=new Date().toISOString();await db.put('mises',m);d.close();await refresh();render();toast('Contrôle de mise enregistré')}
+  requestPhotoAnalysis(file,controller.signal).then(proposals=>{
+    if(finished)return
+    detectedObjects=proposals;analysisStatus='available';analysedAt=new Date().toISOString()
+    $('#analysisStatus').textContent=proposals.length?`${proposals.length} proposition(s) à examiner. Aucune n’est validée automatiquement.`:'Aucun objet proposé par le service. Poursuivez avec la liste manuelle.'
+    $('#detectedProposals').innerHTML=proposals.length?`<h3>Propositions du service</h3><div class="proposals">${proposals.map((o,i)=>`<label class="check"><input type="checkbox" data-proposal="${i}"><span>${esc(o.name)}${o.confidence!==undefined?` <small>· score du service ${Math.round(o.confidence*100)} %</small>`:''}<small class="proposalNote">Confirmer cet objet visible · proposition hors inventaire</small></span></label>`).join('')}</div><p class="hint">Ces propositions ne modifient pas Data Bruitage.</p>`:''
+    $('#savePhotoControl').textContent='Valider et enregistrer le contrôle'
+  }).catch(error=>{
+    if(finished)return
+    analysisStatus='unavailable'
+    analysisError=error.name==='AbortError'?'Délai d’analyse dépassé':error.message
+    $('#analysisStatus').textContent='Analyse indisponible. Utilisez la liste manuelle ; aucune reconnaissance n’a été validée.'
+  }).finally(()=>clearTimeout(timeout))
+  $('#savePhotoControl').onclick=async e=>{
+    e.preventDefault()
+    const button=e.currentTarget;button.disabled=true
+    const details={method:analysisStatus==='available'?'photo-assisted':'manual-photo',analysisStatus:analysisStatus==='pending'?'cancelled':analysisStatus,analysisError,analysedAt,
+      detectedObjects:detectedObjects.map((o,i)=>({...o,validated:!!$(`[data-proposal="${i}"]`,d)?.checked})),
+      file:{name:file.name,type:file.type,size:file.size,lastModified:file.lastModified}}
+    const next={...m,checked:$$('.checklist input:checked',d).map(x=>x.value)}
+    recordControl(next,details)
+    // Freeze the submitted review before allowing late network responses to update it.
+    finished=true;controller.abort();clearTimeout(timeout)
+    try{
+      try{next.controlPhoto=await resizePhoto(file)}catch{next.controlPhoto=''}
+      await saveMise(next);d.close();await refresh();render();toast('Contrôle validé et enregistré')
+    }catch{
+      $('#controlSaveError').hidden=false
+      $('#controlSaveError').textContent='Enregistrement impossible. Vérifiez l’espace disponible et réessayez.'
+      button.disabled=false
+    }
+  }
 }
-$('#photoInput').onchange=e=>e.target.files[0]&&photoFlow(e.target.files[0])
-$('#galleryInput').onchange=e=>e.target.files[0]&&photoFlow(e.target.files[0])
+for(const id of ['photoInput','galleryInput']){
+  $("#"+id).onchange=e=>{const file=e.target.files[0];e.target.value='';if(file)photoFlow(file)}
+  $("#"+id).addEventListener('cancel',()=>{photoTargetMiseId=null})
+}
+function pickPhoto(inputId,miseId=null){
+  photoTargetMiseId=miseId
+  $('#'+inputId).click()
+}
 
 function openObject(p={}){
   const current=p.id?objects.find(o=>o.id===p.id):null
@@ -258,8 +352,8 @@ function openObject(p={}){
   <label>Tags / contexte<input id="fTags" value="${esc(unique([...(o.tags||[]),...(o.contexts||[])]).join(', '))}" placeholder="atelier, kit perso, #spectacle…"></label>
   <div class="row"><button type="button" id="pickGallery" class="ghost">Importer photo</button><button type="button" id="pickCamera" class="ghost">Appareil photo</button><button id="saveObject">Enregistrer</button></div></form>`
   m.showModal()
-  $('#pickGallery').onclick=()=>$('#galleryInput').click()
-  $('#pickCamera').onclick=()=>$('#photoInput').click()
+  $('#pickGallery').onclick=()=>pickPhoto('galleryInput')
+  $('#pickCamera').onclick=()=>pickPhoto('photoInput')
   $('#saveObject').onclick=async e=>{
     e.preventDefault()
     const tags=$('#fTags').value.split(',').map(x=>x.trim()).filter(Boolean)
@@ -331,14 +425,15 @@ function openKit(k){
 $('#addKit').onclick=()=>openKit()
 
 async function createMiseFromKit(kit){
-  const m={id:uid('mise'),name:`${kit.name} · ${new Date().toLocaleDateString('fr-FR')}`,kitId:kit.id,objectIds:[...(kit.objectIds||[])],checked:[],createdAt:new Date().toISOString()}
-  await db.put('mises',m);activeMise=m.id;await refresh();setTab('mises');toast('Mise créée')
+  const m=linkToProject({id:uid('mise'),name:`${kit.name} · ${new Date().toLocaleDateString('fr-FR')}`,kitId:kit.id,objectIds:[...(kit.objectIds||[])],checked:[],createdAt:new Date().toISOString()})
+  await saveMise(m);activeMise=m.id;await refresh();setTab('mises');toast('Mise créée')
 }
 function openMise(m){
-  m=m||{id:uid('mise'),name:'',kitId:null,objectIds:[],checked:[],createdAt:new Date().toISOString()}
+  m=m?{...m}:linkToProject({id:uid('mise'),name:'',kitId:null,objectIds:[],checked:[],createdAt:new Date().toISOString()})
   const d=$('#modal')
   d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><b>${miseBy(m.id)?'Modifier':'Créer'} une mise</b><button value="cancel" class="ghost">×</button></div>
   <label>Nom<input id="mName" value="${esc(m.name)}" placeholder="Atelier mer demain"></label>
+  <p class="hint">${m.projectId?`Projet lié : ${esc(m.projectName||m.projectId)}`:'Mise indépendante · Data Bruitage global'}</p>
   <label>Partir d'un kit<select id="mKit"><option value="">Aucun</option>${kits.map(k=>`<option value="${k.id}" ${m.kitId===k.id?'selected':''}>${esc(k.name)}</option>`)}</select></label>
   <button id="saveMise">Créer / enregistrer</button></form>`
   d.showModal()
@@ -349,21 +444,38 @@ function openMise(m){
     m.kitId=kit?.id||null
     if(kit && !(m.objectIds||[]).length) m.objectIds=[...(kit.objectIds||[])]
     m.objectIds=m.objectIds||[];m.checked=m.checked||[]
-    await db.put('mises',m);activeMise=m.id;d.close();await refresh();render();toast('Mise enregistrée')
+    await saveMise(m);activeMise=m.id;d.close();await refresh();render();toast('Mise enregistrée')
   }
 }
 $('#addMise').onclick=()=>openMise()
 
 async function addToActiveMise(id){
   let m=miseBy(activeMise)
-  if(!m){m={id:uid('mise'),name:'Mise rapide',kitId:null,objectIds:[],checked:[],createdAt:new Date().toISOString()}}
+  if(!m){m=linkToProject({id:uid('mise'),name:'Mise rapide',kitId:null,objectIds:[],checked:[],createdAt:new Date().toISOString()})}
   m.objectIds=unique([...(m.objectIds||[]),id])
-  await db.put('mises',m);activeMise=m.id;await refresh();toast('Ajouté à la mise')
+  await saveMise(m);activeMise=m.id;await refresh();render();toast('Ajouté à la mise')
 }
 async function toggleCheck(m,id,yes){
   m.checked=m.checked||[]
   m.checked=yes?unique([...m.checked,id]):m.checked.filter(x=>x!==id)
-  await db.put('mises',m);render()
+  recordControl(m,{method:'manual'})
+  await saveMise(m);render()
+}
+
+function showLatestControl(m){
+  const c=m.latestControl;if(!c)return
+  const d=$('#modal')
+  const methods={manual:'Liste manuelle','manual-photo':'Liste manuelle avec photo','photo-assisted':'Photo et validation humaine'}
+  const statuses={available:'Propositions reçues',unavailable:'Service indisponible',cancelled:'Analyse interrompue pour validation manuelle','not-requested':'Non demandée'}
+  d.innerHTML=`<div class="form"><div class="dialoghead"><b>Dernier contrôle enregistré</b><button class="ghost" id="closeControl">Fermer</button></div>
+    <h2>${esc(c.miseName)}</h2><p class="hint">${esc(c.controlledAt)} · ${esc(methods[c.method]||c.method)}</p>
+    <p>${c.checkedCount} / ${c.objectCount} objets contrôlés par validation humaine.</p>
+    <p class="hint">Projet au moment du contrôle : ${esc(c.projectName||c.projectId||'Indépendant')}<br>Analyse : ${esc(statuses[c.analysisStatus]||c.analysisStatus)}${c.analysisError?` · ${esc(c.analysisError)}`:''}${c.analysedAt?`<br>Réponse reçue : ${esc(c.analysedAt)}`:''}</p>
+    ${c.file?`<p class="hint">Image originale : ${esc(c.file.name)} · ${esc(c.file.type)} · ${c.file.size} octets${c.file.lastModified?`<br>Fichier modifié : ${esc(new Date(c.file.lastModified).toISOString())}`:''}</p>`:''}
+    <div class="checklist">${c.expectedObjects.map(o=>`<p>${c.checkedObjectIds.includes(o.id)?'Vérifié':'Non vérifié'} · ${esc(o.name)} <small>${esc(o.id)}</small></p>`).join('')||'<p>Aucun objet attendu lors de ce contrôle.</p>'}</div>
+    <h3>Propositions examinées</h3><div class="checklist">${c.detectedObjects.map(o=>`<p>${esc(o.name)} · ${o.validated?'Confirmée par l’utilisateur':'Non confirmée'}${o.confidence!==undefined?` <small>Score du service : ${Math.round(o.confidence*100)} %</small>`:''}</p>`).join('')||'<p>Aucune proposition.</p>'}</div>
+    <p class="hint">Ce relevé conserve l’état au moment du contrôle. La mise peut avoir été modifiée depuis. Le relevé est inclus dans la sauvegarde.</p></div>`
+  d.showModal();$('#closeControl').onclick=()=>d.close()
 }
 
 function openPrint(c,qr){
@@ -425,7 +537,7 @@ $$('[data-action]').forEach(b=>b.onclick=()=>{
   const a=b.dataset.action
   if(a==='search'){setTab('search');$('#q').focus()}
   if(a==='speak')startVoice()
-  if(a==='photo')$('#photoInput').click()
+  if(a==='photo')pickPhoto('photoInput')
   if(a==='scan')startScan()
 })
 $$('[data-preset]').forEach(b=>b.onclick=()=>{
@@ -437,13 +549,13 @@ function renderCreator(){
   $('#creatorResults').innerHTML='<div class="panel"><b>Ton parc</b></div><div id="creatorOwned"></div><div class="panel"><b>Autres pistes</b><p class="hint">Suggestions, jamais confondues avec ton inventaire.</p></div><div id="creatorIdeas"></div>'
   renderSearch('#creatorOwned')
   const ideas=searchExternal(q)
-  $('#creatorIdeas').innerHTML=ideas.length?ideas.map(i=>`<article class="result idea"><div class="thumb">✦</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p><small>${esc(i.source||'référence')}</small></div></article>`).join(''):'<div class="empty">Pas encore d’autre piste indexée pour cette recherche.</div>'
+  $('#creatorIdeas').innerHTML=ideas.length?ideas.map(i=>`<article class="result idea"><div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p><small>${esc(i.source||'référence')}</small></div></article>`).join(''):'<div class="empty">Pas encore d’autre piste indexée pour cette recherche.</div>'
 }
 
 function render(){
   renderSearch()
   $('#objectCards').innerHTML=objects.slice().sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(o=>`<button class="card objectCard" data-object="${o.id}">
-    <b>${esc(o.name)}</b><span>${(o.sounds||[]).slice(0,4).join(' · ')||'Son à préciser'}</span><small>📦 ${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></button>`).join('')
+    <b>${esc(o.name)}</b><span>${(o.sounds||[]).slice(0,4).join(' · ')||'Son à préciser'}</span><small>${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></button>`).join('')
   $$('[data-object]').forEach(b=>b.onclick=()=>openObject(objects.find(o=>o.id===b.dataset.object)))
 
   $('#caseCards').innerHTML=cases.map(c=>`<button class="card caseCard" data-case="${c.id}"><b>${esc(caseName(c))}</b><span>${objects.filter(o=>(o.caseId||o.container_id)===c.id).length} objets</span><small>QR prêt</small></button>`).join('')
@@ -473,5 +585,4 @@ $('#backupBtn').onclick=async()=>{
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='MISE-backup.json';a.click();URL.revokeObjectURL(a.href)
 }
 
-const params=new URLSearchParams(location.search)
 if(params.get('case')) setTimeout(()=>showCase(params.get('case')),250)
