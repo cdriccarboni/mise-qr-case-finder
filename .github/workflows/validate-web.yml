@@ -3,7 +3,11 @@ name: Validate MISE Web
 on:
   push:
     branches:
+      - main
       - mise/google-autonomous-auth-20260925
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
