@@ -57,7 +57,7 @@ async function migrateDataBruitage(){
   if(await db.get('settings','data-bruitage-v1')) return
   const seededIds=new Set((seed.objects||[]).map(o=>o.id))
   const autoKit=await db.get('kits','kit-acoustique')
-  if(autoKit && autoKit.source==='02_MalettePedago CDRIC V.20.25.docx'){
+  if(autoKit && autoKit.source && autoKit.id==='kit-acoustique'){
     const ids=autoKit.objectIds||[]
     if(ids.length && ids.every(id=>seededIds.has(id))) await db.delete('kits','kit-acoustique')
   }
