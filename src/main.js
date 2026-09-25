@@ -357,8 +357,9 @@ $('#app').innerHTML=`
 <dialog id="printDlg"></dialog>
 <dialog id="preferencesDlg"><div class="form"><div class="dialoghead"><div><b>Préférences</b><small>Affichage · connexions · données</small></div><button id="closePreferences" class="ghost" type="button">×</button></div>
   <div class="grid2"><label><span>Affichage</span><select id="displayMode"><option value="auto">Auto</option><option value="desktop">Ordinateur</option><option value="mobile">Mobile</option></select></label><label><span>Thème</span><select id="themeMode"><option value="system">Système</option><option value="dark">Sombre</option><option value="light">Clair</option><option value="regie">Mode régie</option></select></label></div>
+  <div id="preferencesGoogleState" class="preferenceState"><b>Google Drive</b><span>Non connecté</span></div>
   <button id="preferencesGoogle" type="button">Raccorder Google Drive</button>
-  <div id="folderDropZone" class="folderDropZone" tabindex="0"><b>Raccorder un dossier</b><span>Glisse-dépose un dossier ou des fichiers ici.</span><input id="folderDropInput" type="file" webkitdirectory multiple hidden><button id="chooseFolder" type="button" class="ghost">Choisir un dossier</button></div>
+  <div id="folderDropZone" class="folderDropZone" tabindex="0"><b>Dossier de travail</b><span id="folderLinkState">Choisis un dossier local de référence. MISE mémorise son nom sur cet appareil ; l’import automatique viendra dans une prochaine passe.</span><input id="folderDropInput" type="file" webkitdirectory multiple hidden><button id="chooseFolder" type="button" class="ghost">Choisir un dossier</button></div>
   <div class="row"><button id="preferencesBackup" type="button" class="ghost">Sauvegarder</button><button id="preferencesRestore" type="button" class="ghost">Importer une sauvegarde</button></div>
 </div></dialog>
 <dialog id="manualDlg"><div class="manual"><div class="dialoghead"><div><b>MISE ! · Mini-manuel</b><small>QR Case Finder · prise en main rapide</small></div><button id="closeManual" class="ghost" type="button">×</button></div>
@@ -388,7 +389,7 @@ function setTab(t){
   $$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))
   render()
 }
-$$('[data-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab))
+$$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
 
 function renderSearch(target='#searchResults'){
   const q=$('#q').value.trim(), own=searchOwned(q), ideas=searchExternal(q)
@@ -411,7 +412,7 @@ function renderSearch(target='#searchResults'){
   $$('[data-alt]',$(target)).forEach(b=>b.onclick=()=>openAlternatives(b.dataset.alt))
   $$('[data-idea]',$(target)).forEach(b=>b.onclick=()=>openObject({name:b.dataset.idea,source:'suggestion externe',owned:false}))
 }
-$('#q').addEventListener('input',()=>renderSearch())
+$('#q').addEventListener('input',()=>{setTab('search');renderSearch()})
 $('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){setTab('search');renderSearch()}})
 
 async function resizePhoto(file){
@@ -627,7 +628,7 @@ async function addToActiveMise(id){
   let m=miseBy(activeMise)
   if(!m){m=linkToProject({id:uid('mise'),name:'Mise rapide',kitId:null,objectIds:[],checked:[],createdAt:new Date().toISOString()})}
   m.objectIds=unique([...(m.objectIds||[]),id])
-  await saveMise(m);activeMise=m.id;await refresh();render();toast('Ajouté à la mise')
+  await saveMise(m);activeMise=m.id;await refresh();render();toast('Ajouté à '+(m.name||'la mise'))
 }
 async function toggleCheck(m,id,yes){
   m.checked=m.checked||[]
@@ -797,7 +798,7 @@ function startVoice(){
   $('#mic').classList.add('listening')
   r.onresult=e=>{
     let t='';for(const x of e.results)t+=x[0].transcript+' '
-    $('#q').value=t.trim();renderSearch()
+    $('#q').value=t.trim();setTab('search');renderSearch()
   }
   r.onend=()=>$('#mic').classList.remove('listening')
   r.start()
@@ -811,6 +812,17 @@ function applyUiPreferences(){
   const displaySelect=$('#displayMode'),themeSelect=$('#themeMode')
   if(displaySelect)displaySelect.value=display
   if(themeSelect)themeSelect.value=theme
+  const googleState=$('#preferencesGoogleState')
+  if(googleState){
+    const account=$('#accountBtn')?.textContent||''
+    const connected=/connecté|reconnecter/i.test(account)&&!/non connecté/i.test(account)
+    googleState.innerHTML=`<b>Google Drive</b><span>${connected?esc(account):'Non connecté'}</span>`
+    $('#preferencesGoogle').textContent=connected?'Reconnecter Google Drive':'Raccorder Google Drive'
+  }
+  db.get('settings','linked-folder').then(linked=>{
+    const state=$('#folderLinkState');if(!state||!linked)return
+    state.textContent=`Dossier repéré sur cet appareil : ${linked.name||'dossier'} · ${linked.fileCount||0} fichier(s). Import automatique à venir.`
+  }).catch(()=>{})
 }
 applyUiPreferences()
 $('#preferencesBtn').onclick=()=>{applyUiPreferences();$('#preferencesDlg').showModal()}
