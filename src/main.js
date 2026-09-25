@@ -6,7 +6,7 @@ import { BrowserQRCodeReader } from '@zxing/browser'
 import { openDB } from 'idb'
 import { registerSW } from 'virtual:pwa-register'
 import { readProjectContext, requestPhotoAnalysis, makeControlSummary, makeProjectSummary } from './project-control.js'
-import { artGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState } from './google-sync.js'
+import { artGoogleSession, requestGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState } from './google-sync.js'
 
 registerSW({ immediate:true })
 
