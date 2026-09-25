@@ -6,7 +6,7 @@ import { BrowserQRCodeReader } from '@zxing/browser'
 import { openDB } from 'idb'
 import { registerSW } from 'virtual:pwa-register'
 import { readProjectContext, requestPhotoAnalysis, makeControlSummary, makeProjectSummary } from './project-control.js'
-import { artGoogleSession, requestGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState } from './google-sync.js'
+import { artGoogleSession, requestGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState, createSharePackage, loadSharePackage } from './google-sync.js'
 
 registerSW({ immediate:true })
 
@@ -78,6 +78,7 @@ async function migrateDataBruitage(){
 await migrateDataBruitage()
 
 let objects=[],cases=[],kits=[],mises=[],activeMise=null, scanner=null, photoTargetMiseId=null
+let scanPurpose='browse',moveScanState=null
 let projectSyncFailed=false
 async function refresh(){
   objects=await db.getAll('objects')
@@ -109,6 +110,7 @@ async function updateAccountStatus(){
 }
 async function connectGoogle(){
   try{
+    await requestGoogleSession()
     const profile=await connectedGoogleProfile(),email=String(profile?.email||'').trim()
     if(!email)throw new Error('Compte Google non identifiable')
     if(!confirm(`Utiliser ce compte Google pour la base privée MISE ! ?\n\n${email}\n\nRien ne sera partagé publiquement.`))return
@@ -167,6 +169,7 @@ function renderProjectContext(){
 }
 
 const caseBy=id=>cases.find(c=>c.id===id)
+const objectBy=id=>objects.find(o=>o.id===id)
 const kitBy=id=>kits.find(k=>k.id===id)
 const miseBy=id=>mises.find(m=>m.id===id)
 const caseName=c=>c?`${c.name}${c.part&&c.total?` · ${c.part}/${c.total}`:''}`:'Sans contenant'
@@ -213,7 +216,7 @@ function searchOwned(q){
     ],
     threshold:.44,ignoreLocation:true,includeScore:true
   })
-  return fuse.search(expandQuery(q)).slice(0,20).map(x=>({...x.item,_score:x.score}))
+  return fuse.search(expandQuery(q)).map(x=>({...x.item,_score:x.score})).sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||(a._score-b._score)).slice(0,20)
 }
 function searchExternal(q){
   if(!q.trim()) return []
@@ -222,6 +225,91 @@ function searchExternal(q){
 }
 function chip(s){return `<span class="chip">${esc(s)}</span>`}
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
+
+function companyMemberEmails(){
+  const emails=[]
+  try{
+    const root=JSON.parse(localStorage.getItem('art-company-root-v1')||'{}')
+    for(const member of root.members||[]) if(member?.email) emails.push(String(member.email).trim().toLowerCase())
+    const registry=JSON.parse(localStorage.getItem('art-company-registry-v1')||'{}')
+    const company=project.companyId&&registry?.companies?.[project.companyId]
+    for(const member of company?.members||[]) if(member?.email) emails.push(String(member.email).trim().toLowerCase())
+  }catch{}
+  return unique(emails.filter(Boolean))
+}
+async function toggleFavorite(id){
+  const o=objectBy(id);if(!o)return
+  o.favorite=!o.favorite;o.updatedAt=new Date().toISOString();await db.put('objects',o);scheduleDriveSync();render();renderSearch();toast(o.favorite?'Ajouté aux favoris':'Retiré des favoris')
+}
+function findAlternatives(o){
+  const queries=unique([...(o.sounds||[]),...(o.tags||[]),...(o.contexts||[])]).join(' ')
+  if(!queries)return objects.filter(x=>x.id!==o.id).slice(0,8)
+  const pool=objects.filter(x=>x.id!==o.id).map(x=>({...x,altText:[x.name,...(x.sounds||[]),...(x.tags||[]),...(x.contexts||[])].join(' ')}))
+  return new Fuse(pool,{keys:['sounds','tags','contexts','name','altText'],threshold:.48,ignoreLocation:true}).search(queries).slice(0,8).map(x=>x.item)
+}
+function openAlternatives(id){
+  const o=objectBy(id);if(!o)return
+  const alts=findAlternatives(o),d=$('#modal')
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Alternatives à ${esc(o.name)}</b><small>Même fonction sonore ou usage proche</small></div><button id="closeAlt" class="ghost">×</button></div>${alts.length?alts.map(a=>`<article class="result"><div class="thumb">${a.photo?`<img src="${a.photo}">`:'≈'}</div><div><h3>${esc(a.name)}</h3><p>${(a.sounds||[]).slice(0,4).map(chip).join(' ')}</p><small>${esc(caseName(caseBy(a.caseId||a.container_id)))}</small></div><button data-altadd="${a.id}" class="plus">+</button></article>`).join(''):'<div class="empty">Pas encore d’alternative dans ta base.</div>'}</div>`
+  d.showModal();$('#closeAlt').onclick=()=>d.close();$$('[data-altadd]',d).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.altadd))
+}
+function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob)})}
+async function captureAudioMemo(o,button){
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast('Enregistrement audio non disponible ici');return}
+  let stream
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:true});const chunks=[],rec=new MediaRecorder(stream)
+    button.disabled=true;button.textContent='● Enregistrement… toucher pour arrêter'
+    const done=new Promise(resolve=>{rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};rec.onstop=resolve})
+    rec.start();let stopped=false;const stop=()=>{if(stopped)return;stopped=true;rec.stop()};button.onclick=stop;const timer=setTimeout(stop,10000)
+    await done;clearTimeout(timer);stream.getTracks().forEach(t=>t.stop())
+    const blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});o.audioMemo=await blobToDataUrl(blob);o.audioMemoAt=new Date().toISOString()
+    button.disabled=false;button.textContent='Mémo sonore enregistré';toast('Mémo sonore ajouté · pense à enregistrer la fiche')
+  }catch{stream?.getTracks().forEach(t=>t.stop());button.disabled=false;button.textContent='Enregistrer un mémo sonore';toast('Microphone indisponible')}
+}
+async function showObjectQr(o){
+  const url=location.href.split('?')[0]+'?object='+encodeURIComponent(o.id),qr=await QRCode.toDataURL(url,{width:520,margin:2,errorCorrectionLevel:'M'}),d=$('#printDlg')
+  d.innerHTML=`<div class="labelPreview"><strong>${esc(o.name)}</strong><img src="${qr}"><small>${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></div><div class="row"><button id="systemPrint">Impression système</button><button id="closePrint" class="ghost">Fermer</button></div>`
+  d.showModal();$('#closePrint').onclick=()=>d.close();$('#systemPrint').onclick=()=>window.print()
+}
+function scopedCaseSearch(c,q){
+  const items=objects.filter(o=>(o.caseId||o.container_id)===c.id)
+  if(!q.trim())return items
+  return new Fuse(items.map(o=>({...o,txt:[o.name,...(o.sounds||[]),...(o.tags||[]),...(o.contexts||[])].join(' ')})),{keys:['name','sounds','tags','contexts','txt'],threshold:.48,ignoreLocation:true}).search(expandQuery(q)).map(x=>x.item)
+}
+function openCaseCreator(c){
+  const d=$('#modal')
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Avec ce que j’ai ici</b><small>${esc(caseName(c))}</small></div><button id="closeCaseCreator" class="ghost">×</button></div><label>Ambiance / son<input id="caseCreatorQ" placeholder="mer, forêt, pluie, maison…"></label><div id="caseCreatorResults" class="cards"></div></div>`
+  d.showModal();$('#closeCaseCreator').onclick=()=>d.close();const renderScoped=()=>{const q=$('#caseCreatorQ').value,found=scopedCaseSearch(c,q);$('#caseCreatorResults').innerHTML=found.map(o=>`<article class="card"><b>${esc(o.name)}</b><span>${(o.sounds||[]).slice(0,5).join(' · ')||'Usage à préciser'}</span><button data-caseadd="${o.id}">Ajouter à la mise</button></article>`).join('')||'<div class="empty">Rien de convaincant dans cette valise pour cette recherche.</div>';$$('[data-caseadd]',d).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.caseadd))};$('#caseCreatorQ').oninput=renderScoped;renderScoped()
+}
+function openChallenge(){
+  const pools=['mer','forêt','pluie','orage','pas','maison','vent','mécanique','nuit','feu'],pick=pools[Math.floor(Math.random()*pools.length)],count=Math.min(3,Math.max(1,objects.length)),d=$('#modal')
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Défi bruitage</b><small>Mallette pédagogique</small></div><button id="closeChallenge" class="ghost">×</button></div><div class="challenge"><strong>Crée « ${esc(pick)} » avec ${count} objet${count>1?'s':''} maximum.</strong><p>Essaie plusieurs gestes, écoute, puis compare les solutions.</p></div><div class="row"><button id="tryChallenge">Voir mes pistes</button><button id="newChallenge" class="ghost">Autre défi</button></div></div>`
+  d.showModal();$('#closeChallenge').onclick=()=>d.close();$('#newChallenge').onclick=()=>{d.close();openChallenge()};$('#tryChallenge').onclick=()=>{d.close();$('#q').value=pick;setTab('creator');renderCreator()}
+}
+function sharePayload({miseIds=[],kitIds=[],caseIds=[],objectIds=[],includeMedia=false}={}){
+  const selectedMises=mises.filter(x=>miseIds.includes(x.id)),selectedKits=kits.filter(x=>kitIds.includes(x.id)),selectedCases=cases.filter(x=>caseIds.includes(x.id))
+  const ids=new Set(objectIds)
+  selectedMises.forEach(x=>(x.objectIds||[]).forEach(id=>ids.add(id)));selectedKits.forEach(x=>(x.objectIds||[]).forEach(id=>ids.add(id)));selectedCases.forEach(c=>objects.filter(o=>(o.caseId||o.container_id)===c.id).forEach(o=>ids.add(o.id)))
+  const sharedObjects=objects.filter(o=>ids.has(o.id)).map(o=>{const x={...o};if(!includeMedia){delete x.photo;delete x.audioMemo;delete x.controlPhoto}return x})
+  const referencedCases=cases.filter(c=>caseIds.includes(c.id)||sharedObjects.some(o=>(o.caseId||o.container_id)===c.id))
+  return {version:1,kind:'mise-share',createdAt:new Date().toISOString(),project:project.projectId?{id:project.projectId,name:project.projectName,type:project.projectType}:null,includeMedia,objects:sharedObjects,cases:referencedCases,kits:selectedKits,mises:selectedMises}
+}
+function openShareDialog(){
+  const d=$('#modal'),members=companyMemberEmails()
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Partager par QR</b><small>Seulement ce que tu sélectionnes</small></div><button id="closeShare" class="ghost">×</button></div>
+  <p class="hint">Le paquet est créé séparément dans Drive. Ta base complète n’est jamais partagée.</p>
+  <div class="shareColumns"><div><b>Mises</b>${mises.map(x=>`<label class="check"><input type="checkbox" data-share-mise value="${x.id}"><span>${esc(x.name)}</span></label>`).join('')||'<small>Aucune mise</small>'}</div><div><b>Kits</b>${kits.map(x=>`<label class="check"><input type="checkbox" data-share-kit value="${x.id}"><span>${esc(x.name)}</span></label>`).join('')||'<small>Aucun kit</small>'}</div><div><b>Valises</b>${cases.map(x=>`<label class="check"><input type="checkbox" data-share-case value="${x.id}"><span>${esc(caseName(x))}</span></label>`).join('')||'<small>Aucune valise</small>'}</div></div>
+  <details><summary>Sélection d’objets</summary><div class="checklist">${objects.map(x=>`<label class="check"><input type="checkbox" data-share-object value="${x.id}"><span>${esc(x.name)}</span></label>`).join('')}</div></details>
+  <label class="check"><input type="checkbox" id="shareMedia"><span>Inclure photos et mémos sonores</span></label>
+  <label>Destinataires Google<textarea id="shareRecipients" rows="3" placeholder="une.adresse@gmail.com, autre@gmail.com">${esc(members.join(', '))}</textarea></label>
+  <button id="createShare">Créer le partage privé + QR</button><div id="shareResult"></div></div>`
+  d.showModal();$('#closeShare').onclick=()=>d.close();$('#createShare').onclick=async()=>{const btn=$('#createShare');btn.disabled=true;try{const recipients=$('#shareRecipients').value.split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);if(!recipients.length)throw new Error('Ajoute au moins une adresse destinataire');const payload=sharePayload({miseIds:$$('[data-share-mise]:checked',d).map(x=>x.value),kitIds:$$('[data-share-kit]:checked',d).map(x=>x.value),caseIds:$$('[data-share-case]:checked',d).map(x=>x.value),objectIds:$$('[data-share-object]:checked',d).map(x=>x.value),includeMedia:$('#shareMedia').checked});if(!payload.objects.length&&!payload.mises.length&&!payload.kits.length&&!payload.cases.length)throw new Error('Sélectionne au moins un élément');const out=await createSharePackage(payload,recipients);const url=`https://art.acousmatic-theatre.fr/mise-app/?shareFile=${encodeURIComponent(out.file.id)}`,qr=await QRCode.toDataURL(url,{width:420,margin:2,errorCorrectionLevel:'M'});$('#shareResult').innerHTML=`<div class="shareDone"><img class="qr" src="${qr}"><b>${out.recipients.length} destinataire${out.recipients.length>1?'s':''}</b><small>Le QR ouvre uniquement ce paquet MISE !.</small><button id="shareNative">Partager le lien</button></div>`;$('#shareNative').onclick=async()=>{try{if(navigator.share)await navigator.share({title:'MISE !',text:'Partage MISE !',url});else{await navigator.clipboard.writeText(url);toast('Lien copié')}}catch{}};toast('Partage créé')}catch(error){toast(error instanceof Error?error.message:'Partage impossible')}finally{btn.disabled=false}}
+}
+async function openSharedPackage(fileId){
+  const d=$('#modal')
+  try{const pack=await loadSharePackage(fileId);d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Partage MISE !</b><small>${esc(pack.project?.name||'Sélection partagée')}</small></div><button id="closeShared" class="ghost">×</button></div>${(pack.mises||[]).map(m=>`<article class="card"><b>${esc(m.name)}</b><span>${(m.objectIds||[]).length} objets</span></article>`).join('')}${(pack.objects||[]).map(o=>`<article class="result"><div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div><div><h3>${esc(o.name)}</h3><p>${(o.sounds||[]).slice(0,5).map(chip).join(' ')}</p><small>${esc(caseName((pack.cases||[]).find(c=>c.id===(o.caseId||o.container_id))))}</small>${o.audioMemo?`<audio controls src="${o.audioMemo}"></audio>`:''}</div></article>`).join('')}</div>`;d.showModal();$('#closeShared').onclick=()=>d.close()}catch(error){toast(error instanceof Error?error.message:'Partage inaccessible')}
+}
 
 $('#app').innerHTML=`
 <header>
@@ -252,9 +340,9 @@ $('#app').innerHTML=`
   </div>
 </section>
 <div class="goalNav" aria-label="Navigation MISE">
- <details open><summary>Trouver & créer</summary><div><button data-tab="search" class="active">Recherche</button><button data-tab="creator">Créateur d’ambiance</button></div></details>
- <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises & contrôles</button></div></details>
- <details><summary>Partager & outils</summary><div><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button></div></details>
+ <details open><summary>Trouver & créer</summary><div><button data-tab="search" class="active">Recherche</button><button data-tab="creator">Créateur d’ambiance</button><button id="goalGroupPhoto" type="button">Photo de groupe</button><button id="goalChallenge" type="button">Défi bruitage</button></div></details>
+ <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises & contrôles</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
+ <details><summary>Partager & outils</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Imprimer série QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button></div></details>
 </div>
 <section id="search" class="tab active"><div id="searchResults"></div></section>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
@@ -270,6 +358,7 @@ $('#app').innerHTML=`
 
 <input id="photoInput" type="file" accept="image/*" capture="environment" hidden>
 <input id="galleryInput" type="file" accept="image/*" hidden>
+<input id="groupPhotoInput" type="file" accept="image/*" capture="environment" hidden>
 <input id="restoreInput" type="file" accept=".json" hidden>
 <dialog id="modal"></dialog>
 <dialog id="scanDlg"><div class="dialoghead"><strong>Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline></video><p class="hint">Cadre le QR d'une valise ou d'une caisse.</p></dialog>
@@ -282,7 +371,9 @@ $('#app').innerHTML=`
 <article><b>4 · Préparer</b><span>Crée un kit ou une mise, éventuellement rattachée à un spectacle/EAC ART, puis coche ce qui est prêt.</span></article>
 <article><b>5 · Contrôler</b><span>Scanne les QR ou utilise le contrôle photo avant départ / avant jeu. Toute proposition photo reste à valider humainement.</span></article>
 <article><b>6 · Imprimer</b><span>Ouvre une valise → Étiquette / imprimer. L’impression système fonctionne partout ; Bluetooth direct dépend du protocole de l’imprimante.</span></article>
-<article><b>7 · Confidentialité</b><span>Ta base personnelle n’est jamais incluse dans l’application publique. Les données de projet restent privées tant que tu ne les partages pas explicitement.</span></article>
+<article><b>7 · Travailler plus vite</b><span>Favoris, alternatives, photo de groupe, mémo sonore, déplacement par scans et impression en série sont dans les trois menus par objectif.</span></article>
+<article><b>8 · Partager</b><span>« Partager par QR » crée un paquet séparé sur Drive avec seulement ce que tu sélectionnes. Photos et mémos sonores sont optionnels.</span></article>
+<article><b>9 · Confidentialité</b><span>Ta base personnelle n’est jamais incluse dans l’application publique. Les données de projet restent privées tant que tu ne les partages pas explicitement.</span></article>
 </div><p class="manualNote">Le bouton ⇩ crée une sauvegarde locale de ta base.</p></div></dialog>
 <div id="toast" role="status"></div>`
 
@@ -312,12 +403,14 @@ function renderSearch(target='#searchResults'){
     <div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div>
     <div><h3>${esc(o.name)}</h3><p>${(o.sounds||[]).slice(0,5).map(chip).join(' ')||'<span class="muted">Son à préciser</span>'}</p>
     <small>${esc(caseName(caseBy(o.caseId||o.container_id)))} · ${esc(o.family||'À classer')}</small></div>
-    <button data-add="${o.id}" class="plus">+</button></article>`).join('')
+    <div class="resultActions"><button data-fav="${o.id}" class="miniAction" title="Favori">${o.favorite?'★':'☆'}</button><button data-alt="${o.id}" class="miniAction" title="Alternatives">≈</button><button data-add="${o.id}" class="plus">+</button></div></article>`).join('')
   if(ideas.length) h+=`<h3 class="ideaTitle">Idées à ajouter à ton parc</h3>`+ideas.map(i=>`<article class="result idea">
     <div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p>
     <small>Référence externe · ${esc(i.source||'base de référence')}</small></div><button class="plus" data-idea="${esc(i.name)}">+</button></article>`).join('')
   $(target).innerHTML=h
   $$('[data-add]',$(target)).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.add))
+  $$('[data-fav]',$(target)).forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.fav))
+  $$('[data-alt]',$(target)).forEach(b=>b.onclick=()=>openAlternatives(b.dataset.alt))
   $$('[data-idea]',$(target)).forEach(b=>b.onclick=()=>openObject({name:b.dataset.idea,source:'suggestion externe',owned:false}))
 }
 $('#q').addEventListener('input',()=>renderSearch())
@@ -332,6 +425,19 @@ async function resizePhoto(file){
     img.onerror=()=>{URL.revokeObjectURL(u);reject(new Error('Image illisible'))};img.src=u
   })
 }
+async function groupPhotoFlow(file){
+  if(!file?.type?.startsWith('image/')){toast('Sélectionne une image');return}
+  const d=$('#modal'),preview=URL.createObjectURL(file),photo=await resizePhoto(file)
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Photo de groupe</b><small>Créer plusieurs objets depuis une seule photo</small></div><button id="closeGroup" class="ghost">×</button></div><img class="photoPreview" src="${preview}" alt="Photo de groupe"><p id="groupStatus" class="hint">Analyse en cours… Toute proposition devra être validée.</p><div id="groupRows"></div><label>Contenant commun<select id="groupCase"><option value="">Sans contenant</option>${cases.map(c=>`<option value="${c.id}">${esc(caseName(c))}</option>`).join('')}</select></label><button id="saveGroup" disabled>Créer les objets cochés</button></div>`
+  d.showModal();const close=()=>{URL.revokeObjectURL(preview);d.close()};$('#closeGroup').onclick=close
+  let proposals=[]
+  try{proposals=await requestPhotoAnalysis(file,new AbortController().signal);$('#groupStatus').textContent=proposals.length?`${proposals.length} proposition(s) à corriger / valider.`:'Aucune proposition : ajoute les noms manuellement.'}catch{$('#groupStatus').textContent='Analyse indisponible ici. Tu peux quand même saisir plusieurs objets manuellement.'}
+  const rows=proposals.length?proposals.slice(0,12):Array.from({length:4},()=>({label:'',category:'autre',quantity:1}))
+  $('#groupRows').innerHTML=rows.map((o,i)=>`<div class="groupRow"><input type="checkbox" data-group-check="${i}" ${o.label?'checked':''}><input data-group-name="${i}" value="${esc(o.label||'')}" placeholder="Nom de l’objet"><input data-group-sounds="${i}" placeholder="sons / usages (facultatif)"></div>`).join('')
+  $('#saveGroup').disabled=false
+  $('#saveGroup').onclick=async()=>{const selected=$$('[data-group-check]:checked',d);if(!selected.length){toast('Coche au moins un objet');return}const caseId=$('#groupCase').value;for(const box of selected){const i=box.dataset.groupCheck,name=$(`[data-group-name="${i}"]`,d).value.trim();if(!name)continue;const sounds=$(`[data-group-sounds="${i}"]`,d).value.split(',').map(x=>x.trim()).filter(Boolean);await db.put('objects',{id:uid('obj'),name,detectedName:proposals[i]?.label||'',sounds,tags:[],contexts:[],photo,caseId,container_id:caseId,family:'À classer',source:'photo de groupe',owned:true,status:'available',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()})}scheduleDriveSync();await refresh();render();close();toast('Objets créés depuis la photo')}
+}
+
 async function photoFlow(file){
   const targetId=photoTargetMiseId;photoTargetMiseId=null
   if(!file.type.startsWith('image/')){toast('Sélectionnez un fichier image');return}
@@ -389,6 +495,8 @@ function openMisePhotoControl(m,file){
     }
   }
 }
+$('#groupPhotoInput').onchange=e=>{const file=e.target.files?.[0];e.target.value='';if(file)groupPhotoFlow(file)}
+
 for(const id of ['photoInput','galleryInput']){
   $("#"+id).onchange=e=>{const file=e.target.files[0];e.target.value='';if(file)photoFlow(file)}
   $("#"+id).addEventListener('cancel',()=>{photoTargetMiseId=null})
@@ -404,22 +512,30 @@ function openObject(p={}){
   const m=$('#modal')
   m.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>${current?'Modifier':'Ajouter'} un objet</b><small>Nom libre et personnel</small></div><button value="cancel" class="ghost">×</button></div>
   ${o.photo?`<img class="photoPreview" src="${o.photo}">`:''}
+  <div class="objectQuick"><button type="button" id="favObject" class="ghost">${o.favorite?'★ Favori':'☆ Favori'}</button>${current?'<button type="button" id="qrObject" class="ghost">QR objet</button>':''}<button type="button" id="audioMemo" class="ghost">${o.audioMemo?'Réenregistrer mémo sonore':'Enregistrer un mémo sonore'}</button></div>
+  ${o.audioMemo?`<audio controls src="${o.audioMemo}"></audio>`:''}
   <label>Nom<input id="fName" value="${esc(o.name)}" placeholder="Bouteille frangée"></label>
   <div class="grid2"><label>Famille<select id="fFamily">${['Vie quotidienne','Musique & percussions','Nature & matières','Pas & surfaces','Eau & liquides','Vent & air','Feu & textures','Animaux & voix','Technique audio','Technique scène','À classer'].map(x=>`<option ${o.family===x?'selected':''}>${x}</option>`)}</select></label>
   <label>Contenant<select id="fCase"><option value="">Sans contenant</option>${cases.map(c=>`<option value="${c.id}" ${(o.caseId||o.container_id)===c.id?'selected':''}>${esc(caseName(c))}</option>`)}</select></label></div>
   <label>Sons / usages<input id="fSounds" value="${esc((o.sounds||[]).join(', '))}" placeholder="mer, pluie, vent…"></label>
   <label>Tags / contexte<input id="fTags" value="${esc(unique([...(o.tags||[]),...(o.contexts||[])]).join(', '))}" placeholder="atelier, kit perso, #spectacle…"></label>
+  ${(o.locationHistory||[]).length?`<details><summary>Historique de rangement</summary><div class="historyList">${(o.locationHistory||[]).slice().reverse().slice(0,12).map(h=>`<small>${esc(new Date(h.at).toLocaleString('fr-FR'))} · ${esc(caseName(caseBy(h.from)))} → ${esc(caseName(caseBy(h.to)))}</small>`).join('')}</div></details>`:''}
   <div class="row"><button type="button" id="pickGallery" class="ghost">Importer photo</button><button type="button" id="pickCamera" class="ghost">Appareil photo</button><button id="saveObject">Enregistrer</button></div></form>`
   m.showModal()
   $('#pickGallery').onclick=()=>pickPhoto('galleryInput')
   $('#pickCamera').onclick=()=>pickPhoto('photoInput')
+  $('#favObject').onclick=()=>{o.favorite=!o.favorite;$('#favObject').textContent=o.favorite?'★ Favori':'☆ Favori'}
+  if($('#qrObject'))$('#qrObject').onclick=()=>showObjectQr(o)
+  $('#audioMemo').onclick=e=>captureAudioMemo(o,e.currentTarget)
   $('#saveObject').onclick=async e=>{
     e.preventDefault()
     const tags=$('#fTags').value.split(',').map(x=>x.trim()).filter(Boolean)
+    const previousCase=current?(current.caseId||current.container_id||''):(o.caseId||o.container_id||''),nextCase=$('#fCase').value
+    if(previousCase!==nextCase)o.locationHistory=[...(o.locationHistory||[]),{at:new Date().toISOString(),from:previousCase,to:nextCase,method:'fiche'}]
     Object.assign(o,{
       name:$('#fName').value.trim()||'Objet sans nom',
       family:$('#fFamily').value,
-      caseId:$('#fCase').value,container_id:$('#fCase').value,
+      caseId:nextCase,container_id:nextCase,
       sounds:$('#fSounds').value.split(',').map(x=>x.trim()).filter(Boolean),
       tags,contexts:tags,updatedAt:new Date().toISOString()
     })
@@ -454,9 +570,10 @@ async function showCase(id){
   m.innerHTML=`<div class="caseView"><div class="dialoghead"><div><b>${esc(caseName(c))}</b><small>${items.length} objet${items.length>1?'s':''}</small></div><button class="ghost" id="closeCase">×</button></div>
   <img class="qr" src="${qr}"><code>${esc(c.id)}</code>
   <div class="miniList">${items.map(o=>`<span>${esc(o.name)}</span>`).join('')}</div>
-  <div class="row"><button id="printLabel">Étiquette / imprimer</button><button id="editCase" class="ghost">Modifier</button></div></div>`
+  <div class="row"><button id="caseCreator">Avec ce que j’ai ici</button><button id="printLabel">Étiquette / imprimer</button><button id="editCase" class="ghost">Modifier</button></div></div>`
   m.showModal()
   $('#closeCase').onclick=()=>m.close()
+  $('#caseCreator').onclick=()=>{m.close();openCaseCreator(c)}
   $('#printLabel').onclick=()=>openPrint(c,qr)
   $('#editCase').onclick=()=>{m.close();openCase(c)}
 }
@@ -547,6 +664,12 @@ function openPrint(c,qr){
   $('#systemPrint').onclick=()=>window.print()
   $('#btPrint').onclick=pairPrinter
 }
+async function openBatchPrint(){
+  const d=$('#printDlg')
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Imprimer une série de QR</b><small>Valises et caisses</small></div><button id="closeBatch" class="ghost">×</button></div><div class="checklist">${cases.map(c=>`<label class="check"><input type="checkbox" data-print-case value="${c.id}" checked><span>${esc(caseName(c))}</span></label>`).join('')||'<p>Aucun contenant.</p>'}</div><button id="makeBatch">Préparer les étiquettes</button><div id="batchLabels" class="batchLabels"></div></div>`
+  d.showModal();$('#closeBatch').onclick=()=>d.close();$('#makeBatch').onclick=async()=>{const ids=$$('[data-print-case]:checked',d).map(x=>x.value),selected=cases.filter(c=>ids.includes(c.id));if(!selected.length){toast('Sélectionne au moins une valise');return}const labels=[];for(const c of selected){const url=location.href.split('?')[0]+'?case='+encodeURIComponent(c.id),qr=await QRCode.toDataURL(url,{width:420,margin:2,errorCorrectionLevel:'M'});labels.push(`<div class="labelPreview batchLabel"><strong>${esc(caseName(c))}</strong><img src="${qr}"><small>${esc(c.id)}</small></div>`)}$('#batchLabels').innerHTML=labels.join('')+`<div class="row"><button id="printBatchNow">Impression système</button></div>`;$('#printBatchNow').onclick=()=>window.print()}
+}
+
 async function updatePrinterStatus(){
   const saved=await db.get('settings','printer')
   const label=saved?.name?`Imprimante · ${saved.name}`:'Imprimante · À connecter'
@@ -565,27 +688,55 @@ async function pairPrinter(){
   }catch(e){if(e.name!=='NotFoundError') toast('Connexion Bluetooth impossible')}
 }
 
+function parseScannedTarget(text){
+  let caseId='',objectId=''
+  try{const u=new URL(text);caseId=u.searchParams.get('case')||'';objectId=u.searchParams.get('object')||''}catch{if(caseBy(text))caseId=text;else if(objectBy(text))objectId=text}
+  return {caseId,objectId,text}
+}
+async function handleScanTarget(target){
+  if(scanPurpose!=='move'){
+    if(target.caseId&&caseBy(target.caseId))return showCase(target.caseId)
+    if(target.objectId&&objectBy(target.objectId))return openObject(objectBy(target.objectId))
+    toast('QR non reconnu dans cette base');return
+  }
+  if(!moveScanState)moveScanState={step:'source',sourceCaseId:'',objectId:''}
+  if(moveScanState.step==='source'){
+    if(!target.caseId||!caseBy(target.caseId)){toast('Scanne d’abord la valise source');return setTimeout(()=>startScan(),350)}
+    moveScanState.sourceCaseId=target.caseId;moveScanState.step='object';toast(`Source : ${caseName(caseBy(target.caseId))} · scanne l’objet`);return setTimeout(()=>startScan(),350)
+  }
+  if(moveScanState.step==='object'){
+    if(!target.objectId||!objectBy(target.objectId)){toast('Scanne maintenant le QR de l’objet');return setTimeout(()=>startScan(),350)}
+    const o=objectBy(target.objectId),actual=o.caseId||o.container_id||''
+    if(actual&&actual!==moveScanState.sourceCaseId&&!confirm(`Cet objet est actuellement rangé dans « ${caseName(caseBy(actual))} », pas dans la valise source scannée. Continuer ?`)){moveScanState={step:'source',sourceCaseId:'',objectId:''};toast('Déplacement annulé');scanPurpose='browse';return}
+    moveScanState.objectId=target.objectId;moveScanState.step='destination';toast(`Objet : ${o.name} · scanne la valise destination`);return setTimeout(()=>startScan(),350)
+  }
+  if(moveScanState.step==='destination'){
+    if(!target.caseId||!caseBy(target.caseId)){toast('Scanne la valise destination');return setTimeout(()=>startScan(),350)}
+    const o=objectBy(moveScanState.objectId),from=o.caseId||o.container_id||'',to=target.caseId
+    o.locationHistory=[...(o.locationHistory||[]),{at:new Date().toISOString(),from,to,method:'scan'}];o.caseId=to;o.container_id=to;o.updatedAt=new Date().toISOString();await db.put('objects',o);scheduleDriveSync();await refresh();render();toast(`${o.name} → ${caseName(caseBy(to))}`);moveScanState=null;scanPurpose='browse'
+  }
+}
+function startMoveScans(){
+  if(!cases.length||!objects.length){toast('Il faut au moins un objet et une valise');return}
+  scanPurpose='move';moveScanState={step:'source',sourceCaseId:'',objectId:''};toast('Déplacement · scanne la valise source');startScan()
+}
 async function startScan(){
   if(!navigator.mediaDevices){toast('Caméra indisponible');return}
-  const d=$('#scanDlg');d.showModal()
-  scanner=new BrowserQRCodeReader()
+  const d=$('#scanDlg');if(!d.open)d.showModal()
+  const hint=$('.hint',d);if(hint)hint.textContent=scanPurpose==='move'?(moveScanState?.step==='source'?'1/3 · Scanne la valise source':moveScanState?.step==='object'?'2/3 · Scanne le QR de l’objet':'3/3 · Scanne la valise destination'):'Scanne le QR d’une valise, d’une caisse ou d’un objet.'
+  scanner=new BrowserQRCodeReader();let handled=false
   try{
     await scanner.decodeFromVideoDevice(undefined,$('#scanVideo'),(result)=>{
-      if(!result)return
-      const text=result.getText(); stopScan()
-      let id=text
-      try{const u=new URL(text);id=u.searchParams.get('case')||u.searchParams.get('object')||text}catch{}
-      const c=caseBy(id)
-      if(c) showCase(c.id); else toast('QR non reconnu dans cette base')
+      if(!result||handled)return;handled=true;const target=parseScannedTarget(result.getText());stopScan();void handleScanTarget(target)
     })
   }catch{toast('Impossible d’ouvrir la caméra')}
 }
 function stopScan(){
   try{scanner?.reset()}catch{}
   scanner=null
-  $('#scanDlg').close()
+  const d=$('#scanDlg');if(d?.open)d.close()
 }
-$('#stopScan').onclick=stopScan
+$('#stopScan').onclick=()=>{stopScan();if(scanPurpose==='move'){scanPurpose='browse';moveScanState=null;toast('Déplacement annulé')}}
 
 function startVoice(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition
@@ -609,6 +760,11 @@ $('#goalManual').onclick=()=>$('#manualDlg').showModal()
 $('#closeManual').onclick=()=>$('#manualDlg').close()
 $('#goalBackup').onclick=()=>$('#backupBtn').click()
 $('#goalRestore').onclick=()=>$('#restoreInput').click()
+$('#goalGroupPhoto').onclick=()=>$('#groupPhotoInput').click()
+$('#goalChallenge').onclick=openChallenge
+$('#goalMove').onclick=startMoveScans
+$('#goalShare').onclick=openShareDialog
+$('#goalBatchPrint').onclick=openBatchPrint
 updatePrinterStatus();updateAccountStatus()
 
 $$('[data-action]').forEach(b=>b.onclick=()=>{
@@ -632,8 +788,8 @@ function renderCreator(){
 
 function render(){
   renderSearch()
-  $('#objectCards').innerHTML=objects.slice().sort((a,b)=>a.name.localeCompare(b.name,'fr')).map(o=>`<button class="card objectCard" data-object="${o.id}">
-    <b>${esc(o.name)}</b><span>${(o.sounds||[]).slice(0,4).join(' · ')||'Son à préciser'}</span><small>${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></button>`).join('')
+  $('#objectCards').innerHTML=objects.slice().sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'fr')).map(o=>`<button class="card objectCard" data-object="${o.id}">
+    <b>${o.favorite?'★ ':''}${esc(o.name)}</b><span>${(o.sounds||[]).slice(0,4).join(' · ')||'Son à préciser'}</span><small>${esc(caseName(caseBy(o.caseId||o.container_id)))}${o.audioMemo?' · mémo sonore':''}</small></button>`).join('')
   $$('[data-object]').forEach(b=>b.onclick=()=>openObject(objects.find(o=>o.id===b.dataset.object)))
 
   $('#caseCards').innerHTML=cases.map(c=>`<button class="card caseCard" data-case="${c.id}"><b>${esc(caseName(c))}</b><span>${objects.filter(o=>(o.caseId||o.container_id)===c.id).length} objets</span><small>QR prêt</small></button>`).join('')
@@ -668,4 +824,6 @@ $('#restoreInput').onchange=async event=>{
   try{const payload=JSON.parse(await file.text());if(!confirm('Importer cette sauvegarde MISE ! et remplacer les données locales de cet appareil ?'))return;await applyPrivateState(payload);scheduleDriveSync();toast('Sauvegarde importée')}catch(error){toast(error instanceof Error?error.message:'Import impossible')}finally{event.target.value=''}
 }
 
-if(params.get('case')) setTimeout(()=>showCase(params.get('case')),250)
+if(params.get('shareFile'))setTimeout(()=>openSharedPackage(params.get('shareFile')),300)
+else if(params.get('case'))setTimeout(()=>showCase(params.get('case')),250)
+else if(params.get('object'))setTimeout(()=>{const o=objectBy(params.get('object'));if(o)openObject(o)},250)

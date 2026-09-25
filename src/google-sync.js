@@ -170,3 +170,39 @@ export async function savePrivateState(payload){
   const response=await api(endpoint,{method:current?'PATCH':'POST',headers:{'Content-Type':`multipart/related; boundary=${boundary}`},body})
   return {folder:mise,file:await response.json()}
 }
+
+async function ensureSharesFolder(){
+  const {mise}=await ensureMiseFolder()
+  let shares=(await searchFolders(`name = 'Partages' and '${q(mise.id)}' in parents`))[0]
+  if(!shares)shares=await createFolder('Partages',mise.id)
+  return shares
+}
+async function createJsonFile(name,payload,parentId,kind='share-package'){
+  const boundary='mise_share_'+Date.now()
+  const metadata={name,mimeType:'application/json',parents:[parentId],appProperties:{miseKind:kind,miseVersion:'1'}}
+  const body=new Blob([
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,JSON.stringify(payload),`\r\n--${boundary}--`
+  ])
+  const response=await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,modifiedTime,version,webViewLink,parents',{method:'POST',headers:{'Content-Type':`multipart/related; boundary=${boundary}`},body})
+  return await response.json()
+}
+async function grantFileReader(fileId,email){
+  const response=await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}/permissions?sendNotificationEmail=true&fields=id,emailAddress,role,type`,{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'user',role:'reader',emailAddress:email})
+  })
+  return await response.json()
+}
+export async function createSharePackage(payload,recipientEmails=[]){
+  const shares=await ensureSharesFolder()
+  const stamp=new Date().toISOString().replace(/[:.]/g,'-')
+  const file=await createJsonFile(`MISE-partage-${stamp}.json`,payload,shares.id)
+  const recipients=[...new Set(recipientEmails.map(x=>String(x||'').trim().toLowerCase()).filter(Boolean))]
+  const permissions=[]
+  for(const email of recipients) permissions.push(await grantFileReader(file.id,email))
+  return {folder:shares,file,recipients,permissions}
+}
+export async function loadSharePackage(fileId){
+  const response=await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`)
+  return await response.json()
+}
