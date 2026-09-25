@@ -59,3 +59,51 @@ header{padding-top:.9rem;align-items:center}.brand{min-width:0}.wordmark{display
 
 @supports(padding:max(0px)){header{padding-left:max(1rem,env(safe-area-inset-left));padding-right:max(1rem,env(safe-area-inset-right));padding-top:max(.9rem,env(safe-area-inset-top))}.goalNav{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}}
 @media(max-width:620px){button,.goalNav summary{min-height:44px}.form input,.form select,.form textarea,.searchbox input{font-size:16px}#scanDlg{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 12px)}#scanVideo{max-height:52dvh}}
+
+
+/* MISE 0.2.1-beta.1 · carton mark, layout and preference hardening */
+[hidden]{display:none!important}
+.miseBrand{display:flex;align-items:center;gap:.8rem}.miseBrandCopy{min-width:0}.miseLogo4{width:46px;height:46px;display:grid;place-items:center;flex:none;border:1px solid #35353b;border-radius:10px;background:#121216}.miseLogo4 svg{width:38px;height:38px;fill:none;stroke:#efefec;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.miseLogo4 .box{fill:#1d2024}.miseLogo4 .flap{stroke:#c9ced1}.miseLogo4 .wave{stroke:#ff3b30;stroke-width:2.8}
+.miseSectionHead{display:flex;align-items:end;justify-content:space-between;gap:1rem;margin:.4rem 0 .8rem;padding:.9rem 1rem;border:1px solid #2d2d34;border-radius:10px;background:#151519}.miseSectionHead>div{display:grid;gap:.18rem}.miseSectionHead small{font-size:.61rem;font-weight:850;letter-spacing:.12em;color:#ff6a62}.miseSectionHead h2,.miseSectionHead p{margin:0}.miseSectionHead h2{font-size:1.35rem}.miseSectionHead p{font-size:.72rem;color:#95959d}.miseSectionHead #addMise{min-width:110px;background:#d93630;border-color:#f25d56;color:#fff;font-weight:850}.miseCards{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.preferenceState{display:flex;justify-content:space-between;gap:1rem;align-items:center;padding:.72rem .8rem;border:1px solid #303036;border-radius:8px;background:#141418}.preferenceState span{font-size:.76rem;color:#9d9da5;text-align:right}
+.folderDropZone{display:grid;gap:.45rem;padding:.8rem;border:1px dashed #3b3b43;border-radius:8px;background:#121216}.folderDropZone.dragging{border-color:#ff665e;background:#1a1313}.folderDropZone span{font-size:.72rem;line-height:1.4;color:#92929a}
+
+/* Explicit light mode */
+html[data-theme=light] body{background:#f5f5f1;color:#151519}
+html[data-theme=light] header,html[data-theme=light] .goalNav{background:#f5f5f1f2;border-color:#d8d8de}
+html[data-theme=light] .goalNav details,html[data-theme=light] .result,html[data-theme=light] .empty,html[data-theme=light] .checklist,html[data-theme=light] .preferenceState,html[data-theme=light] .miseSectionHead{background:#fff;color:#151519;border-color:#d8d8de}
+html[data-theme=light] .goalNav summary,html[data-theme=light] .goalNav button,html[data-theme=light] .card,html[data-theme=light] .result h3,html[data-theme=light] .miseTitle b{color:#151519}
+html[data-theme=light] .goalNav button{background:#f2f2ef;border-color:#d8d8de}html[data-theme=light] .goalNav button.active{background:#151519;color:#fff;border-color:#151519}
+html[data-theme=light] .searchbox input,html[data-theme=light] .form input,html[data-theme=light] .form select,html[data-theme=light] .form textarea{color:#151519;background:#fff;border-color:#d1d1d5}
+html[data-theme=light] .ghost,html[data-theme=light] .searchbox button,html[data-theme=light] .headerChip,html[data-theme=light] .headerIcon{background:#ecece8;color:#151519;border-color:#d1d1d5}
+html[data-theme=light] .muted,html[data-theme=light] .hint,html[data-theme=light] small,html[data-theme=light] .miseSectionHead p,html[data-theme=light] .preferenceState span{color:#666872}
+html[data-theme=light] .activeMise{border-color:#c93b35!important}
+
+/* System light follows the device */
+@media(prefers-color-scheme:light){
+ html[data-theme=system] body{background:#f5f5f1;color:#151519}
+ html[data-theme=system] header,html[data-theme=system] .goalNav{background:#f5f5f1f2;border-color:#d8d8de}
+ html[data-theme=system] .goalNav details,html[data-theme=system] .result,html[data-theme=system] .empty,html[data-theme=system] .checklist,html[data-theme=system] .preferenceState,html[data-theme=system] .miseSectionHead{background:#fff;color:#151519;border-color:#d8d8de}
+ html[data-theme=system] .goalNav summary,html[data-theme=system] .goalNav button,html[data-theme=system] .card,html[data-theme=system] .result h3,html[data-theme=system] .miseTitle b{color:#151519}
+ html[data-theme=system] .goalNav button{background:#f2f2ef;border-color:#d8d8de}html[data-theme=system] .goalNav button.active{background:#151519;color:#fff;border-color:#151519}
+ html[data-theme=system] .searchbox input,html[data-theme=system] .form input,html[data-theme=system] .form select,html[data-theme=system] .form textarea{color:#151519;background:#fff;border-color:#d1d1d5}
+ html[data-theme=system] .ghost,html[data-theme=system] .searchbox button,html[data-theme=system] .headerChip,html[data-theme=system] .headerIcon{background:#ecece8;color:#151519;border-color:#d1d1d5}
+ html[data-theme=system] .muted,html[data-theme=system] .hint,html[data-theme=system] small,html[data-theme=system] .miseSectionHead p,html[data-theme=system] .preferenceState span{color:#666872}
+}
+
+/* Régie keeps the backstage shell very dark and high contrast. */
+html[data-theme=regie] body{background:#000;color:#fff}html[data-theme=regie] header,html[data-theme=regie] .goalNav{background:#000;border-color:#555}
+html[data-theme=regie] .goalNav details,html[data-theme=regie] .result,html[data-theme=regie] .empty,html[data-theme=regie] .checklist,html[data-theme=regie] .preferenceState,html[data-theme=regie] .miseSectionHead{background:#050505;border-color:#666}
+
+/* Force phone-like layout when requested, even on a wide screen. */
+html[data-display=mobile] header{align-items:flex-start;flex-direction:column;gap:.65rem;padding:.8rem .75rem .35rem}
+html[data-display=mobile] .headerTools{width:100%;justify-content:flex-start}html[data-display=mobile] .headerTools .status{order:4;text-align:left}html[data-display=mobile] .headerChip{flex:1}
+html[data-display=mobile] main{padding-left:.75rem;padding-right:.75rem}html[data-display=mobile] .quick{grid-template-columns:repeat(2,1fr)}html[data-display=mobile] .goalNav{grid-template-columns:1fr;position:relative}html[data-display=mobile] .goalNav details>div{grid-template-columns:repeat(2,minmax(0,1fr))}html[data-display=mobile] .grid2{grid-template-columns:1fr}html[data-display=mobile] .resultHead span{display:none}html[data-display=mobile] .miseSectionHead{align-items:stretch;flex-direction:column}html[data-display=mobile] .miseSectionHead #addMise{width:100%}
+
+/* Force the desktop shell on a narrow viewport when requested. */
+@media(max-width:620px){
+ html[data-display=desktop] header{align-items:center;flex-direction:row;gap:1rem;padding:1rem}
+ html[data-display=desktop] .headerTools{width:auto;justify-content:flex-end}html[data-display=desktop] .headerTools .status{order:0;text-align:right}html[data-display=desktop] .headerChip{flex:0 1 auto}
+ html[data-display=desktop] main{padding-left:1rem;padding-right:1rem}html[data-display=desktop] .quick{grid-template-columns:repeat(4,1fr)}html[data-display=desktop] .goalNav{grid-template-columns:repeat(3,minmax(0,1fr));position:sticky}html[data-display=desktop] .goalNav details>div{grid-template-columns:1fr}html[data-display=desktop] .grid2{grid-template-columns:1fr 1fr}
+}
+.form,.caseView{width:min(560px,calc(94vw - 2rem));min-width:0;max-width:100%}
