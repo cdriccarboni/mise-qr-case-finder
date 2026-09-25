@@ -10,9 +10,9 @@ button:active{transform:scale(.985)}
 .muted,.hint,small{color:#999}
 header{max-width:980px;margin:auto;padding:1.2rem 1rem .5rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
 .brand{text-align:left}.wordmark{font-size:2.35rem;font-weight:900;letter-spacing:-.08em;line-height:.9}
-.logo-i,.bang{position:relative;display:inline-block}.logo-i i{position:absolute;width:.17em;height:.17em;border-radius:50%;background:#ff3b30;left:.24em;top:-.08em}
-.bang{margin-left:.08em}.bang i{position:absolute;width:.18em;height:.18em;border-radius:50%;background:#ff3b30;left:.16em;bottom:.01em}
-.sub{margin-top:.45rem;font-size:.82rem;letter-spacing:.16em;color:#d7d7d2}.tag{font-size:.67rem;color:#7f7f87;margin-top:.12rem}
+.logo-i,.bang{position:relative;display:inline-block}.logo-i i,.bang i{position:absolute;width:.18em;height:.18em;border-radius:50%;background:#ff3b30;left:50%;transform:translateX(-50%)}.logo-i i{top:-.08em}
+.bang{margin-left:.08em}.bang i{bottom:.01em}
+.sub{margin-top:.45rem;font-size:.82rem;letter-spacing:.16em;color:#d7d7d2}.tag{font-size:.67rem;color:#7f7f87;margin-top:.12rem}.corpusMeta{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-top:.7rem;padding:.55rem .72rem;border:1px solid #2b2b31;border-radius:14px;background:#141418;color:#9d9da5;font-size:.72rem}.corpusMeta b{color:#f5f5f2}
 main{max-width:980px;margin:auto;padding:0 1rem 7rem}
 .hero{padding:1rem 0}.searchbox{display:flex;gap:.55rem;background:#17171b;border:1px solid #2b2b31;padding:.5rem;border-radius:20px;box-shadow:0 14px 50px #0008}
 .searchbox input{flex:1;min-width:0;background:transparent;color:#fff;border:0;outline:0;padding:.8rem;font-size:1.08rem}.searchbox button{width:3.15rem;border-radius:15px;background:#2b2b31}.searchbox button.listening{background:#e53c34;animation:pulse 1s infinite}
