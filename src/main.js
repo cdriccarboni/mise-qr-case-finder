@@ -427,12 +427,12 @@ function render(){
     <div class="miseTitle"><b>${esc(m.name)}</b><button class="link" data-active="${m.id}">${activeMise===m.id?'Active':'Activer'}</button></div>
     <span>${(m.objectIds||[]).length} objets · ${(m.checked||[]).length} contrôlés</span>
     <div class="checklist">${(m.objectIds||[]).map(id=>objects.find(o=>o.id===id)).filter(Boolean).map(o=>`<label class="check"><input type="checkbox" data-mise="${m.id}" value="${o.id}" ${(m.checked||[]).includes(o.id)?'checked':''}><span>${esc(o.name)} <small>· ${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></span></label>`).join('')}</div>
-    <div class="row"><button data-control="${m.id}">📷 Contrôle photo</button><button data-editmise="${m.id}" class="ghost">Modifier</button></div>
+    <div class="row"><button data-control="${m.id}">📷 Contrôle photo · bêta</button><button data-editmise="${m.id}" class="ghost">Modifier</button></div>
   </article>`).join(''):'<div class="empty">Crée une mise ou ouvre un kit puis « Préparer demain ».</div>'
   $$('[data-active]').forEach(b=>b.onclick=()=>{activeMise=b.dataset.active;render()})
   $$('#miseCards .check input').forEach(x=>x.onchange=()=>toggleCheck(miseBy(x.dataset.mise),x.value,x.checked))
   $$('[data-editmise]').forEach(b=>b.onclick=()=>openMise(miseBy(b.dataset.editmise)))
-  $$('[data-control]').forEach(b=>b.onclick=()=>{activeMise=b.dataset.control;$('#photoInput').click();toast('Photo de contrôle : ajoute/valide les objets visibles')})
+  $$('[data-control]').forEach(b=>b.onclick=()=>{activeMise=b.dataset.control;$('#photoInput').click();photoTargetMiseId=b.dataset.control})
 }
 render()
 
