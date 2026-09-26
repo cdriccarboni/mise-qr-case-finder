@@ -12,6 +12,11 @@ export default defineConfig({
       display:'standalone', start_url:'./', scope:'./', lang:'fr',
       icons:[{src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any'},{src:'apple-touch-icon.png',sizes:'180x180',type:'image/png',purpose:'any'}]
     },
-    workbox:{navigateFallback:'index.html',globPatterns:['**/*.{js,css,html,svg,json}']}
+    workbox:{
+      navigateFallback:'index.html',
+      globPatterns:['**/*.{js,mjs,css,html,svg,json,bin,png}','models/coco-ssd/*'],
+      maximumFileSizeToCacheInBytes:8*1024*1024,
+      cleanupOutdatedCaches:true
+    }
   })]
 })

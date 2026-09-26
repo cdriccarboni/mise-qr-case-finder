@@ -10,6 +10,13 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+public/models/
+test-results/
+playwright-report/
+# Local migrations and exports must never enter the repository.
+private-data/
+MISE-backup*.json
+MISE-Data-Bruitage*.xlsx
 *.local
 
 # Editor directories and files
