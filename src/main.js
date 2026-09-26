@@ -5,8 +5,12 @@ import QRCode from 'qrcode'
 import { BrowserQRCodeReader } from '@zxing/browser'
 import { openDB } from 'idb'
 import { registerSW } from 'virtual:pwa-register'
-import { readProjectContext, requestPhotoAnalysis, makeControlSummary, makeProjectSummary } from './project-control.js'
+import { readProjectContext, makeControlSummary, makeProjectSummary } from './project-control.js'
 import { artGoogleSession, requestGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState, createSharePackage, loadSharePackage } from './google-sync.js'
+
+import { DATA_STORES, readData, enrichObjects } from './data-bruitage.js'
+import { openDataBruitage } from './data-ui.js'
+import { openLocalPhoto } from './vision-ui.js'
 
 registerSW({ immediate:true })
 
@@ -20,8 +24,8 @@ const safeExternal=x=>!/(gun|weapon|arme|fusil|pisto|coup de feu|explosi|knife)/
 const params=new URLSearchParams(location.search)
 const project=readProjectContext(location.search,location.href)
 
-const db=await openDB('mise-db',3,{upgrade(d){
-  for(const s of ['objects','cases','kits','mises','settings']) {
+const db=await openDB('mise-db',4,{upgrade(d){
+  for(const s of [...DATA_STORES,'kits','settings']) {
     if(!d.objectStoreNames.contains(s)) d.createObjectStore(s,{keyPath:'id'})
   }
 }})
@@ -81,7 +85,7 @@ let objects=[],cases=[],kits=[],mises=[],activeMise=null, scanner=null, photoTar
 let scanPurpose='browse',moveScanState=null
 let projectSyncFailed=false
 async function refresh(){
-  objects=await db.getAll('objects')
+  objects=enrichObjects(await readData(db))
   cases=await db.getAll('cases')
   kits=await db.getAll('kits')
   mises=await db.getAll('mises')
@@ -92,11 +96,12 @@ await refresh()
 
 let driveSyncTimer=0,driveSyncBusy=false
 async function privateStatePayload(){
-  return {version:1,exportedAt:new Date().toISOString(),objects:await db.getAll('objects'),cases:await db.getAll('cases'),kits:await db.getAll('kits'),mises:await db.getAll('mises')}
+  return {version:2,exportedAt:new Date().toISOString(),...await readData(db),kits:await db.getAll('kits')}
 }
 async function applyPrivateState(payload){
   if(!payload||typeof payload!=='object')throw new Error('Sauvegarde MISE ! invalide')
-  for(const store of ['objects','cases','kits','mises']){
+  for(const store of [...DATA_STORES,'kits']){
+    if(!Array.isArray(payload[store]))continue
     await db.clear(store)
     for(const item of Array.isArray(payload[store])?payload[store]:[]) if(item?.id) await db.put(store,item)
   }
@@ -339,7 +344,7 @@ $('#app').innerHTML=`
 <div class="goalNav" aria-label="Navigation MISE">
  <details open><summary>Trouver & créer</summary><div><button data-tab="search" class="active">Recherche</button><button data-tab="creator">Créateur d’ambiance</button><button id="goalGroupPhoto" type="button">Photo de groupe</button><button id="goalChallenge" type="button">Défi bruitage</button></div></details>
  <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
- <details><summary>Partager & outils</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Imprimer série QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
+ <details><summary>Partager & outils</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Imprimer série QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Data Bruitage · importer / exporter</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="search" class="tab active"><div id="searchResults"></div></section>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
@@ -364,7 +369,7 @@ $('#app').innerHTML=`
   <div class="grid2"><label><span>Affichage</span><select id="displayMode"><option value="auto">Auto</option><option value="desktop">Ordinateur</option><option value="mobile">Mobile</option></select></label><label><span>Thème</span><select id="themeMode"><option value="system">Système</option><option value="dark">Sombre</option><option value="light">Clair</option><option value="regie">Mode régie</option></select></label></div>
   <div id="preferencesGoogleState" class="preferenceState"><b>Google Drive</b><span>Non connecté</span></div>
   <button id="preferencesGoogle" type="button">Raccorder Google Drive</button>
-  <div id="folderDropZone" class="folderDropZone" tabindex="0"><b>Dossier de travail</b><span id="folderLinkState">Choisis un dossier local de référence. MISE mémorise son nom sur cet appareil ; l’import automatique viendra dans une prochaine passe.</span><input id="folderDropInput" type="file" webkitdirectory multiple hidden><button id="chooseFolder" type="button" class="ghost">Choisir un dossier</button></div>
+  <div id="folderDropZone" class="folderDropZone" tabindex="0"><b>Dossier de travail</b><span id="folderLinkState">Choisis un dossier local pour préparer un lot d’import. Aucun fichier source ne sera modifié.</span><input id="folderDropInput" type="file" webkitdirectory multiple hidden><button id="chooseFolder" type="button" class="ghost">Choisir un dossier</button></div>
   <div class="row"><button id="preferencesBackup" type="button" class="ghost">Sauvegarder</button><button id="preferencesRestore" type="button" class="ghost">Importer une sauvegarde</button></div>
 </div></dialog>
 <dialog id="manualDlg"><div class="manual"><div class="dialoghead"><div><b>MISE ! · Mini-manuel</b><small>QR Case Finder · prise en main rapide</small></div><button id="closeManual" class="ghost" type="button">×</button></div>
@@ -394,7 +399,7 @@ function setTab(t){
   $$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))
   render()
 }
-$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
+$$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
 
 function renderSearch(target='#searchResults'){
   const q=$('#q').value.trim(), own=searchOwned(q), ideas=searchExternal(q)
@@ -429,76 +434,19 @@ async function resizePhoto(file){
     img.onerror=()=>{URL.revokeObjectURL(u);reject(new Error('Image illisible'))};img.src=u
   })
 }
-async function groupPhotoFlow(file){
-  if(!file?.type?.startsWith('image/')){toast('Sélectionne une image');return}
-  const d=$('#modal'),preview=URL.createObjectURL(file),photo=await resizePhoto(file)
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Photo de groupe</b><small>Créer plusieurs objets depuis une seule photo</small></div><button id="closeGroup" class="ghost">×</button></div><img class="photoPreview" src="${preview}" alt="Photo de groupe"><p id="groupStatus" class="hint">Analyse en cours… Toute proposition devra être validée.</p><div id="groupRows"></div><label>Contenant commun<select id="groupCase"><option value="">Sans contenant</option>${cases.map(c=>`<option value="${c.id}">${esc(caseName(c))}</option>`).join('')}</select></label><button id="saveGroup" disabled>Créer les objets cochés</button></div>`
-  d.showModal();const close=()=>{URL.revokeObjectURL(preview);d.close()};$('#closeGroup').onclick=close
-  let proposals=[]
-  try{proposals=await requestPhotoAnalysis(file,new AbortController().signal);$('#groupStatus').textContent=proposals.length?`${proposals.length} proposition(s) à corriger / valider.`:'Aucune proposition : ajoute les noms manuellement.'}catch{$('#groupStatus').textContent='Analyse indisponible ici. Tu peux quand même saisir plusieurs objets manuellement.'}
-  const rows=proposals.length?proposals.slice(0,12):Array.from({length:4},()=>({label:'',category:'autre',quantity:1}))
-  $('#groupRows').innerHTML=rows.map((o,i)=>`<div class="groupRow"><input type="checkbox" data-group-check="${i}" ${o.label?'checked':''}><input data-group-name="${i}" value="${esc(o.label||'')}" placeholder="Nom de l’objet"><input data-group-sounds="${i}" placeholder="sons / usages (facultatif)"></div>`).join('')
-  $('#saveGroup').disabled=false
-  $('#saveGroup').onclick=async()=>{const selected=$$('[data-group-check]:checked',d);if(!selected.length){toast('Coche au moins un objet');return}const caseId=$('#groupCase').value;for(const box of selected){const i=box.dataset.groupCheck,name=$(`[data-group-name="${i}"]`,d).value.trim();if(!name)continue;const sounds=$(`[data-group-sounds="${i}"]`,d).value.split(',').map(x=>x.trim()).filter(Boolean);await db.put('objects',{id:uid('obj'),name,detectedName:proposals[i]?.label||'',sounds,tags:[],contexts:[],photo,caseId,container_id:caseId,family:'À classer',source:'photo de groupe',owned:true,status:'available',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()})}scheduleDriveSync();await refresh();render();close();toast('Objets créés depuis la photo')}
+async function runLocalPhoto(file,mise=null){
+  if(!file?.type?.startsWith('image/')){toast('Sélectionnez une image');return}
+  try{await openLocalPhoto({file,db,mise,resizePhoto,saved:async next=>{
+    if(next)publishProject(next)
+    await refresh();render();toast('Validations enregistrées sur cet appareil')
+  }})}catch(error){toast(error instanceof Error?error.message:'Photo illisible')}
 }
-
+const groupPhotoFlow=file=>runLocalPhoto(file)
 async function photoFlow(file){
-  const targetId=photoTargetMiseId;photoTargetMiseId=null
-  if(!file.type.startsWith('image/')){toast('Sélectionnez un fichier image');return}
-  const mise=miseBy(targetId)
-  if(mise){openMisePhotoControl(mise,file);return}
-  try{openObject({photo:await resizePhoto(file),source:'photo',owned:true})}
-  catch{toast('Impossible de lire cette image')}
+  const target=miseBy(photoTargetMiseId);photoTargetMiseId=null
+  await runLocalPhoto(file,target)
 }
-function openMisePhotoControl(m,file){
-  const d=$('#modal'),expected=(m.objectIds||[]).map(id=>objects.find(o=>o.id===id)).filter(Boolean)
-  const controller=new AbortController(),preview=URL.createObjectURL(file)
-  let detectedObjects=[],analysisStatus='pending',analysisError=null,analysedAt=null,finished=false
-  const cleanup=()=>{finished=true;controller.abort();clearTimeout(timeout);URL.revokeObjectURL(preview)}
-  const timeout=setTimeout(()=>controller.abort(),25000)
-  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Contrôle photo</b><small>${esc(m.name)}</small></div><button value="cancel" class="ghost" aria-label="Fermer">Fermer</button></div>
-  <img class="photoPreview" src="${preview}" alt="Photo du matériel à contrôler">
-  <p class="hint">L’image originale est envoyée au service d’analyse. La reconnaissance peut omettre ou confondre des objets. Seule votre validation fait foi.</p>
-  <div id="analysisStatus" class="analysisStatus" role="status">Analyse en cours. Vous pouvez déjà effectuer le contrôle manuel.</div>
-  <div id="detectedProposals"></div>
-  <h3>Objets attendus · validation humaine</h3><p class="hint">Cochez les objets réellement vérifiés pour ce contrôle. Confirmer une proposition ne coche pas cette liste.</p>
-  <div class="checklist">${expected.map(o=>`<label class="check"><input type="checkbox" value="${esc(o.id)}"><span>${esc(o.name)} <small>· ${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></span></label>`).join('')||'<p class="hint">Aucun objet attendu. Ajoutez des objets à la mise depuis la recherche.</p>'}</div>
-  <p id="controlSaveError" class="syncWarning" role="alert" hidden></p>
-  <button id="savePhotoControl">Enregistrer le contrôle manuel</button></form>`
-  d.addEventListener('close',cleanup,{once:true})
-  d.showModal()
-  requestPhotoAnalysis(file,controller.signal).then(proposals=>{
-    if(finished)return
-    detectedObjects=proposals;analysisStatus='available';analysedAt=new Date().toISOString()
-    $('#analysisStatus').textContent=proposals.length?`${proposals.length} proposition(s) à examiner. Aucune n’est validée automatiquement.`:'Aucun objet proposé par le service. Poursuivez avec la liste manuelle.'
-    $('#detectedProposals').innerHTML=proposals.length?`<h3>Propositions du service</h3><div class="proposals">${proposals.map((o,i)=>`<label class="check"><input type="checkbox" data-proposal="${i}"><span>${esc(o.label)} <small>· ${esc(o.category)} · ×${o.quantity}${o.confidence!==undefined?` · score ${Math.round(o.confidence*100)} %`:''}</small><small class="proposalNote">Confirmer cet objet visible · proposition non ajoutée automatiquement à Data Bruitage</small></span></label>`).join('')}</div><p class="hint">Ces propositions ne modifient pas Data Bruitage.</p>`:''
-    $('#savePhotoControl').textContent='Valider et enregistrer le contrôle'
-  }).catch(error=>{
-    if(finished)return
-    analysisStatus='unavailable'
-    analysisError=error.name==='AbortError'?'Délai d’analyse dépassé':error.message
-    $('#analysisStatus').textContent='Analyse indisponible. Utilisez la liste manuelle ; aucune reconnaissance n’a été validée.'
-  }).finally(()=>clearTimeout(timeout))
-  $('#savePhotoControl').onclick=async e=>{
-    e.preventDefault()
-    const button=e.currentTarget;button.disabled=true
-    const details={method:analysisStatus==='available'?'photo-assisted':'manual-photo',analysisStatus:analysisStatus==='pending'?'cancelled':analysisStatus,analysisError,analysedAt,
-      detectedObjects:detectedObjects.map((o,i)=>({...o,validated:!!$(`[data-proposal="${i}"]`,d)?.checked})),
-      file:{name:file.name,type:file.type,size:file.size,lastModified:file.lastModified}}
-    const next={...m,checked:$$('.checklist input:checked',d).map(x=>x.value)}
-    recordControl(next,details)
-    // Freeze the submitted review before allowing late network responses to update it.
-    finished=true;controller.abort();clearTimeout(timeout)
-    try{
-      try{next.controlPhoto=await resizePhoto(file)}catch{next.controlPhoto=''}
-      await saveMise(next);d.close();await refresh();render();toast('Contrôle validé et enregistré')
-    }catch{
-      $('#controlSaveError').hidden=false
-      $('#controlSaveError').textContent='Enregistrement impossible. Vérifiez l’espace disponible et réessayez.'
-      button.disabled=false
-    }
-  }
-}
+$('#goalDataBruitage').onclick=()=>openDataBruitage({db,changed:async()=>{await refresh();render()}})
 $('#groupPhotoInput').onchange=e=>{const file=e.target.files?.[0];e.target.value='';if(file)groupPhotoFlow(file)}
 
 for(const id of ['photoInput','galleryInput']){
@@ -645,7 +593,7 @@ async function toggleCheck(m,id,yes){
 function showLatestControl(m){
   const c=m.latestControl;if(!c)return
   const d=$('#modal')
-  const methods={manual:'Liste manuelle','manual-photo':'Liste manuelle avec photo','photo-assisted':'Photo et validation humaine'}
+  const methods={'photo-local':'Photo locale et validation humaine',manual:'Liste manuelle','manual-photo':'Liste manuelle avec photo','photo-assisted':'Photo et validation humaine'}
   const statuses={available:'Propositions reçues',unavailable:'Service indisponible',cancelled:'Analyse interrompue pour validation manuelle','not-requested':'Non demandée'}
   d.innerHTML=`<div class="form"><div class="dialoghead"><b>Dernier contrôle enregistré</b><button class="ghost" id="closeControl">Fermer</button></div>
     <h2>${esc(c.miseName)}</h2><p class="hint">${esc(c.controlledAt)} · ${esc(methods[c.method]||c.method)}</p>
@@ -826,7 +774,7 @@ function applyUiPreferences(){
   }
   db.get('settings','linked-folder').then(linked=>{
     const state=$('#folderLinkState');if(!state||!linked)return
-    state.textContent=`Dossier repéré sur cet appareil : ${linked.name||'dossier'} · ${linked.fileCount||0} fichier(s). Import automatique à venir.`
+    state.textContent='Sélectionnez à nouveau le dossier pour préparer un lot d’import local.'
   }).catch(()=>{})
 }
 applyUiPreferences()
@@ -839,12 +787,10 @@ $('#preferencesBackup').onclick=()=>$('#backupBtn').click()
 $('#preferencesRestore').onclick=()=>$('#restoreInput').click()
 $('#chooseFolder').onclick=()=>$('#folderDropInput').click()
 const folderDropZone=$('#folderDropZone')
-function folderSelection(files){
-  const list=[...(files||[])];if(!list.length)return
-  const root=(list[0].webkitRelativePath||list[0].name).split('/')[0]
-  db.put('settings',{id:'linked-folder',name:root,fileCount:list.length,linkedAt:new Date().toISOString()})
-  applyUiPreferences()
-  toast(`${root} · ${list.length} fichier${list.length>1?'s':''} sélectionné${list.length>1?'s':''}`)
+async function folderSelection(files){
+  if(!files?.length)return
+  $('#preferencesDlg').close()
+  await openDataBruitage({db,files:[...files],changed:async()=>{await refresh();render()}})
 }
 $('#folderDropInput').onchange=e=>{folderSelection(e.target.files);e.target.value=''}
 for(const name of ['dragenter','dragover'])folderDropZone.addEventListener(name,e=>{e.preventDefault();folderDropZone.classList.add('dragging')})
@@ -917,7 +863,7 @@ function render(){
 render()
 
 $('#backupBtn').onclick=async()=>{
-  const payload={version:1,exportedAt:new Date().toISOString(),objects:await db.getAll('objects'),cases:await db.getAll('cases'),kits:await db.getAll('kits'),mises:await db.getAll('mises')}
+  const payload=await privateStatePayload()
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'})
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='MISE-backup.json';a.click();URL.revokeObjectURL(a.href)
 }
