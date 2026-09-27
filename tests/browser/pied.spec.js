@@ -3,6 +3,20 @@ import { mkdir } from 'node:fs/promises'
 
 const shots = '/opt/cursor/artifacts/screenshots'
 
+async function shoot(page, path) {
+  let last
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      await page.screenshot({ path, animations: 'disabled', caret: 'hide', timeout: 20000 })
+      return
+    } catch (error) {
+      last = error
+      await page.waitForTimeout(400)
+    }
+  }
+  throw last
+}
+
 test('le dernier cartouche reste entier en bas d’écran, dans les trois thèmes', async ({ page }) => {
   test.setTimeout(120000)
   await mkdir(shots, { recursive: true })
@@ -21,7 +35,7 @@ test('le dernier cartouche reste entier en bas d’écran, dans les trois thème
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
       await expect(page.locator('.goalNav details').last()).toBeVisible()
       await page.evaluate(() => document.documentElement.style.setProperty('--android-safe-bottom', '48px'))
-      if (width === 360) await page.screenshot({ path: `${shots}/rose-${label}-360x740.png`, animations: 'disabled' })
+      if (width === 360) await shoot(page, `${shots}/rose-${label}-360x740.png`)
       const last = page.locator('.goalNav details').last()
       await last.evaluate(node => { node.open = true })
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
@@ -29,7 +43,7 @@ test('le dernier cartouche reste entier en bas d’écran, dans les trois thème
       expect(box).toBeTruthy()
       expect(box.y).toBeGreaterThanOrEqual(-1)
       expect(box.y + box.height).toBeLessThanOrEqual(height + 1)
-      await page.screenshot({ path: `${shots}/pied-${label}-${width}x${height}.png` })
+      await shoot(page, `${shots}/pied-${label}-${width}x${height}.png`)
     }
   }
 })
