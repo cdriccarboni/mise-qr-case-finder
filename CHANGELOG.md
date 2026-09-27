@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3-beta.1 — 2026-09-27
+
+- Android `versionCode` 5. Connexion Google désactivée dans la WebView (Google bloque l’OAuth intégré). Message explicite, le reste de l’app reste hors connexion. Le scope Drive de la version web reste `drive` (pas `drive.file`).
+- Politique de confidentialité réécrite dans `public/privacy.html`. Dossier Play : `docs/PLAY-CONSOLE.md`.
+- Signature des binaires de test : clé debug. Ce n’est pas la clé d’upload Play.
+
 ## 0.2.2-beta.1 — 2026-09-27
 
 - Data Bruitage : champs séparés « son à entendre » et « son à imaginer », origine explicite (document de l’utilisateur, source externe, proposition générée, à vérifier), doublons signalés sans fusion.

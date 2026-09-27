@@ -13,26 +13,32 @@
   </style>
 </head>
 <body><main>
-  <h1>Confidentialité — MISE !</h1>
-  <div class="box"><strong>Principe simple :</strong> la base personnelle de MISE ! n’est pas publiée avec l’application.</div>
+  <h1>Politique de confidentialité — MISE !</h1>
+  <p>Dernière mise à jour : 27 septembre 2026. Éditeur : Cédric Carboni.</p>
+  <div class="box">MISE ! ne comporte ni publicité, ni mesure d’audience, ni outil de suivi. Le développeur ne reçoit pas la base de travail.</div>
 
-  <h2>Données stockées</h2>
-  <p>MISE ! stocke localement sur l’appareil les objets, contenants, kits, mises, photos et réglages que l’utilisateur choisit d’ajouter.</p>
+  <h2>Données sur l’appareil</h2>
+  <p>Objets, sons, relations objet-son, alias, mises, contenants, kits, sources, éléments à vérifier, corrections et réglages que vous ajoutez sont stockés localement dans IndexedDB. Les photos (JPEG réduit sur l’appareil) et les mémos sonores (fichier audio) sont enregistrés dans ces fiches, sous forme de données locales. L’affichage, le thème et, le cas échéant, un résumé de projet restent dans le stockage local du navigateur. Rien de cela n’est envoyé au développeur.</p>
 
-  <h2>Caméra et microphone</h2>
-  <p>L’accès à la caméra ou au microphone n’est demandé que lorsqu’une fonction qui en a besoin est utilisée, par exemple pour scanner un QR, ajouter une photo ou utiliser une fonction vocale.</p>
+  <h2>Caméra, micro, Bluetooth</h2>
+  <p>Ces accès ne sont demandés qu’au moment d’utiliser la fonction correspondante : scan d’un QR, photo, reconnaissance d’objets sur l’appareil, mémo sonore, dictée si le navigateur la propose, ou impression sur une imprimante Bluetooth déjà appairée. L’application ne recherche pas d’appareils Bluetooth autour de vous : elle propose seulement ceux déjà appairés.</p>
 
-  <h2>Synchronisation</h2>
-  <p>Une synchronisation avec un espace privé peut être proposée lorsque l’utilisateur active volontairement une connexion compatible. Cette synchronisation n’est pas obligatoire pour utiliser les fonctions locales.</p>
+  <h2>Reconnaissance d’objets</h2>
+  <p>La détection photo utilise un modèle embarqué (COCO-SSD). L’image est analysée sur l’appareil. Elle n’est pas envoyée à un service d’analyse.</p>
+
+  <h2>Synchronisation Google Drive (facultative)</h2>
+  <p>Dans un navigateur, vous pouvez connecter votre propre compte Google. MISE ! lit alors votre adresse e-mail (et le nom de profil renvoyé par Google) pour afficher le compte connecté. Elle lit et écrit un fichier <code>mise-data.json</code> dans votre Google Drive, dans les dossiers « _ART » puis « MISE ! ». Ce fichier reprend la base locale : textes, photos et mémos sonores inclus, ainsi que les photos de contrôle de mise. Le jeton d’accès reste dans la session du navigateur. Le développeur n’a pas accès à ce Drive.</p>
+  <p>Un partage explicite crée un second fichier, limité à la sélection. Les photos et les mémos ne sont inclus que si vous cochez cette option. Les adresses que vous saisissez sont transmises à l’API Google Drive pour leur donner un accès en lecture ; Google peut leur envoyer un e-mail. Le traitement par Google est régi par la politique de confidentialité de Google.</p>
+  <p>Dans l’application Android 0.2.3, cette connexion n’est pas proposée : Google bloque l’identification dans la fenêtre intégrée. L’application Android ne transmet donc pas la base, les photos, les mémos ni l’adresse e-mail à Google. Elle reste utilisable hors connexion. La synchronisation Drive, si vous la voulez, se fait dans Chrome ou un autre navigateur.</p>
 
   <h2>Partage</h2>
-  <p>Aucun inventaire personnel n’est rendu public automatiquement. Les fonctions de partage nécessitent une action explicite de l’utilisateur et ne doivent transmettre que les éléments sélectionnés.</p>
-
-  <h2>Publicité et suivi</h2>
-  <p>La version actuelle de MISE ! n’intègre pas de SDK publicitaire ni de système de suivi comportemental identifié dans le code publié.</p>
+  <p>Le menu Partager du système n’envoie des données que si vous lancez vous-même cette action et choisissez une application.</p>
 
   <h2>Suppression</h2>
-  <p>Les données locales peuvent être supprimées depuis l’application ou en effaçant les données du site/de l’application sur l’appareil. Les éventuelles copies synchronisées doivent être supprimées séparément depuis l’espace où elles ont été enregistrées.</p>
+  <p>Supprimez les éléments dans MISE !, ou effacez les données du site ou de l’application. Supprimez les copies présentes dans votre Google Drive, et révoquez l’accès sur <a href="https://myaccount.google.com/permissions">https://myaccount.google.com/permissions</a>. Le développeur n’en conserve pas de copie.</p>
+
+  <h2>Contact</h2>
+  <p>Cédric Carboni — <a href="mailto:cdric.carboni@gmail.com">cdric.carboni@gmail.com</a></p>
 
   <p><a href="./">Retour à MISE !</a></p>
 </main></body></html>

@@ -94,7 +94,8 @@ public final class NativePrinterBridge {
                 if (adapter == null || !adapter.isEnabled()) throw new IllegalStateException("Bluetooth désactivé");
                 BluetoothDevice device = adapter.getRemoteDevice(address);
                 emit("Connexion à " + (device.getName() == null ? address : device.getName()) + "…");
-                adapter.cancelDiscovery();
+                try { adapter.cancelDiscovery(); }
+                catch (SecurityException ignored) { /* API 31+ : pas de scan, seulement un appareil déjà appairé. */ }
                 socket = connect(device);
                 OutputStream out = socket.getOutputStream();
                 for (int i = 0; i < images.length(); i++) {
