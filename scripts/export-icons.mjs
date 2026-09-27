@@ -3,7 +3,7 @@ import { renderIconRgba } from '../src/label-render.js'
 import { rgbaToPngBuffer } from '../src/png.js'
 
 function write(path, size, padding) {
-  const image = renderIconRgba(size, { background: [157, 20, 88, 255], foreground: [255, 247, 251, 255], padding })
+  const image = renderIconRgba(size, { background: [224, 0, 120, 255], foreground: [196, 0, 104, 255], padding })
   writeFileSync(path, rgbaToPngBuffer(image.rgba, image.width, image.height))
 }
 write(new URL('../public/icon-192.png', import.meta.url), 192, 0.16)

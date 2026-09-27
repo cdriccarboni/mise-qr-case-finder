@@ -262,7 +262,7 @@ Livré et branché de bout en bout (interface, logique, moteur, données, entré
 - recherche en français qui sépare possédé / suggéré / incertain ;
 - apprentissages locaux (corrections, alias, fausse détection, emplacement, retour sur une proposition). Le modèle photo n’est pas réentraîné. On peut désactiver un apprentissage sans modifier la fiche. IndexedDB passe en version 5 sans effacer les fiches déjà là.
 
-Direction visuelle : le document d’agent d’origine demandait une interface sobre. La mission 0.3.0 demande au contraire une identité plus chaude, graphique et jouable, tout en restant lisible sur le terrain. C’est celle qui est en place (rose framboise, logo « caisse vibrante »). Le mode Régie reste plus sobre. Le détail est dans `docs/IDENTITE.md`.
+Direction visuelle : le document d’agent d’origine demandait une interface sobre. La mission 0.3.0 demande une identité plus graphique. La référence privée est « Musiques en jeu(x) – LE KIT ». MISE ! en reprend l’esprit (magenta, jetons, ondes, blocs) avec des formes originales. Le mode Régie reste sobre. Le détail est dans `docs/IDENTITE.md`. Aucune image de cette référence n’est dans le dépôt.
 
 Aucune donnée privée réelle n’est dans le dépôt. Les exemples et les tests restent fictifs.
 

@@ -153,10 +153,30 @@ export function renderLabelRgba(spec) {
   return { rgba: img.rgba, width, height, qrText: spec.qrText }
 }
 
-export function renderIconRgba(size = 512, { background = [194, 23, 106, 255], foreground = [255, 247, 251, 255], padding = 0.18 } = {}) {
+function fillCircle(img, cx, cy, radius, color) {
+  const r2 = radius * radius
+  for (let y = Math.floor(cy - radius); y <= Math.ceil(cy + radius); y++) {
+    for (let x = Math.floor(cx - radius); x <= Math.ceil(cx + radius); x++) {
+      const dx = x + 0.5 - cx, dy = y + 0.5 - cy
+      if (dx * dx + dy * dy <= r2) img.set(x, y, color)
+    }
+  }
+}
+function hexagon(img, cx, cy, radius, color, width) {
+  const pts = []
+  for (let i = 0; i < 6; i++) {
+    const angle = -Math.PI / 2 + i * Math.PI / 3
+    pts.push([cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius])
+  }
+  for (let i = 0; i < 6; i++) stroke(img, pts[i][0], pts[i][1], pts[(i + 1) % 6][0], pts[(i + 1) % 6][1], width, color)
+}
+export function renderIconRgba(size = 512, { background = [224, 0, 120, 255], foreground = [196, 0, 104, 255], padding = 0.3 } = {}) {
+  const paper = [255, 255, 255, 255]
   const img = createImage(size, size, background)
+  fillCircle(img, size * 0.48, size * 0.54, size * 0.3, paper)
+  hexagon(img, size * 0.78, size * 0.2, size * 0.09, paper, Math.max(2, size * 0.012))
   const pad = Math.round(size * padding)
-  paintMark(img, pad, pad, size - pad * 2, foreground)
+  paintMark(img, pad, pad + size * 0.04, size - pad * 2, foreground)
   return { rgba: img.rgba, width: size, height: size }
 }
 

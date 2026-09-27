@@ -38,7 +38,7 @@ public final class MainActivity extends Activity {
         getWindow().setNavigationBarColor(Color.rgb(22, 9, 16));
 
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.rgb(22, 9, 16));
+        webView.setBackgroundColor(Color.rgb(26, 6, 16));
         setContentView(webView);
         printerBridge = new NativePrinterBridge(this, webView);
         webView.addJavascriptInterface(printerBridge, "MiseAndroidPrinter");

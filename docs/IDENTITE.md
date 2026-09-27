@@ -1,24 +1,24 @@
 # Identité visuelle — MISE ! 0.3.0-beta.1
 
-## Ce qui a été cherché
+## D’où vient l’esprit
 
-« Univers en jeu » et « Jeux sonores » ont été cherchés dans le dépôt, l’historique Git et les branches, y compris `codex/modern-project-vision-20260925`.
+Le nom réel n’est pas dans le dépôt. Il est dans un dossier privé : **Musiques en jeu(x) – LE KIT**, boîte de jeux sonores coopératifs (Odia Normandie). La couverture et les premières pages du dossier de presse et du livret ont servi de référence.
 
-Aucun système visuel à ce nom n’existe. La branche `codex/modern-project-vision-20260925` est une direction plus sobre, pas une identité rose.
+Dans le dépôt public, on ne trouve qu’une mention pédagogique (`inspired_by_musiques_en_jeux` dans `public/data.json`). La branche `codex/modern-project-vision-20260925` est une autre direction, plus sobre. Ce n’est pas cette charte.
 
-Le plus proche est un texte de pédagogie dans `public/data.json` : `inspired_by_musiques_en_jeux` et `musiques_en_jeux_game_index`. C’est un index de jeux, pas une charte graphique.
+C’est une marque tierce. MISE ! n’en reprend ni le logo, ni le mot, ni les photos, ni les dessins, ni les lettres posées dans les jetons. Les images de référence ne sont pas dans ce dépôt.
 
-L’esprit demandé (rose, graphique, vivant, jouable, contemporain) a donc été construit pour cette version, sans prétendre reprendre un fichier qui n’était pas là.
+Ce qui est repris, en formes originales : le magenta saturé avec le blanc, des jetons géométriques vides (cercle, hexagone, pentagone), une trame de points, des ondes, et des blocs francs. Le terrain (recherche, fiches, caisses) reste lisible. Le jeu est réservé au Vibe, aux exercices et à « Crée ton bruitage ». Régie enlève la trame et les jetons.
 
 ## Trois directions
 
 Les fichiers sont dans `public/brand/`.
 
-### 1. Caisse vibrante — retenue
+### 1. Caisse vibrante dans un jeton — retenue
 
 ![Caisse vibrante](../public/brand/logo.svg)
 
-Une caisse en perspective, une onde au-dessus, un point comme un impact sonore. Ça se lit petit (icône, étiquette thermique, en-tête). Le nom MISE ! reste le mot, avec ses deux points alignés.
+Une caisse et une onde, posées dans un cercle blanc sur un carré magenta. Un hexagone vide à côté : un jeton, sans lettre. Le nom MISE ! reste le mot, avec ses deux points alignés. L’étiquette thermique reste en noir et blanc, sans la trame, pour que le QR se lise.
 
 ### 2. Un objet qui devient une onde — écartée
 
@@ -34,15 +34,16 @@ Le point d’exclamation du nom, posé sur une ligne de scène. Fort comme symbo
 
 ## Système retenu
 
-- Fond sombre `#160910`, texte `#fff7fb`.
-- Rose d’action `#9d1458` (bouton sur fond clair) et accent `#ff6aaa` sur fond sombre.
-- Clair : fond `#fff7fb`, texte `#2a1020`, bouton `#8f124e`.
-- Régie : noir et blanc, le rose ne sert que d’accent. Le logo passe en noir sur blanc.
+- Magenta `#e00078` (blanc dessus : contraste 4,7) et `#c40068` pour le texte des boutons sur blanc (contraste 5,9).
+- Encre de lecture `#2b0c1c` sur blanc (contraste 16). Le magenta ne sert pas de petit texte sur blanc.
+- Sombre : fond `#1a0610`, texte `#fff7fb` (contraste 18), accent `#ff4d9a` (contraste 6,3).
+- Clair : fond blanc, blocs magenta, cartes blanches.
+- Régie : noir et blanc. Le magenta ne reste que dans les deux points du nom. Pas de trame, pas de jetons.
 - Les cartes « possédé », « suggestion » et « incertain » ne se ressemblent pas.
 - Les exercices, le Vibe et « Crée ton bruitage » utilisent le panneau plus joueur. Les fiches et les caisses restent plus calmes.
 - Modes conservés : Auto / Ordinateur / Mobile, et Système / Sombre / Clair / Régie.
 
-Les contrastes mesurés (WCAG) : texte clair sur fond sombre 18,5 ; texte atténué 13,9 ; bouton sombre sur blanc 7,9 ; accent rose sur fond sombre 7,3 ; texte sombre sur fond clair et bouton clair au-dessus de 8.
+Les contrastes ci-dessus sont mesurés (WCAG). Le magenta très clair du dossier de presse, posé en petit texte sur blanc, ne passe pas : il est réservé aux grands blocs, avec du blanc ou de l’encre sombre pour lire.
 
 ## Où le logo est branché
 
