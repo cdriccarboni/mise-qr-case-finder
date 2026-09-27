@@ -1,4 +1,4 @@
-# Identité visuelle — MISE ! 0.3.0-beta.1
+# Identité visuelle — MISE ! 0.3.0-beta.2
 
 ## D’où vient l’esprit
 
@@ -8,7 +8,7 @@ Dans le dépôt public, on ne trouve qu’une mention pédagogique (`inspired_by
 
 C’est une marque tierce. MISE ! n’en reprend ni le logo, ni le mot, ni les photos, ni les dessins, ni les lettres posées dans les jetons. Les images de référence ne sont pas dans ce dépôt.
 
-Ce qui est gardé, c’est le rendu **sérigraphié, une seule encre** : un aplat fort, le blanc du papier, le noir pour lire, des blocs plats, une trame de points, des jetons vides (cercle, hexagone, pentagone), des ondes. Le rose n’est plus demandé. Le terrain (recherche, fiches, caisses) reste lisible. Le jeu est réservé au Vibe, aux exercices et à « Crée ton bruitage ». Régie enlève la trame, les jetons et la couleur.
+Ce qui est gardé, c’est le rendu **sérigraphié, une seule encre** : un aplat fort, le blanc du papier, le noir pour lire, des blocs plats, une trame de points, des jetons vides (cercle, hexagone, pentagone), des ondes. L’encre est un rose d’imprimerie. Le terrain (recherche, fiches, caisses) reste lisible, avec un liseré de la même encre. Le jeu est réservé au Vibe, aux exercices et à « Crée ton bruitage ». Régie enlève la trame, les jetons et la couleur.
 
 ## Une seule encre
 
@@ -16,27 +16,29 @@ Toute la couleur de l’interface passe par `--ink` dans `src/identity.css`. Pou
 
 Le papier (`--paper`, `#f4f1ea`) et le noir de texte (`--type`, `#161513`) ne sont pas une deuxième encre. Le fond sombre est `#141311`.
 
-L’encre ne sert pas de petit texte sur le fond sombre : le contraste tombe à 1,8. Sur ce fond, l’encre est un bloc (logo, boutons terrain, panneaux Vibe) avec du blanc dedans. Les deux points du nom sont l’encre sur le papier clair, et le blanc du papier sur le fond sombre ou en Régie.
+L’encre ne sert pas de petit texte sur le fond sombre. Sur ce fond, l’encre est un bloc (logo, boutons terrain, panneaux Vibe) avec du blanc dedans. Les cartouches et les cartes ont un contour de la même encre : l’encre elle-même en clair, une teinte éclaircie en sombre pour que le filet se voie. Les deux points du nom sont l’encre sur le papier clair, et une teinte claire de la même encre sur le fond sombre. En Régie, lettres et points sont noirs sur blanc, sans rose.
 
 ## Encre retenue
 
-Bleu d’imprimerie `#0B3D91`.
+Rose d’imprimerie `#D12A74`.
 
-![Bleu d'imprimerie](../public/brand/encre-bleu.svg)
+![Rose d'imprimerie](../public/brand/encre-rose.svg)
 
-Blanc sur ce bleu : contraste 10,0. Bleu sur le papier `#f4f1ea` : contraste 8,9. Lisible sur un téléphone, en clair comme en sombre, et le logo monochrome (`public/brand/logo-mono.svg`) reste le même dessin en noir pour l’étiquette thermique.
+Blanc sur ce rose : contraste 4,9. Rose sur le papier `#f4f1ea` : contraste 4,3. Le texte posé sur l’aplat reste blanc. Le logo monochrome (`public/brand/logo-mono.svg`) reste le même dessin en noir pour l’étiquette thermique.
+
+Les roses plus fluo `#E4458C` et `#FF48B0` ont été mesurés. Le blanc dessus tombe à 3,8 et 3,1 : trop juste pour le texte des boutons. Ils restent dans `public/brand` comme comparaison, pas comme encre de l’application.
 
 ## Deux variantes, non utilisées
 
-![Trois encres](../public/brand/encres.svg)
+![Trois roses](../public/brand/encres.svg)
 
-Vermillon `#C23A1B`. Blanc dessus : contraste 5,4. Sur le papier : 4,8. Juste au-dessus du seuil pour un grand texte, plus faible en petit.
+Rose clair `#E4458C`. Blanc dessus : contraste 3,8.
 
-![Vermillon](../public/brand/encre-vermillon.svg)
+![Rose clair](../public/brand/encre-rose-clair.svg)
 
-Vert affiche `#0F6E45`. Blanc dessus : contraste 6,3. Sur le papier : 5,6. Lisible, moins tranché que le bleu une fois imprimé en une passe.
+Rose fluo `#FF48B0`. Blanc dessus : contraste 3,1.
 
-![Vert affiche](../public/brand/encre-vert.svg)
+![Rose fluo](../public/brand/encre-rose-fluo.svg)
 
 ## Le logo est le mot
 
@@ -44,7 +46,7 @@ Le mot **mise !** est le logo, dans la variante **Tampon** : une seconde passe d
 
 ![mise !](../public/brand/logo.svg)
 
-Les lettres prennent la couleur de lecture : noir doux sur le papier, crème sur le fond sombre, blanc en Régie. Les deux points — celui du i, au-dessus, et celui du !, en dessous — prennent l’encre. Sur le fond sombre, l’encre brute est trop proche du noir (contraste 1,8) : les points passent à une teinte claire de la même encre, `#91A8CE`, contraste 7,7. En Régie, lettres et points sont blancs.
+Les lettres prennent la couleur de lecture : noir doux sur le papier, crème sur le fond sombre, blanc en Régie. Les deux points — celui du i, au-dessus, et celui du !, en dessous — prennent l’encre. Sur le fond sombre, l’encre brute est trop proche du noir : les points passent à une teinte claire de la même encre (mélange avec le blanc, contraste environ 9). En Régie, lettres et points sont noirs sur un blanc.
 
 L’impression une couleur est `logo-mono.svg` : le même dessin, tout en noir, y compris les deux points. L’étiquette thermique l’imprime ainsi, pour que le QR se lise. `logo-mono-light.svg` est le même trait en blanc.
 
@@ -56,8 +58,8 @@ Cinq autres études du mot, à choisir, sont dans `docs/design/` : mailloche, je
 
 ## Système retenu
 
-- Encre `#0B3D91` pour les aplats et pour les deux points du mot, sur le papier. Papier `#f4f1ea`, texte `#161513` (contraste 16,2).
-- Sombre : fond `#141311`, texte `#f4f1ea` (contraste 16,5). L’encre reste un aplat, pas un filet fin.
+- Encre `#D12A74` pour les aplats, les liserés et les deux points du mot, sur le papier. Papier `#f4f1ea`, texte `#161513` (contraste 16,2).
+- Sombre : fond `#141311`, texte `#f4f1ea` (contraste 16,5). L’encre reste un aplat. Le filet des cartes est une teinte claire du même rose.
 - Clair : page papier, cartes presque blanches, blocs de l’encre.
 - Régie : noir et blanc. Pas de trame, pas de jetons, pas d’encre. Le logo passe en noir sur blanc, comme l’impression une couleur.
 - Les cartes « possédé », « suggestion » et « incertain » ne se ressemblent pas.

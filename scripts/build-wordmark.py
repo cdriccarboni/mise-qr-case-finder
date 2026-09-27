@@ -6,6 +6,7 @@ stem. The ! dot stays under the stem. Letters and dots are separate so the
 interface can color them apart, and a one-ink print can use the same drawing.
 """
 import json
+import re
 from pathlib import Path
 
 from fontTools.pens.recordingPen import RecordingPen
@@ -591,6 +592,24 @@ def write_android(tile, ink, sx=ICON_STAMP_X, sy=ICON_STAMP_Y):
 ''')
 
 
+def sync_chrome(ink):
+    def paint(path, pattern, replacement, label):
+        file = ROOT / path
+        text = file.read_text()
+        updated = re.sub(pattern, replacement, text, count=1)
+        if ink not in updated:
+            raise SystemExit(f'{label} introuvable')
+        if updated != text:
+            file.write_text(updated)
+
+    paint('index.html', r'(<meta name="theme-color" content=")#[0-9A-Fa-f]{6}', r'\1' + ink, 'theme-color')
+    paint('vite.config.js', r"theme_color:'#[0-9A-Fa-f]{6}'", f"theme_color:'{ink}'", 'theme_color')
+    paint('android/app/src/main/res/values/themes.xml', r'(<item name="android:colorAccent">)#[0-9A-Fa-f]{6}', r'\1' + ink, 'colorAccent')
+    legacy = ROOT / 'android/app/src/main/res/drawable/ic_launcher_mise.xml'
+    if legacy.exists():
+        legacy.write_text(legacy.read_text().replace('#0B3D91', ink).replace('#0b3d91', ink))
+
+
 def write_splash(ink):
     icon = (ROOT / 'public' / 'icon.svg').read_text().replace(
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="mise !">',
@@ -693,23 +712,28 @@ def main():
             f'</g>'
         )
     sheet = (
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 120" role="img" aria-label="Trois encres pour les points de mise !">'
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 120" role="img" aria-label="Trois roses pour les points de mise !">'
         '<rect width="640" height="120" fill="#f4f1ea"/>'
         + row(ink, f'{ink} · retenue', 16)
-        + row('#C23A1B', '#C23A1B · vermillon', 220)
-        + row('#0F6E45', '#0F6E45 · vert', 430)
+        + row('#E4458C', '#E4458C · clair', 220)
+        + row('#FF48B0', '#FF48B0 · fluo', 430)
         + '</svg>'
     )
     write(ROOT / 'public' / 'brand' / 'encres.svg', sheet)
     for name, color, label in (
-        ('encre-bleu.svg', ink, 'Encre retenue'),
-        ('encre-vermillon.svg', '#C23A1B', 'Variante vermillon'),
-        ('encre-vert.svg', '#0F6E45', 'Variante vert affiche'),
+        ('encre-rose.svg', ink, 'Encre retenue'),
+        ('encre-rose-clair.svg', '#E4458C', 'Variante rose clair'),
+        ('encre-rose-fluo.svg', '#FF48B0', 'Variante rose fluo'),
     ):
         write(ROOT / 'public' / 'brand' / name, svg_wordmark(mark, letter, color, label))
+    for obsolete in ('encre-bleu.svg', 'encre-vermillon.svg', 'encre-vert.svg'):
+        leftover = ROOT / 'public' / 'brand' / obsolete
+        if leftover.exists():
+            leftover.unlink()
 
     write_android(bang, ink)
     write_splash(ink)
+    sync_chrome(ink)
     meta = {
         'ink': ink,
         'viewBox': [width, height],

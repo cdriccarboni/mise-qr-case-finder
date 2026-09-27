@@ -28,7 +28,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
   const creative = mode === 'hands' || mode === 'universe' || mode === 'group'
   dialog.innerHTML = `<div class="form ${creative ? 'playful' : ''}"><div class="dialoghead"><div><b>${mise && mode === 'control' ? 'Contrôle photo de mise' : esc(heading[0])}</b><small>${esc(mise?.name || heading[1])}</small></div><button data-close class="ghost">Fermer</button></div>
     <div class="visionFrame"><img data-photo class="photoPreview" alt="Photo à analyser"><div data-boxes></div></div>
-    <p class="hint">Analyse sur cet appareil. Le pourcentage est un indice, pas une certitude. Rien n’est enregistré sans toi. Une correction mémorisée est une association locale : le modèle n’est pas réentraîné. Les personnes sont ignorées. Un objet sans indice visuel n’est pas inventé.</p>
+    <p class="hint">Analyse sur cet appareil, en plusieurs passages (photo entière, détails, échelles). Le pourcentage est un indice, pas une certitude. Les noms proposés viennent de ta base quand un synonyme ou un objet proche correspond. Rien n’est enregistré sans toi. Une correction mémorisée est une association locale : le modèle n’est pas réentraîné. Les personnes sont ignorées. Un objet sans indice visuel n’est pas inventé.</p>
     <p data-status role="status">Chargement du modèle local… Vous pouvez déjà saisir un objet.</p>
     <div data-creative hidden></div>
     <div class="batchBar"><label>Tout est dans<select data-batch-case><option value="">Choisir un contenant</option>${(data.cases || []).map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></label>

@@ -179,7 +179,7 @@ function hexagon(img, cx, cy, radius, color, width) {
   }
   for (let i = 0; i < 6; i++) stroke(img, pts[i][0], pts[i][1], pts[(i + 1) % 6][0], pts[(i + 1) % 6][1], width, color)
 }
-const SPOT_HEX = '#0B3D91'
+const SPOT_HEX = '#D12A74'
 function spotRgb(hex = SPOT_HEX) {
   return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16), 255]
 }

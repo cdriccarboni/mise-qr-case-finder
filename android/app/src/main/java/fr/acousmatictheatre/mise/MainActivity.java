@@ -7,9 +7,14 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -30,12 +35,21 @@ public final class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private NativePrinterBridge printerBridge;
+    private int safeTop;
+    private int safeRight;
+    private int safeBottom;
+    private int safeLeft;
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(Color.rgb(20, 19, 17));
-        getWindow().setNavigationBarColor(Color.rgb(20, 19, 17));
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= 29) {
+            getWindow().setStatusBarContrastEnforced(false);
+            getWindow().setNavigationBarContrastEnforced(false);
+        }
 
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(20, 19, 17));
@@ -52,13 +66,29 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " MISE-Android/0.3.0");
+        settings.setUserAgentString(settings.getUserAgentString() + " MISE-Android/0.3.0-beta.2");
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
 
+        ViewCompat.setOnApplyWindowInsetsListener(webView, (view, windowInsets) -> {
+            Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
+            safeTop = bars.top;
+            safeRight = bars.right;
+            safeBottom = Math.max(bars.bottom, ime.bottom);
+            safeLeft = bars.left;
+            publishSafeArea();
+            return WindowInsetsCompat.CONSUMED;
+        });
+
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                publishSafeArea();
+            }
+
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 if (isGoogleAuthHost(request.getUrl())) {
@@ -109,6 +139,18 @@ public final class MainActivity extends Activity {
         } else {
             webView.restoreState(state);
         }
+        ViewCompat.requestApplyInsets(webView);
+    }
+
+    private void publishSafeArea() {
+        if (webView == null) return;
+        webView.evaluateJavascript(
+                "(function(){var r=document.documentElement.style;"
+                        + "r.setProperty('--android-safe-top','" + safeTop + "px');"
+                        + "r.setProperty('--android-safe-right','" + safeRight + "px');"
+                        + "r.setProperty('--android-safe-bottom','" + safeBottom + "px');"
+                        + "r.setProperty('--android-safe-left','" + safeLeft + "px');})()",
+                null);
     }
 
     private boolean staysInApp(Uri uri) {

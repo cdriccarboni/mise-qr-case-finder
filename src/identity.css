@@ -2,7 +2,7 @@
    Le script recopie cette valeur dans les icônes, le manifeste et Android.
    Le papier et le noir de texte ne sont pas une deuxième encre. */
 :root{
-  --ink:#0B3D91;
+  --ink:#D12A74;
   --paper:#f4f1ea;
   --type:#161513;
   --night:#141311;
@@ -145,3 +145,8 @@ html[data-theme=regie] .miseWordmark .stampGhost,html[data-theme=regie] .miseWor
 .aboutVersion{margin:.6rem 0 0}
 html[data-theme=light] .playful,html[data-theme=system] .playful{background-color:var(--ink);color:#fff;border:0;background-image:radial-gradient(rgba(255,255,255,.28) 1.1px,transparent 1.2px);background-size:9px 9px}
 html[data-theme=light] .terrainQuick button,html[data-theme=system] .terrainQuick button{background:var(--ink);color:#fff;border:0}
+:root{--stroke:color-mix(in srgb, var(--ink) 62%, #fff)}
+html[data-theme=light]{--stroke:var(--ink)}
+@media(prefers-color-scheme:light){html[data-theme=system]{--stroke:var(--ink)}}
+html:not([data-theme=regie]) .goalNav details,html:not([data-theme=regie]) .panel:not(.playful),html:not([data-theme=regie]) .card,html:not([data-theme=regie]) .result,html:not([data-theme=regie]) .empty,html:not([data-theme=regie]) .checklist,html:not([data-theme=regie]) .preferenceState,html:not([data-theme=regie]) .miseSectionHead,html:not([data-theme=regie]) .challenge,html:not([data-theme=regie]) .manualSteps article,html:not([data-theme=regie]) .shareColumns>div,html:not([data-theme=regie]) .printerDevice,html:not([data-theme=regie]) .visionProposal,html:not([data-theme=regie]) .searchbox,html:not([data-theme=regie]) .corpusMeta{border:2px solid var(--stroke)}
+html[data-theme=regie] .goalNav details,html[data-theme=regie] .panel,html[data-theme=regie] .card,html[data-theme=regie] .result,html[data-theme=regie] .empty,html[data-theme=regie] .checklist,html[data-theme=regie] .preferenceState,html[data-theme=regie] .miseSectionHead,html[data-theme=regie] .challenge,html[data-theme=regie] .searchbox,html[data-theme=regie] .corpusMeta{border-color:#888}

@@ -1,4 +1,4 @@
-# Pour commencer — MISE ! 0.3.0-beta.1
+# Pour commencer — MISE ! 0.3.0-beta.2
 
 MISE ! sert à retrouver et classer tes Data Bruitage : documents, listes, objets, sons, contenants. Le Kit Acoustique, les kits et les mises sont des vues sur cette base, pas la base elle-même.
 
@@ -8,7 +8,7 @@ Tout ce que tu importes reste sur l’appareil (IndexedDB), sauf si tu connectes
 
 ## Ouvrir
 
-1. Ouvre la PWA. Le site public https://cdriccarboni.github.io/mise-qr-case-finder/ suit `main` seulement après un merge. Cette branche est `0.3.0-beta.1`. L’APK de test, signé avec la clé debug, est la pré-version [v0.3.0-beta.1-test](https://github.com/cdriccarboni/mise-qr-case-finder/releases/tag/v0.3.0-beta.1-test).
+1. Ouvre la PWA. Le site public https://cdriccarboni.github.io/mise-qr-case-finder/ suit `main` seulement après un merge. Cette branche est `0.3.0-beta.2`. L’APK de test, signé avec la clé debug, est la pré-version [v0.3.0-beta.2-test](https://github.com/cdriccarboni/mise-qr-case-finder/releases/tag/v0.3.0-beta.2-test).
 2. La première page est vide de tes données. L’application publique n’embarque pas ton inventaire.
 3. Un exemple fictif est fourni dans `public/exemples/` (`classeur-fictif.xlsx`, `index-fictif.csv`). Ce n’est pas ta base.
 

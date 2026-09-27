@@ -8,7 +8,7 @@ export default defineConfig({
     manifest:{
       name:'MISE ! — QR Case Finder', short_name:'MISE !',
       description:'Cherche ta mise — inventaire de bruitage, matériel, QR et préparation.',
-      theme_color:'#0B3D91', background_color:'#141311',
+      theme_color:'#D12A74', background_color:'#141311',
       display:'standalone', start_url:'./', scope:'./', lang:'fr',
       icons:[
         {src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any'},
@@ -19,7 +19,7 @@ export default defineConfig({
       ]
     },
     workbox:{
-      cacheId:'mise-0.3.0-beta.1',
+      cacheId:'mise-0.3.0-beta.2',
       navigateFallback:'index.html',
       globPatterns:['**/*.{js,mjs,css,html,svg,json,bin,png,ttf}','models/coco-ssd/*'],
       maximumFileSizeToCacheInBytes:8*1024*1024,

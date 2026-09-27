@@ -10,8 +10,8 @@ android {
         applicationId = "fr.acousmatictheatre.mise"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "0.3.0-beta.1"
+        versionCode = 7
+        versionName = "0.3.0-beta.2"
     }
 
     buildTypes {
@@ -29,6 +29,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.core:core:1.15.0")
     implementation("androidx.webkit:webkit:1.12.1")
 }
 

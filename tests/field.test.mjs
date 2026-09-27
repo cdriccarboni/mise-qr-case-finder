@@ -90,7 +90,7 @@ test('exercises and hands challenges use only the given objects', () => {
 
 test('a validated learning changes the next proposal and can be reversed without touching the fiche', () => {
   const data = emptyData()
-  data.objects.push({ id: 'obj-bouteille', name: 'Gourde froissable fictive', aliases: [], tags: [], sounds: [], contexts: [] })
+  data.objects.push({ id: 'obj-bouteille', name: 'Chaîne moyenne fictive', aliases: [], tags: [], sounds: [], contexts: [] })
   const before = matchDetections([{ class: 'bottle', score: .9, bbox: [0, 0, 8, 8] }], data, 'inventaire')
   assert.equal(before[0].objectId, '')
   const learning = newLearning({ kind: 'label-preference', label: 'bottle', objectId: 'obj-bouteille' })

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-beta.2 — 2026-09-27
+
+- Le bas de l’écran n’est plus coupé par la barre Android. L’application passe en bord à bord, lit les marges système (`WindowInsets`) et les transmet à la page. Le défilement garde le dernier cartouche entier, avec une marge basse (`dvh`, `env(safe-area-inset-bottom)`).
+- L’encre unique passe du bleu au rose d’imprimerie `#D12A74`. Le blanc dessus reste lisible (contraste 4,9). Les cartouches et les cartes ont un liseré rose, plus clair en sombre pour ressortir. Régie reste en noir et blanc. Deux autres roses sont dans `public/brand` pour comparaison (`#E4458C`, `#FF48B0`), ils ne sont pas l’encre de l’application.
+- La photo cherche en plusieurs passages : image entière, recadrage, zoom, tuiles, quart de tour. Les détections qui se recouvrent sont fusionnées. Le nom proposé est celui d’une fiche de la base (synonyme français ou anglais, ou objet proche), pas le mot anglais brut. Une correction déjà mémorisée reste prioritaire. Le modèle embarqué n’est pas réentraîné.
+- Version `0.3.0-beta.2`, Android `versionCode` 7. La clé d’envoi Play n’est toujours pas disponible. Le binaire de test reste signé avec la clé debug.
+
 ## 0.3.0-beta.1 — 2026-09-27
 
 - Inventaire rapide, photo à plusieurs objets, QR continu (objet, caisse, valise, kit, mise) et recherche en français, hors ligne.
