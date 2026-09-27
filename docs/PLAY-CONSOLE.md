@@ -11,10 +11,10 @@ Ce document prépare une fiche. Il n’annonce pas une publication Play, n’env
 | Package | `fr.acousmatictheatre.mise` | **vérifié** (`aapt dump badging` sur l’APK debug) |
 | versionCode / versionName | 5 / 0.2.3-beta.1 | **vérifié** (manifeste packagé debug et release, et manifeste du bundle) |
 | minSdk / targetSdk / compileSdk | 26 / 36 / 36 | **vérifié** |
-| APK debug | `MISE-0.2.3-beta.1-TEST-debug.apk` — 19 715 366 octets — SHA-256 `74cdc8f57eaf13af59582cc45fc1312b6036f6b3b5eef9892846ef35c66b79c0` | **vérifié** (build local `assembleDebug`) |
-| AAB | `MISE-0.2.3-beta.1-TEST-release-signe-debug.aab` — 19 147 742 octets — SHA-256 `d233053de863aa1aa54f62c23b5d73f0ff1557f7e899025cdf41ea28e4bdfebd` | **vérifié** (build local `bundleRelease`) |
-| APK release de test | construit aussi en local (`assembleRelease`), 19 153 078 octets, SHA-256 `486d6456cbd9f23f59aa3387e5b8631aedc9e5b4a8f1672da3d568da95d0d904`. Même certificat que l’APK debug. Non demandé comme livrable principal. | **vérifié** |
-| Signature | `C=US, O=Android, CN=Android Debug`. SHA-256 du certificat : `88abe27f02b21a402da651d020f93d975eb12cf6676b8fef6f3e4de157929960`. SHA-1 : `c6138946770147fb6e700fbbaf26f7ba8deb5d62`. Créé le 27/09/2026 à 11:18:15 UTC par le keystore debug de la machine de build. | **vérifié** (`apksigner` sur les deux APK, `keytool` sur `META-INF/ANDROIDD.RSA` de l’AAB) |
+| APK debug publié | [MISE-0.2.3-beta.1-TEST-debug.apk](https://github.com/cdriccarboni/mise-qr-case-finder/releases/download/v0.2.3-beta.1-test/MISE-0.2.3-beta.1-TEST-debug.apk) — 19 715 326 octets — SHA-256 `99fdd99b161be01e13d3f125ca085a4c6db0ea47a1bd7357535731f6fda8d723` | **vérifié** (artefact du run CI `36315501940`, retéléchargé) |
+| AAB publié | [MISE-0.2.3-beta.1-TEST-release-signe-debug.aab](https://github.com/cdriccarboni/mise-qr-case-finder/releases/download/v0.2.3-beta.1-test/MISE-0.2.3-beta.1-TEST-release-signe-debug.aab) — 19 147 837 octets — SHA-256 `0a9956912fb830bc56c46291df5a3b5c9c8a11d891436babb27208e587bc2043` | **vérifié** (même run, `bundleRelease`) |
+| APK release de test | [MISE-0.2.3-beta.1-TEST-release-signe-debug.apk](https://github.com/cdriccarboni/mise-qr-case-finder/releases/download/v0.2.3-beta.1-test/MISE-0.2.3-beta.1-TEST-release-signe-debug.apk) — 19 153 174 octets — SHA-256 `b12ad5739382a4dc4f36d88b5f197e53bb31f52a88b97dc9aa3c828d0f64b8c5`. Même certificat debug. | **vérifié** |
+| Signature des fichiers publiés | `C=US, O=Android, CN=Android Debug`. SHA-256 du certificat : `29b8fe2ac7a2cf680fe9bfebcf9af8cfa59ee26ecb6d81e46178884ad266f5d9`. SHA-1 : `29a9da26899ea2cf8de32d795cc6969f1bd447ce`. Créé le 27/09/2026 à 11:23:10 UTC sur le runner du run `36315501940`. | **vérifié** (`apksigner` sur les deux APK, `keytool` sur l’AAB) |
 | Clé d’upload Play | **absente**. Aucun `.jks` / `.keystore` dans le dépôt. `PLAY_STORE_PREP.md` dit qu’une clé d’upload existe déjà et n’est pas disponible ici. Elle n’a pas été inventée, ni recréée, ni devinée. | **bloqué** |
 | Conséquence Play | Cet AAB est signé avec la clé debug. Play le refusera comme envoi d’une application, et il ne peut pas servir de mise à jour d’une fiche déjà signée avec la clé d’upload. | **vérifié** (certificat) / envoi Play **non testé** (aucun envoi) |
 | Permissions du manifeste packagé (debug, release et bundle) | `INTERNET`, `CAMERA`, `RECORD_AUDIO`, `BLUETOOTH` (maxSdk 30), `BLUETOOTH_ADMIN` (maxSdk 30), `BLUETOOTH_CONNECT` | **vérifié** |
@@ -24,7 +24,9 @@ Ce document prépare une fiche. Il n’annonce pas une publication Play, n’env
 | allowBackup | `true` | **vérifié** |
 | usesCleartextTraffic | `false` | **vérifié** |
 
-Le lien de la pré-version GitHub est ajouté en fin de document une fois la pré-version publiée. Ce n’est pas un lien Play.
+Pré-version GitHub (pas un lien Play) : https://github.com/cdriccarboni/mise-qr-case-finder/releases/tag/v0.2.3-beta.1-test
+
+Un build local antérieur, sur une autre machine, a produit les mêmes versionCode, targetSdk et permissions, avec un autre certificat debug (`88abe27f02b21a402da651d020f93d975eb12cf6676b8fef6f3e4de157929960`, créé à 11:18:15 UTC). Ces fichiers-là ne sont pas ceux de la pré-version. Les empreintes ci-dessus sont celles des fichiers publiés.
 
 ## 1. Fiche Play Store principale
 
@@ -219,7 +221,7 @@ Aucune permission ajoutée par les bibliothèques au-delà de celles du source. 
 - versionCode 5 : strictement supérieur à 4. **Vérifié**.
 - Play App Signing : obligatoire pour un AAB neuf. Choix Console : « Laisser Google gérer et protéger la clé de signature ». **Non fait** (aucun accès Console).
 - Clé d’upload : `PLAY_STORE_PREP.md` indique qu’une clé existe et n’est pas disponible dans cet environnement. Recherche dans le dépôt : aucun keystore. Aucune clé n’a été fabriquée pour « remplacer » celle-là. L’AAB de test reste signé `CN=Android Debug`.
-- Le certificat debug de cette session (SHA-256 `88abe27f…`) n’est pas celui du runner CI de la 0.2.2, qui était aussi un debug éphémère. Deux builds debug de deux machines n’ont pas la même clé. Aucune des deux n’est la clé d’upload Play.
+- Le certificat des fichiers publiés (SHA-256 `29b8fe2a…`, runner du 27/09/2026 à 11:23:10 UTC) n’est ni la clé d’upload Play, ni le certificat debug du build local de contrôle (`88abe27f…`), ni celui de la pré-version 0.2.2. Chaque runner neuf recrée un debug. Aucune de ces clés n’est la clé d’upload.
 
 ## 13. Notes de version (si un test fermé est créé plus tard)
 
@@ -264,14 +266,15 @@ Rien dans cette liste n’a été exécuté sur la Play Console.
 
 | Contrôle | Résultat | Statut |
 |---|---|---|
-| `npm test` (Node, 23 tests) | 23 réussis, 0 échec | **vérifié** |
-| `npm run build` | Vite OK, modèle COCO-SSD local vérifié par `prepare-vision.mjs` | **vérifié** |
-| Playwright (`npm run test:browser`, 6 tests) | 6 réussis après correction du test qui cliquait sous la boîte de dialogue ouverte | **vérifié** |
-| `assembleDebug` + `assembleRelease` + `bundleRelease` | `BUILD SUCCESSFUL` en local (Gradle 8.13, SDK 36, build-tools 35.0.0) | **vérifié** |
-| Même build dans GitHub Actions | voir le run indiqué après poussée de la branche | mis à jour ci-dessous quand le run est terminé |
+| `npm test` (Node, 23 tests) | 23 réussis en local ; le job CI [36315501936](https://github.com/cdriccarboni/mise-qr-case-finder/actions/runs/36315501936) refait `npm test` avec succès | **vérifié** |
+| `npm run build` | Vite OK en local et dans les deux jobs CI. Modèle COCO-SSD vérifié par `prepare-vision.mjs` | **vérifié** |
+| Playwright (6 tests) | 6 réussis en local et dans [36315501936](https://github.com/cdriccarboni/mise-qr-case-finder/actions/runs/36315501936) | **vérifié** |
+| `assembleDebug` + `assembleRelease` + `bundleRelease` | Réussi en local, puis dans [36315501940](https://github.com/cdriccarboni/mise-qr-case-finder/actions/runs/36315501940) (`assembleDebug`, `assembleRelease`, `bundleRelease`) | **vérifié** |
 | Téléphone, caméra, QR réel, imprimante, compte Google réel | pas d’appareil, pas de compte utilisé | **non testé** |
 | Envoi Play, contact de testeurs | non fait | **non testé** (voulu) |
 
 ### Pré-version GitHub
 
-Le tag et les empreintes publiées sont reportés ici après création de la pré-version. Tant que cette section dit « pas encore », les empreintes du §0 sont celles du build local inspecté.
+https://github.com/cdriccarboni/mise-qr-case-finder/releases/tag/v0.2.3-beta.1-test
+
+Tag `v0.2.3-beta.1-test` sur le commit `af6707e`, marqué pré-version. Les trois fichiers du §0 y sont joints. Les notes de la pré-version disent que l’AAB n’est pas signé avec la clé d’envoi Play. Ce n’est pas une annonce de publication Play.
