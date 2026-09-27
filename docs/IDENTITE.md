@@ -38,31 +38,23 @@ Vert affiche `#0F6E45`. Blanc dessus : contraste 6,3. Sur le papier : 5,6. Lisib
 
 ![Vert affiche](../public/brand/encre-vert.svg)
 
-## Trois directions de logo
+## Le logo est le mot
 
-Les fichiers sont dans `public/brand/`.
+Le mot **mise !** est le logo. Minuscules, sans capitale, dans une sans arrondie. La police est Fredoka (SIL Open Font License), embarquée dans `src/fonts/` avec sa licence `OFL.txt`. Le dessin du logo est vectorisé : il ne dépend pas du chargement de la police, et il reste net hors ligne.
 
-### 1. Caisse vibrante dans un jeton — retenue
+![mise !](../public/brand/logo.svg)
 
-![Caisse vibrante](../public/brand/logo.svg)
+Les lettres prennent la couleur de lecture : noir doux sur le papier, crème sur le fond sombre, blanc en Régie. Les deux points — celui du i, au-dessus, et celui du !, en dessous — prennent l’encre. Sur le fond sombre, l’encre brute est trop proche du noir (contraste 1,8) : les points passent à une teinte claire de la même encre, `#91A8CE`, contraste 7,7. En Régie, lettres et points sont blancs.
 
-Une caisse et une onde, dans un cercle de papier, sur un carré de l’encre. Un hexagone vide à côté : un jeton, sans lettre. Caisse, onde et point sont la même encre. Le nom MISE ! reste le mot, avec ses deux points alignés. L’impression une couleur est `logo-mono.svg` (noir et blanc du papier). L’étiquette thermique reprend le dessin en noir, sans la trame, pour que le QR se lise.
+L’impression une couleur est `logo-mono.svg` : le même dessin, tout en noir, y compris les deux points. L’étiquette thermique l’imprime ainsi, pour que le QR se lise. `logo-mono-light.svg` est le même trait en blanc.
 
-### 2. Un objet qui devient une onde — écartée
+L’icône de l’application est le mot réduit à **m!**, en blanc sur le carré d’encre, pour rester lisible tout petit.
 
-![Objet qui devient une onde](../public/brand/direction-onde.svg)
-
-Un cercle (l’objet) se prolonge en vagues. Lisible, mais trop générique : on ne voit ni la caisse, ni le rangement, ni le plateau.
-
-### 3. Point d’exclamation scène — écartée
-
-![Point d’exclamation scène](../public/brand/direction-scene.svg)
-
-Le point d’exclamation du nom, posé sur une ligne de scène. Fort comme symbole, faible comme icône d’application : il ne dit pas « objet » ni « bruitage ».
+Les pistes dessinées avant ce choix (caisse dans un jeton, objet qui devient une onde, point d’exclamation sur une ligne) ne sont plus le logo.
 
 ## Système retenu
 
-- Encre `#0B3D91`, papier `#f4f1ea`, texte `#161513` sur le papier (contraste 16,2).
+- Encre `#0B3D91` pour les aplats et pour les deux points du mot, sur le papier. Papier `#f4f1ea`, texte `#161513` (contraste 16,2).
 - Sombre : fond `#141311`, texte `#f4f1ea` (contraste 16,5). L’encre reste un aplat, pas un filet fin.
 - Clair : page papier, cartes presque blanches, blocs de l’encre.
 - Régie : noir et blanc. Pas de trame, pas de jetons, pas d’encre. Le logo passe en noir sur blanc, comme l’impression une couleur.
@@ -74,8 +66,9 @@ Les contrastes sont mesurés (WCAG, blanc `#ffffff` sur l’encre, encre sur `#f
 
 ## Où le logo est branché
 
-- Maître couleur : `public/brand/logo.svg`. Maître une encre : `logo-mono.svg`. Version encre claire : `logo-mono-light.svg`.
-- PWA : `public/icon.svg`, `favicon.svg`, `icon-maskable.svg`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`. Le manifeste Vite les déclare.
-- Application : en-tête (`.miseLogo4`) et écran de démarrage dans `index.html`.
-- Android : icône adaptative premier plan / fond / monochrome (`mipmap-anydpi-v26/ic_launcher.xml`). Le monochrome est une silhouette noire, pour l’impression et les thèmes d’icône.
-- Étiquette imprimée : le même dessin, en noir sur blanc, à côté de « MISE ! », du nom et du QR.
+- Maître : `public/brand/logo.svg` (lettres noires, points en encre). Une encre : `logo-mono.svg`. Encre claire : `logo-mono-light.svg`.
+- Le fichier servi dans l’en-tête est `src/brand/wordmark.svg` (les mêmes tracés, couleurs laissées au thème).
+- PWA : `public/icon.svg` et les PNG, dessinés à partir de « m! ».
+- Android : icône adaptative, premier plan « m! », fond encre, couche monochrome noire.
+- Étiquette imprimée : le mot « mise ! » en noir, au-dessus du nom et du QR.
+- Pour régénérer après un changement de `--ink` : `node scripts/export-icons.mjs`.

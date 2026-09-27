@@ -21,7 +21,7 @@ export default defineConfig({
     workbox:{
       cacheId:'mise-0.3.0-beta.1',
       navigateFallback:'index.html',
-      globPatterns:['**/*.{js,mjs,css,html,svg,json,bin,png}','models/coco-ssd/*'],
+      globPatterns:['**/*.{js,mjs,css,html,svg,json,bin,png,ttf}','models/coco-ssd/*'],
       maximumFileSizeToCacheInBytes:8*1024*1024,
       cleanupOutdatedCaches:true
     }

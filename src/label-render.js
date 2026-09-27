@@ -1,5 +1,6 @@
 import QRCode from 'qrcode'
 import { shortId } from './qr-link.js'
+import { WORDMARK_BITMAP } from './wordmark-bitmap.js'
 
 const INK = [16, 8, 12, 255]
 const PAPER = [255, 255, 255, 255]
@@ -140,8 +141,7 @@ export function renderLabelRgba(spec) {
   const extra = [spec.location, spec.category].filter(Boolean)
   const height = 150 + nameLines.length * 28 + 280 + extra.length * 22 + 36
   const img = createImage(width, height, PAPER)
-  paintMark(img, 16, 12, 56, INK)
-  drawText(img, 'MISE !', 84, 28, 4, INK)
+  blitWordmark(img, Math.round((width - WORDMARK_BITMAP.width) / 2), 16, INK)
   img.fillRect(20, 78, 344, 3, INK)
   let y = 92
   for (const line of nameLines) { drawText(img, line, width / 2, y, 3, INK, 'center'); y += 28 }
@@ -153,6 +153,15 @@ export function renderLabelRgba(spec) {
   return { rgba: img.rgba, width, height, qrText: spec.qrText }
 }
 
+function blitWordmark(img, x, y, color) {
+  const { width, height, rows } = WORDMARK_BITMAP
+  for (let row = 0; row < height; row++) {
+    const hex = rows[row]
+    let bits = ''
+    for (let i = 0; i < hex.length; i += 2) bits += Number.parseInt(hex.slice(i, i + 2), 16).toString(2).padStart(8, '0')
+    for (let col = 0; col < width; col++) if (bits[col] === '1') img.set(x + col, y + row, color)
+  }
+}
 function fillCircle(img, cx, cy, radius, color) {
   const r2 = radius * radius
   for (let y = Math.floor(cy - radius); y <= Math.ceil(cy + radius); y++) {

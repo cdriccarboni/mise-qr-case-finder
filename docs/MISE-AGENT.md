@@ -262,7 +262,7 @@ Livré et branché de bout en bout (interface, logique, moteur, données, entré
 - recherche en français qui sépare possédé / suggéré / incertain ;
 - apprentissages locaux (corrections, alias, fausse détection, emplacement, retour sur une proposition). Le modèle photo n’est pas réentraîné. On peut désactiver un apprentissage sans modifier la fiche. IndexedDB passe en version 5 sans effacer les fiches déjà là.
 
-Direction visuelle : le document d’agent d’origine demandait une interface sobre. La mission 0.3.0 demande une identité plus graphique. La référence privée est « Musiques en jeu(x) – LE KIT ». MISE ! en garde le rendu sérigraphié (une encre, papier, trame, jetons, ondes, blocs) avec des formes originales. L’encre retenue est le bleu `#0B3D91`, changeable par la seule variable `--ink`. Le rose n’est pas repris. Le mode Régie reste en noir et blanc. Le détail est dans `docs/IDENTITE.md`. Aucune image de cette référence n’est dans le dépôt.
+Direction visuelle : le document d’agent d’origine demandait une interface sobre. La mission 0.3.0 demande une identité plus graphique. La référence privée est « Musiques en jeu(x) – LE KIT ». MISE ! en garde le rendu sérigraphié (une encre, papier, trame, jetons, ondes, blocs). Le logo est le mot « mise ! », minuscules arrondies, points du i et du ! dans l’encre. L’encre retenue est le bleu `#0B3D91`, changeable par `--ink`. Le rose n’est pas repris. Le mode Régie reste en noir et blanc. Le détail est dans `docs/IDENTITE.md`. Aucune image de cette référence n’est dans le dépôt.
 
 Aucune donnée privée réelle n’est dans le dépôt. Les exemples et les tests restent fictifs.
 

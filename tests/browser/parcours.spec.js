@@ -29,9 +29,9 @@ test('logo dots stay aligned and the fictional catalogue can be corrected offlin
     await page.setViewportSize({ width, height: 900 })
     const dots = await dotCenters(page)
     expect(dots, `largeur ${width}`).toHaveLength(2)
-    expect(Math.abs(dots[0].y - dots[1].y), `alignement vertical ${width}`).toBeLessThan(0.75)
+    expect(dots[1].y - dots[0].y, `le point du ! est sous le point du i ${width}`).toBeGreaterThan(8)
     expect(Math.abs(dots[0].h - dots[1].h), `taille ${width}`).toBeLessThan(0.75)
-    expect(Math.abs(dots[0].x - dots[1].x)).toBeGreaterThan(20)
+    expect(dots[1].x - dots[0].x).toBeGreaterThan(20)
     await page.locator('header').screenshot({ path: `${shots}/logo-${width}.png` })
   }
   await page.setViewportSize({ width: 1280, height: 900 })
