@@ -12,7 +12,7 @@ test('manifest scope resolves to the GitHub Pages path and the Android asset pat
   assert.match(vite, /sizes:'192x192'/)
   assert.match(vite, /sizes:'512x512'/)
   assert.match(vite, /purpose:'any maskable'/)
-  assert.match(vite, /cacheId:'mises-0\.3\.0-beta\.3'/)
+  assert.match(vite, /cacheId:'mises-0\.3\.0-beta\.4'/)
   assert.match(vite, /cleanupOutdatedCaches:true/)
   assert.match(vite, /clientsClaim:true/)
   const pages = new URL('./', 'https://cdriccarboni.github.io/mise-qr-case-finder/manifest.webmanifest')
