@@ -6,7 +6,7 @@
 - Vibe bruitage, « Crée ton bruitage » et exercices générés. Ce qui est possédé, avec son emplacement, reste séparé de ce qui est seulement suggéré.
 - Une correction validée est mémorisée localement et réutilisée. Le modèle photo n’est pas réentraîné. On peut désactiver un apprentissage sans toucher à la fiche.
 - Étiquettes : logo, nom, QR, identifiant court. Impression par le service Android. L’essai WalkPrint/YHK reste à part. Le QR de l’étiquette se relit.
-- Nouvelle identité : magenta et blanc, logo « caisse dans un jeton », icône Android adaptative (y compris monochrome) et icônes PWA. L’esprit vient de Musiques en jeu(x) – LE KIT, sans reprendre son logo, ses photos ni ses dessins. Les modes Auto / Ordinateur / Mobile et Système / Sombre / Clair / Régie restent en place. Régie reste sobre.
+- Nouvelle identité : une seule encre (bleu d’imprimerie `#0B3D91`) sur papier, logo « caisse dans un jeton », icône Android adaptative (y compris monochrome) et icônes PWA. L’esprit sérigraphié vient de Musiques en jeu(x) – LE KIT, sans reprendre son logo, ses photos ni ses dessins. Le rose n’est pas repris. Les modes Auto / Ordinateur / Mobile et Système / Sombre / Clair / Régie restent en place. Régie reste en noir et blanc.
 - Version `0.3.0-beta.1`, Android `versionCode` 6. IndexedDB passe en version 5 : les fiches déjà là sont conservées, un espace « apprentissages » est ajouté.
 - La clé d’envoi Play n’est toujours pas disponible. Les binaires de test sont signés avec la clé debug.
 

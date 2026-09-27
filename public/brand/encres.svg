@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 168" role="img" aria-label="Trois encres possibles pour MISE !">
+  <rect width="480" height="168" fill="#f4f1ea"/>
+  <g transform="translate(28,16)">
+    <rect width="64" height="64" rx="14" fill="#0B3D91"/>
+    <circle cx="31" cy="36" r="18" fill="#fff"/>
+    <path fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" d="M48 7l8 4.6v9.2L48 25.4 40 20.8v-9.2z"/>
+    <path fill="none" stroke="#0B3D91" stroke-width="2.2" stroke-linejoin="round" d="M16 36 31 28l15 8v14L31 58 16 50V36Z"/>
+    <path fill="none" stroke="#0B3D91" stroke-width="2" stroke-linejoin="round" d="M16 36l15 8 15-8M31 44v14"/>
+    <path fill="none" stroke="#0B3D91" stroke-width="2.2" stroke-linecap="round" d="M18 26c4-6 8-6 13 0s9 6 13 0"/>
+    <circle cx="46" cy="22" r="2.4" fill="#0B3D91"/>
+    <text x="0" y="88" fill="#161513" font-family="ui-sans-serif,system-ui,sans-serif" font-size="13" font-weight="700">Bleu d'imprimerie</text>
+    <text x="0" y="106" fill="#5c5852" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12">#0B3D91 · retenue</text>
+  </g>
+  <g transform="translate(188,16)">
+    <rect width="64" height="64" rx="14" fill="#C23A1B"/>
+    <circle cx="31" cy="36" r="18" fill="#fff"/>
+    <path fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" d="M48 7l8 4.6v9.2L48 25.4 40 20.8v-9.2z"/>
+    <path fill="none" stroke="#C23A1B" stroke-width="2.2" stroke-linejoin="round" d="M16 36 31 28l15 8v14L31 58 16 50V36Z"/>
+    <path fill="none" stroke="#C23A1B" stroke-width="2" stroke-linejoin="round" d="M16 36l15 8 15-8M31 44v14"/>
+    <path fill="none" stroke="#C23A1B" stroke-width="2.2" stroke-linecap="round" d="M18 26c4-6 8-6 13 0s9 6 13 0"/>
+    <circle cx="46" cy="22" r="2.4" fill="#C23A1B"/>
+    <text x="0" y="88" fill="#161513" font-family="ui-sans-serif,system-ui,sans-serif" font-size="13" font-weight="700">Vermillon</text>
+    <text x="0" y="106" fill="#5c5852" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12">#C23A1B · variante</text>
+  </g>
+  <g transform="translate(348,16)">
+    <rect width="64" height="64" rx="14" fill="#0F6E45"/>
+    <circle cx="31" cy="36" r="18" fill="#fff"/>
+    <path fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" d="M48 7l8 4.6v9.2L48 25.4 40 20.8v-9.2z"/>
+    <path fill="none" stroke="#0F6E45" stroke-width="2.2" stroke-linejoin="round" d="M16 36 31 28l15 8v14L31 58 16 50V36Z"/>
+    <path fill="none" stroke="#0F6E45" stroke-width="2" stroke-linejoin="round" d="M16 36l15 8 15-8M31 44v14"/>
+    <path fill="none" stroke="#0F6E45" stroke-width="2.2" stroke-linecap="round" d="M18 26c4-6 8-6 13 0s9 6 13 0"/>
+    <circle cx="46" cy="22" r="2.4" fill="#0F6E45"/>
+    <text x="0" y="88" fill="#161513" font-family="ui-sans-serif,system-ui,sans-serif" font-size="13" font-weight="700">Vert affiche</text>
+    <text x="0" y="106" fill="#5c5852" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12">#0F6E45 · variante</text>
+  </g>
+</svg>

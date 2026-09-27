@@ -1,35 +1,43 @@
+/* Encre unique. Changer seulement --ink, puis lancer : node scripts/export-icons.mjs
+   Le script recopie cette valeur dans les icônes, le manifeste et Android.
+   Le papier et le noir de texte ne sont pas une deuxième encre. */
 :root{
-  --bg:#1a0610;--bg-elev:#1a0610f2;--surface:#2a1020;--surface-2:#3d1630;--line:#7a3d5c;
-  --text:#fff7fb;--muted:#ffd0e4;--accent:#ff4d9a;--button:#e00078;--button-text:#fff;
-  --paper:#fff;--ink:#2b0c1c;--active-bg:#fff;--active-text:#2b0c1c;
-  --chip:#4a2040;--shadow:#0008;--radius:18px;--magenta:#e00078;--magenta-deep:#c40068;
+  --ink:#0B3D91;
+  --paper:#f4f1ea;
+  --type:#161513;
+  --night:#141311;
+  --bg:#141311;--bg-elev:#141311f2;--surface:#1e1c19;--surface-2:#2a2723;--line:#5c5852;
+  --text:#f4f1ea;--muted:#d4cfc6;--accent:#f4f1ea;--button:var(--ink);--button-text:#fff;
+  --active-bg:#f4f1ea;--active-text:#161513;
+  --chip:#2a2723;--shadow:#0008;--radius:18px;
   --font:ui-rounded,"Segoe UI",ui-sans-serif,system-ui,sans-serif;
   color-scheme:dark;
 }
 html[data-theme=light]{
-  --bg:#fff;--bg-elev:#fffffff2;--surface:#fff;--surface-2:#ffe4f2;--line:#f3b6d4;
-  --text:#2b0c1c;--muted:#6a3050;--accent:#e00078;--button:#c40068;--button-text:#fff;
-  --paper:#fff;--ink:#2b0c1c;--active-bg:#e00078;--active-text:#fff;--chip:#ffe4f2;
+  --bg:#f4f1ea;--bg-elev:#f4f1eaf2;--surface:#fffefb;--surface-2:#e7e1d6;--line:#c9c2b6;
+  --text:#161513;--muted:#5c5852;--accent:var(--ink);--button:var(--ink);--button-text:#fff;
+  --active-bg:var(--ink);--active-text:#fff;--chip:#e7e1d6;
   color-scheme:light;
 }
 @media(prefers-color-scheme:light){
   html[data-theme=system]{
-    --bg:#fff;--bg-elev:#fffffff2;--surface:#fff;--surface-2:#ffe4f2;--line:#f3b6d4;
-    --text:#2b0c1c;--muted:#6a3050;--accent:#e00078;--button:#c40068;--button-text:#fff;
-    --paper:#fff;--ink:#2b0c1c;--active-bg:#e00078;--active-text:#fff;--chip:#ffe4f2;
+    --bg:#f4f1ea;--bg-elev:#f4f1eaf2;--surface:#fffefb;--surface-2:#e7e1d6;--line:#c9c2b6;
+    --text:#161513;--muted:#5c5852;--accent:var(--ink);--button:var(--ink);--button-text:#fff;
+    --active-bg:var(--ink);--active-text:#fff;--chip:#e7e1d6;
     color-scheme:light;
   }
 }
 html[data-theme=regie]{
   --bg:#000;--bg-elev:#000;--surface:#070707;--surface-2:#111;--line:#8a8a8a;
-  --text:#fff;--muted:#e8e8e8;--accent:#ff6aaa;--button:#fff;--button-text:#000;
-  --paper:#fff;--ink:#000;--active-bg:#fff;--active-text:#000;--chip:#1a1a1a;
+  --text:#fff;--muted:#e8e8e8;--accent:#fff;--button:#fff;--button-text:#000;
+  --active-bg:#fff;--active-text:#000;--chip:#1a1a1a;
   color-scheme:dark;
 }
 body{background:var(--bg);color:var(--text);font-family:var(--font)}
 header,.goalNav{background:var(--bg-elev);border-color:var(--line)}
 button{background:var(--button);color:var(--button-text);border-color:transparent;border-radius:var(--radius);min-height:48px}
 .ghost,.searchbox button,.headerChip,.headerIcon,.miniAction{background:var(--surface-2);color:var(--text);border-color:var(--line)}
+.quick button{background:var(--surface-2);color:var(--text);border-color:var(--line)}
 .goalNav details,.panel,.card,.result,.empty,.checklist,.preferenceState,.miseSectionHead,.challenge,.manualSteps article,.shareColumns>div,.printerDevice,.visionProposal,.historyList small,.searchbox,.corpusMeta{background:var(--surface);color:var(--text);border-color:var(--line);border-radius:var(--radius)}
 .goalNav summary,.goalNav button,.card,.result h3,.miseTitle b,.sub{color:var(--text)}
 .goalNav button.active,nav button.active{background:var(--active-bg);color:var(--active-text);border-color:var(--active-bg)}
@@ -37,17 +45,17 @@ button{background:var(--button);color:var(--button-text);border-color:transparen
 .form input,.form select,.form textarea,.searchbox input{background:var(--bg);color:var(--text);border-color:var(--line);border-radius:12px}
 dialog{background:var(--surface);color:var(--text);border-color:var(--line);border-radius:20px}
 .chip{background:var(--chip);color:var(--text)}
-.miseLogo4{width:56px;height:56px;border-radius:18px;background:var(--magenta);border-color:transparent}
-.miseLogo4 svg{width:48px;height:48px}
-.miseLogo4 .token{fill:#fff}
-.miseLogo4 .hex{fill:none;stroke:#fff;stroke-width:2.2;stroke-linejoin:round}
-.miseLogo4 .crate,.miseLogo4 .lid{fill:none;stroke:var(--magenta-deep);stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
-.miseLogo4 .wave{fill:none;stroke:var(--magenta);stroke-width:2.3;stroke-linecap:round}
-.miseLogo4 .dot{fill:var(--magenta);stroke:none}
+.miseLogo4{width:56px;height:56px;border-radius:18px;background:var(--ink);border-color:transparent}
+.miseLogo4 svg{width:48px;height:48px;fill:none;stroke:none}
+.miseLogo4 .token{fill:var(--paper);stroke:none}
+.miseLogo4 .hex{fill:none;stroke:var(--paper);stroke-width:2.2;stroke-linejoin:round}
+.miseLogo4 .crate,.miseLogo4 .lid,.miseLogo4 .wave{fill:none;stroke:var(--ink);stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+.miseLogo4 .dot{fill:var(--ink);stroke:none}
+.miseWordmark circle{fill:var(--paper)}
 .quick button{min-height:72px;border-radius:18px;font-weight:800}
 .terrainQuick{gap:.45rem}
-.terrainQuick button{background:var(--magenta);color:#fff;border:0}
-.playful{position:relative;overflow:hidden;background:var(--magenta);color:#fff;border:0;
+.terrainQuick button{background:var(--ink);color:#fff;border:0}
+.playful{position:relative;overflow:hidden;background:var(--ink);color:#fff;border:0;
   background-image:radial-gradient(rgba(255,255,255,.28) 1.1px,transparent 1.2px);
   background-size:9px 9px}
 .tokenStrip{color:#fff;margin:0 0 .35rem}
@@ -55,17 +63,17 @@ dialog{background:var(--surface);color:var(--text);border-color:var(--line);bord
 .tokenStrip circle,.tokenStrip polygon,.tokenStrip path{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
 .tokenStrip polygon:nth-of-type(2){transform:rotate(8deg);transform-origin:108px 20px;transform-box:fill-box}
 .playful h2,.playful p,.playful label,.playful strong{color:#fff}
-.playful .hint,.playful small{color:#ffe4f2}
-.playful button{background:#fff;color:var(--magenta-deep)}
+.playful .hint,.playful small{color:var(--paper)}
+.playful button{background:#fff;color:var(--ink)}
 .playful button.ghost{background:transparent;color:#fff;border:2px solid #fff}
-.playful .challenge>button{background:var(--magenta);color:#fff}
-.playful .challenge>button.ghost{background:transparent;color:var(--magenta-deep);border:2px solid var(--magenta-deep)}
-.playful textarea,.playful input,.playful select{background:#fff;color:#2b0c1c;border-color:#fff}
-.playful .challenge,.playful .ownedCard{background:#fff;color:#2b0c1c;border:0}
-.playful .challenge p,.playful .challenge small,.playful .ownedCard span,.playful .ownedCard p{color:#5c2040}
-.playful .challenge strong,.playful .ownedCard b{color:var(--magenta-deep)}
+.playful .challenge>button{background:var(--ink);color:#fff}
+.playful .challenge>button.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.playful textarea,.playful input,.playful select{background:#fff;color:var(--type);border-color:#fff}
+.playful .challenge,.playful .ownedCard{background:#fff;color:var(--type);border:0}
+.playful .challenge p,.playful .challenge small,.playful .ownedCard span,.playful .ownedCard p{color:#5c5852}
+.playful .challenge strong,.playful .ownedCard b{color:var(--ink)}
 .playful .suggestCard{background:transparent;color:#fff;border:2px dashed #fff}
-.playful .uncertain{color:#ffe4f2;border-color:#fff}
+.playful .uncertain{color:var(--paper);border-color:#fff}
 .assistant,.ownedCard,.suggestCard,.uncertain{border-radius:16px;padding:.8rem;margin:.45rem 0}
 .ownedCard{background:var(--surface-2);border:1px solid var(--accent)}
 .suggestCard{background:transparent;border:1px dashed var(--line)}
@@ -76,6 +84,11 @@ dialog{background:var(--surface);color:var(--text);border-color:var(--line);bord
 #scanVideo{width:100%;max-height:62dvh;object-fit:cover;background:#000;border-radius:16px}
 @media(orientation:landscape){#scanVideo{max-height:70dvh;object-fit:contain}}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.link{color:var(--paper)}
+.check input{accent-color:var(--paper)}
+.searchbox button.listening{background:var(--ink)}
+.activeMise{border-color:var(--ink)}
+@keyframes pulse{50%{box-shadow:0 0 0 9px color-mix(in srgb, var(--ink) 28%, transparent)}}
 html[data-theme=light] body,html[data-theme=light] header,html[data-theme=light] .goalNav{background:var(--bg);color:var(--text)}
 html[data-theme=light] .goalNav details,html[data-theme=light] .result,html[data-theme=light] .empty,html[data-theme=light] .checklist,html[data-theme=light] .preferenceState,html[data-theme=light] .miseSectionHead,html[data-theme=light] .card,html[data-theme=light] .panel{background:var(--surface);color:var(--text);border-color:var(--line)}
 html[data-theme=light] .goalNav summary,html[data-theme=light] .goalNav button,html[data-theme=light] .result h3{color:var(--text)}
@@ -84,13 +97,20 @@ html[data-theme=light] .goalNav button.active{background:var(--active-bg);color:
 html[data-theme=light] .searchbox input,html[data-theme=light] .form input,html[data-theme=light] .form select,html[data-theme=light] .form textarea{color:var(--text);background:var(--paper);border-color:var(--line)}
 html[data-theme=light] .ghost,html[data-theme=light] .searchbox button,html[data-theme=light] .headerChip,html[data-theme=light] .headerIcon{background:var(--surface-2);color:var(--text);border-color:var(--line)}
 html[data-theme=light] .muted,html[data-theme=light] .hint,html[data-theme=light] small{color:var(--muted)}
+html[data-theme=light] .link{color:var(--ink)}
+html[data-theme=light] .miseWordmark circle{fill:var(--ink)}
+html[data-theme=light] .check input{accent-color:var(--ink)}
+html[data-theme=light] .activeMise{border-color:var(--ink)!important}
 @media(prefers-color-scheme:light){
   html[data-theme=system] body,html[data-theme=system] header,html[data-theme=system] .goalNav{background:var(--bg);color:var(--text)}
   html[data-theme=system] .goalNav details,html[data-theme=system] .result,html[data-theme=system] .empty,html[data-theme=system] .checklist,html[data-theme=system] .preferenceState,html[data-theme=system] .miseSectionHead,html[data-theme=system] .card{background:var(--surface);color:var(--text);border-color:var(--line)}
   html[data-theme=system] .goalNav button.active{background:var(--active-bg);color:var(--active-text)}
-  html[data-theme=system] .searchbox input,html[data-theme=system] .form input,html[data-theme=system] .form select,html[data-theme=system] .form textarea{color:var(--text);background:#fff;border-color:var(--line)}
+  html[data-theme=system] .searchbox input,html[data-theme=system] .form input,html[data-theme=system] .form select,html[data-theme=system] .form textarea{color:var(--text);background:var(--paper);border-color:var(--line)}
   html[data-theme=system] .ghost,html[data-theme=system] .headerChip,html[data-theme=system] .headerIcon{background:var(--surface-2);color:var(--text)}
   html[data-theme=system] .muted,html[data-theme=system] .hint,html[data-theme=system] small{color:var(--muted)}
+  html[data-theme=system] .link{color:var(--ink)}
+  html[data-theme=system] .miseWordmark circle{fill:var(--ink)}
+  html[data-theme=system] .check input{accent-color:var(--ink)}
 }
 html[data-theme=regie] body,html[data-theme=regie] header,html[data-theme=regie] .goalNav{background:#000;color:#fff;border-color:#888}
 html[data-theme=regie] .goalNav details,html[data-theme=regie] .result,html[data-theme=regie] .empty,html[data-theme=regie] .checklist,html[data-theme=regie] .preferenceState,html[data-theme=regie] .miseSectionHead,html[data-theme=regie] .card,html[data-theme=regie] .panel{background:#070707;color:#fff;border-color:#888}
@@ -110,7 +130,9 @@ html[data-theme=regie] .miseLogo4 .token{fill:#fff}
 html[data-theme=regie] .miseLogo4 .hex{stroke:#000}
 html[data-theme=regie] .miseLogo4 .crate,html[data-theme=regie] .miseLogo4 .lid,html[data-theme=regie] .miseLogo4 .wave{stroke:#000;fill:none}
 html[data-theme=regie] .miseLogo4 .dot{fill:#000;stroke:none}
-.splash{min-height:100dvh;display:grid;place-items:center;gap:.6rem;background:#e00078;color:#fff}
+html[data-theme=regie] .miseWordmark circle{fill:#fff}
+html[data-theme=regie] .link{color:#fff}
+.splash{min-height:100dvh;display:grid;place-items:center;gap:.6rem;background:var(--ink);color:#fff}
 .splash b{font-size:2.4rem;letter-spacing:-.06em}
-html[data-theme=light] .playful,html[data-theme=system] .playful{background-color:#e00078;color:#fff;border:0;background-image:radial-gradient(rgba(255,255,255,.28) 1.1px,transparent 1.2px);background-size:9px 9px}
-html[data-theme=light] .terrainQuick button{background:#e00078;color:#fff;border:0}
+html[data-theme=light] .playful,html[data-theme=system] .playful{background-color:var(--ink);color:#fff;border:0;background-image:radial-gradient(rgba(255,255,255,.28) 1.1px,transparent 1.2px);background-size:9px 9px}
+html[data-theme=light] .terrainQuick button,html[data-theme=system] .terrainQuick button{background:var(--ink);color:#fff;border:0}

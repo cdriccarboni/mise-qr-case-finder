@@ -8,7 +8,7 @@ export default defineConfig({
     manifest:{
       name:'MISE ! — QR Case Finder', short_name:'MISE !',
       description:'Cherche ta mise — inventaire de bruitage, matériel, QR et préparation.',
-      theme_color:'#e00078', background_color:'#1a0610',
+      theme_color:'#0B3D91', background_color:'#141311',
       display:'standalone', start_url:'./', scope:'./', lang:'fr',
       icons:[
         {src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any'},

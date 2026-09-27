@@ -34,11 +34,11 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(Color.rgb(22, 9, 16));
-        getWindow().setNavigationBarColor(Color.rgb(22, 9, 16));
+        getWindow().setStatusBarColor(Color.rgb(20, 19, 17));
+        getWindow().setNavigationBarColor(Color.rgb(20, 19, 17));
 
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.rgb(26, 6, 16));
+        webView.setBackgroundColor(Color.rgb(20, 19, 17));
         setContentView(webView);
         printerBridge = new NativePrinterBridge(this, webView);
         webView.addJavascriptInterface(printerBridge, "MiseAndroidPrinter");

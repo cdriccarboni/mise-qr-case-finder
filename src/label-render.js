@@ -170,7 +170,11 @@ function hexagon(img, cx, cy, radius, color, width) {
   }
   for (let i = 0; i < 6; i++) stroke(img, pts[i][0], pts[i][1], pts[(i + 1) % 6][0], pts[(i + 1) % 6][1], width, color)
 }
-export function renderIconRgba(size = 512, { background = [224, 0, 120, 255], foreground = [196, 0, 104, 255], padding = 0.3 } = {}) {
+const SPOT_HEX = '#0B3D91'
+function spotRgb(hex = SPOT_HEX) {
+  return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16), 255]
+}
+export function renderIconRgba(size = 512, { background = spotRgb(), foreground = spotRgb(), padding = 0.3 } = {}) {
   const paper = [255, 255, 255, 255]
   const img = createImage(size, size, background)
   fillCircle(img, size * 0.48, size * 0.54, size * 0.3, paper)

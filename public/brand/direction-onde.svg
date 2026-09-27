@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Direction : un objet qui devient une onde">
-  <rect width="64" height="64" rx="14" fill="#160910"/>
-  <circle cx="18" cy="32" r="8" fill="none" stroke="#fff7fb" stroke-width="2.4"/>
-  <path fill="none" stroke="#ff4d9a" stroke-width="2.4" stroke-linecap="round" d="M28 32c4-10 8-10 12 0s8 10 12 0"/>
-  <path fill="none" stroke="#ffb3d4" stroke-width="2" stroke-linecap="round" d="M30 32c3-6 6-6 9 0s6 6 9 0"/>
+  <rect width="64" height="64" rx="14" fill="#141311"/>
+  <circle cx="18" cy="32" r="8" fill="none" stroke="#f4f1ea" stroke-width="2.4"/>
+  <path fill="none" stroke="#0B3D91" stroke-width="2.4" stroke-linecap="round" d="M28 32c4-10 8-10 12 0s8 10 12 0"/>
+  <path fill="none" stroke="#f4f1ea" stroke-width="2" stroke-linecap="round" d="M30 32c3-6 6-6 9 0s6 6 9 0"/>
 </svg>

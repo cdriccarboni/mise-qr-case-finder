@@ -122,7 +122,7 @@ html[data-display=mobile] main{padding-left:.75rem;padding-right:.75rem}html[dat
 .visionProposal label.check{flex-direction:row;align-items:center}
 .visionDialog [data-error]{color:#f28383}
 
-/* Wordmark: the two red dots share one SVG coordinate, so they stay aligned at every width. */
+/* Wordmark: the two dots share one SVG coordinate, so they stay aligned at every width. */
 .miseBrand .wordmark{display:block;width:max-content;max-width:100%;line-height:0;letter-spacing:0;font-size:2.25rem}
 .miseWordmark{display:block;width:5.15em;height:auto;overflow:visible}
 .form textarea{width:100%;border:1px solid #34343b;background:#111115;color:#fff;border-radius:7px;padding:.75rem;outline:none;resize:vertical;font:inherit}
