@@ -20,6 +20,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.webkit.WebViewAssetLoader;
 
+import java.io.ByteArrayInputStream;
+import java.util.Collections;
+
 public final class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 2101;
     private static final int FILE_CHOOSER_REQUEST = 2102;
@@ -39,6 +42,7 @@ public final class MainActivity extends Activity {
         setContentView(webView);
         printerBridge = new NativePrinterBridge(this, webView);
         webView.addJavascriptInterface(printerBridge, "MiseAndroidPrinter");
+        webView.addJavascriptInterface(new AndroidShellBridge(), "MiseAndroid");
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -48,7 +52,7 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " MISE-Android/0.2.2");
+        settings.setUserAgentString(settings.getUserAgentString() + " MISE-Android/0.2.3");
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -57,6 +61,9 @@ public final class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                if (isGoogleAuthHost(request.getUrl())) {
+                    return new WebResourceResponse("text/plain", "utf-8", 403, "Forbidden", Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+                }
                 return assetLoader.shouldInterceptRequest(request.getUrl());
             }
 
@@ -106,9 +113,12 @@ public final class MainActivity extends Activity {
 
     private boolean staysInApp(Uri uri) {
         String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
-        return "appassets.androidplatform.net".equals(host)
-                || host.equals("google.com")
-                || host.endsWith(".google.com")
+        return "appassets.androidplatform.net".equals(host);
+    }
+
+    private static boolean isGoogleAuthHost(Uri uri) {
+        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+        return host.equals("accounts.google.com")
                 || host.equals("googleapis.com")
                 || host.endsWith(".googleapis.com")
                 || host.equals("gstatic.com")

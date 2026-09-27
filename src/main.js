@@ -6,7 +6,7 @@ import { BrowserQRCodeReader } from '@zxing/browser'
 import { openDB } from 'idb'
 import { registerSW } from 'virtual:pwa-register'
 import { readProjectContext, makeControlSummary, makeProjectSummary } from './project-control.js'
-import { artGoogleSession, requestGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState, createSharePackage, loadSharePackage } from './google-sync.js'
+import { artGoogleSession, requestGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState, createSharePackage, loadSharePackage, androidGoogleSignInBlocked, googleSignInUnavailableMessage } from './google-sync.js'
 
 import { DATA_STORES, readData, enrichObjects, assignSoundFields, soundFields, PROVENANCE, provenanceLabel } from './data-bruitage.js'
 import { openDataBruitage } from './data-ui.js'
@@ -109,11 +109,22 @@ async function applyPrivateState(payload){
 }
 async function updateAccountStatus(){
   const saved=await db.get('settings','google-account'),session=artGoogleSession(),button=$('#accountBtn')
-  if(!button)return
-  button.textContent=saved?.email?(session?`Google · ${saved.email}`:'Google · Reconnecter'):'Google · À connecter'
-  button.classList.toggle('connected',Boolean(saved&&session))
+  const blocked=androidGoogleSignInBlocked()
+  if(button){
+    button.textContent=blocked?'Google · Indisponible dans l’app':saved?.email?(session?`Google · ${saved.email}`:'Google · Reconnecter'):'Google · À connecter'
+    button.classList.toggle('connected',Boolean(!blocked&&saved&&session))
+  }
+  const goal=$('#goalGoogle')
+  if(goal)goal.textContent=blocked?'Connexion Google indisponible':'Connexion Google'
+}
+function explainAndroidGoogle(){
+  const d=$('#modal')
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Connexion Google indisponible</b><small>Application Android</small></div><button id="closeAndroidGoogle" class="ghost" type="button">×</button></div><p>${esc(googleSignInUnavailableMessage())}</p><p class="hint">La recherche, les QR, les photos, les mémos sonores, l’import et la sauvegarde JSON restent disponibles sur cet appareil.</p></div>`
+  d.showModal()
+  $('#closeAndroidGoogle').onclick=()=>d.close()
 }
 async function connectGoogle(){
+  if(androidGoogleSignInBlocked()){explainAndroidGoogle();return}
   try{
     await requestGoogleSession()
     const profile=await connectedGoogleProfile(),email=String(profile?.email||'').trim()
@@ -316,6 +327,7 @@ function sharePayload({miseIds=[],kitIds=[],caseIds=[],objectIds=[],includeMedia
   return {version:1,kind:'mise-share',createdAt:new Date().toISOString(),project:project.projectId?{id:project.projectId,name:project.projectName,type:project.projectType}:null,includeMedia,objects:sharedObjects,cases:referencedCases,kits:selectedKits,mises:selectedMises}
 }
 function openShareDialog(){
+  if(androidGoogleSignInBlocked()){explainAndroidGoogle();return}
   const d=$('#modal'),members=companyMemberEmails()
   d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Partager par QR</b><small>Seulement ce que tu sélectionnes</small></div><button id="closeShare" class="ghost">×</button></div>
   <p class="hint">Le paquet est créé séparément dans Drive. Ta base complète n’est jamais partagée.</p>
@@ -327,6 +339,7 @@ function openShareDialog(){
   d.showModal();$('#closeShare').onclick=()=>d.close();$('#createShare').onclick=async()=>{const btn=$('#createShare');btn.disabled=true;try{const recipients=$('#shareRecipients').value.split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);if(!recipients.length)throw new Error('Ajoute au moins une adresse destinataire');const payload=sharePayload({miseIds:$$('[data-share-mise]:checked',d).map(x=>x.value),kitIds:$$('[data-share-kit]:checked',d).map(x=>x.value),caseIds:$$('[data-share-case]:checked',d).map(x=>x.value),objectIds:$$('[data-share-object]:checked',d).map(x=>x.value),includeMedia:$('#shareMedia').checked});if(!payload.objects.length&&!payload.mises.length&&!payload.kits.length&&!payload.cases.length)throw new Error('Sélectionne au moins un élément');const out=await createSharePackage(payload,recipients);const shareTarget=new URL(location.href);shareTarget.search='';shareTarget.hash='';shareTarget.searchParams.set('shareFile',out.file.id);const url=shareTarget.href,qr=await QRCode.toDataURL(url,{width:420,margin:2,errorCorrectionLevel:'M'});$('#shareResult').innerHTML=`<div class="shareDone"><img class="qr" src="${qr}"><b>${out.recipients.length} destinataire${out.recipients.length>1?'s':''}</b><small>Le QR ouvre uniquement ce paquet MISE !.</small><button id="shareNative">Partager le lien</button></div>`;$('#shareNative').onclick=async()=>{try{if(navigator.share)await navigator.share({title:'MISE !',text:'Partage MISE !',url});else{await navigator.clipboard.writeText(url);toast('Lien copié')}}catch{}};toast('Partage créé')}catch(error){toast(error instanceof Error?error.message:'Partage impossible')}finally{btn.disabled=false}}
 }
 async function openSharedPackage(fileId){
+  if(androidGoogleSignInBlocked()){explainAndroidGoogle();return}
   const d=$('#modal')
   try{const pack=await loadSharePackage(fileId);d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Partage MISE !</b><small>${esc(pack.project?.name||'Sélection partagée')}</small></div><button id="closeShared" class="ghost">×</button></div>${(pack.mises||[]).map(m=>`<article class="card"><b>${esc(m.name)}</b><span>${(m.objectIds||[]).length} objets</span></article>`).join('')}${(pack.objects||[]).map(o=>`<article class="result"><div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div><div><h3>${esc(o.name)}</h3><p>${(o.sounds||[]).slice(0,5).map(chip).join(' ')}</p><small>${esc(caseName((pack.cases||[]).find(c=>c.id===(o.caseId||o.container_id))))}</small>${o.audioMemo?`<audio controls src="${o.audioMemo}"></audio>`:''}</div></article>`).join('')}</div>`;d.showModal();$('#closeShared').onclick=()=>d.close()}catch(error){toast(error instanceof Error?error.message:'Partage inaccessible')}
 }
@@ -398,7 +411,7 @@ $('#app').innerHTML=`
 <article><b>5 · Contrôler</b><span>Scanne les QR ou utilise le contrôle photo avant départ / avant jeu. Toute proposition photo reste à valider humainement.</span></article>
 <article><b>6 · Imprimer</b><span>Ouvre une valise → Étiquette / imprimer. L’impression système fonctionne partout ; Bluetooth direct dépend du protocole de l’imprimante.</span></article>
 <article><b>7 · Travailler plus vite</b><span>Favoris, alternatives, photo de groupe, mémo sonore, déplacement par scans et impression en série sont dans les trois menus par objectif.</span></article>
-<article><b>8 · Partager</b><span>« Partager par QR » crée un paquet séparé sur Drive avec seulement ce que tu sélectionnes. Photos et mémos sonores sont optionnels.</span></article>
+<article><b>8 · Partager</b><span>« Partager par QR » crée un paquet séparé sur Drive avec seulement ce que tu sélectionnes. Photos et mémos sonores sont optionnels. Dans l’application Android, la connexion Google est désactivée : exporte une sauvegarde JSON, ou ouvre MISE ! dans Chrome pour Drive.</span></article>
 <article id="manualIos"><b>9 · iPhone / iPad</b><span>Dans Safari : bouton Partager → « Sur l’écran d’accueil » → garder « Ouvrir comme app Web » activé. Si ta base était déjà dans Safari, reconnecte Google ou importe une sauvegarde dans l’app installée.</span></article><article><b>10 · Confidentialité</b><span>Ta base personnelle n’est jamais incluse dans l’application publique. Les données de projet restent privées tant que tu ne les partages pas explicitement.</span></article>
 </div><p class="manualNote">Le bouton ⇩ crée une sauvegarde locale de ta base.</p><p class="manualJoke">Toi aussi, tu as acheté une mini-imprimante thermique avec des oreilles de chat pour ta fille… puis tu t’es rendu compte que ce serait incroyablement pratique au boulot ? Voilà. MISE ! est née à peu près comme ça.</p></div></dialog>
 <div id="toast" role="status"></div>`
@@ -805,10 +818,15 @@ function applyUiPreferences(){
   if(themeSelect)themeSelect.value=theme
   const googleState=$('#preferencesGoogleState')
   if(googleState){
-    const account=$('#accountBtn')?.textContent||''
-    const connected=/connecté|reconnecter/i.test(account)&&!/non connecté/i.test(account)
-    googleState.innerHTML=`<b>Google Drive</b><span>${connected?esc(account):'Non connecté'}</span>`
-    $('#preferencesGoogle').textContent=connected?'Reconnecter Google Drive':'Raccorder Google Drive'
+    if(androidGoogleSignInBlocked()){
+      googleState.innerHTML='<b>Google Drive</b><span>Indisponible dans l’application Android</span>'
+      $('#preferencesGoogle').textContent='Pourquoi la connexion est indisponible'
+    }else{
+      const account=$('#accountBtn')?.textContent||''
+      const connected=/connecté|reconnecter/i.test(account)&&!/non connecté/i.test(account)
+      googleState.innerHTML=`<b>Google Drive</b><span>${connected?esc(account):'Non connecté'}</span>`
+      $('#preferencesGoogle').textContent=connected?'Reconnecter Google Drive':'Raccorder Google Drive'
+    }
   }
   db.get('settings','linked-folder').then(linked=>{
     const state=$('#folderLinkState');if(!state||!linked)return

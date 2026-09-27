@@ -6,8 +6,8 @@
 - Sous-titre produit : **QR Case Finder**
 - Package Android : `fr.acousmatictheatre.mise`
 - Catégorie envisagée : Outils
-- Version de test actuelle : `0.2.2-beta.1` (`versionCode` 4, package `fr.acousmatictheatre.mise`)
-- L’APK/AAB du workflow est signé avec la clé de debug. La clé d’upload Play existante n’est pas disponible ici : ne pas envoyer cet AAB comme mise à jour d’une fiche déjà signée avec cette clé.
+- Version de test actuelle : `0.2.3-beta.1` (`versionCode` 5, package `fr.acousmatictheatre.mise`)
+- L’APK/AAB du workflow est signé avec la clé de debug. La clé d’upload Play existante n’est pas disponible ici : elle n’a pas été recréée. Ne pas envoyer cet AAB comme mise à jour d’une fiche déjà signée avec cette clé.
 - Cible Android : API 36
 
 ## Proposition de fiche Store
