@@ -46,7 +46,7 @@ test('ink choice recolors the logo, stays readable, and is restored', async ({ p
   expect(rose.dot).toBe('rgb(209, 42, 116)')
   expect(rose.ghost).toBe(rose.dot)
   expect(rose.letters).not.toBe(rose.dot)
-  expect(rose.onInk.toLowerCase()).toBe('#fff')
+  expect(rose.onInk.toLowerCase()).toMatch(/^#f{3,6}$/)
   await shoot(page.locator('header'), `${shots}/logo-rose.png`)
 
   await page.locator('#preferencesBtn').click()
@@ -71,22 +71,25 @@ test('ink choice recolors the logo, stays readable, and is restored', async ({ p
   await shoot(page.locator('header'), `${shots}/logo-vert.png`)
 
   const contrast = await page.evaluate(() => {
-    const parse = value => value.match(/[\d.]+/g).slice(0, 3).map(Number)
-    const lum = ([r, g, b]) => {
+    const channels = value => {
+      const parts = value.match(/[\d.]+/g).slice(0, 3).map(Number)
+      return value.startsWith('color(') ? parts.map(channel => channel * 255) : parts
+    }
+    const lum = rgb => {
       const linear = channel => {
         const c = channel / 255
         return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
       }
+      const [r, g, b] = channels(rgb)
       return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b)
     }
-    const style = getComputedStyle(document.querySelector('.empty, .goalNav details'))
-    const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink')
+    const card = document.querySelector('.goalNav details')
     const probe = document.createElement('span')
-    probe.style.color = ink
+    probe.style.color = getComputedStyle(document.documentElement).getPropertyValue('--ink')
     document.body.append(probe)
-    const inkRgb = getComputedStyle(probe).color
+    const ink = getComputedStyle(probe).color
     probe.remove()
-    return { border: lum(parse(style.borderTopColor)), ink: lum(parse(inkRgb)) }
+    return { border: lum(getComputedStyle(card).borderTopColor), ink: lum(ink) }
   })
   expect(contrast.border).toBeGreaterThan(contrast.ink)
 
