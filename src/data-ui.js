@@ -1,5 +1,5 @@
-import { TABLES, emptyData, readData, planImport, mergeData, saveReviewedRow, newId } from './data-bruitage.js'
-import { parseImportFile, downloadWorkbook, SUPPORTED_IMPORT } from './data-import.js'
+import { TABLES, emptyData, readData, planImport, mergeData, saveReviewedRow, newId, findDuplicates, provenanceLabel, soundFields } from './data-bruitage.js'
+import { parseImportFile, downloadWorkbook, downloadBinder, downloadIndexCsv, SUPPORTED_IMPORT } from './data-import.js'
 
 export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 const esc = escapeHtml
@@ -8,8 +8,8 @@ export async function openDataBruitage({ db, changed, files = [] }) {
   document.body.append(dialog)
   let data = await readData(db), selectedTable = 'objects', staged = null, closed = false
   dialog.innerHTML = `<div class="form"><div class="dialoghead"><div><b>Data Bruitage · base globale</b><small>Objets, sons et documents de tous les usages et projets</small></div><button data-close class="ghost">Fermer</button></div>
-    <p class="hint">Les imports restent sur cet appareil. Chaque conflit conserve la version locale et rejoint « À vérifier ».</p>
-    <div class="row"><button data-import>Importer des fichiers</button><button data-export>Exporter XLSX</button></div>
+    <p class="hint">Les imports restent sur cet appareil. Chaque conflit conserve la version locale et rejoint « À vérifier ». Document de l’utilisateur, source externe, proposition générée et à vérifier restent des origines distinctes. « Son à entendre » et « son à imaginer » ne sont jamais fusionnés.</p>
+    <div class="row"><button data-import>Importer des fichiers</button><button data-export>Exporter XLSX</button><button data-binder class="ghost">Classeur XLSX</button><button data-csv class="ghost">Index CSV</button><button data-duplicates class="ghost">Doublons</button></div>
     <input data-files type="file" accept=".xlsx,.xls,.csv,.json,.txt,.pdf,.docx" multiple hidden>
     <p data-status role="status"></p><div data-preview></div>
     <label>Table<select data-table>${Object.entries(TABLES).map(([key, label]) => `<option value="${key}">${esc(label)}</option>`).join('')}</select></label>
@@ -23,7 +23,12 @@ export async function openDataBruitage({ db, changed, files = [] }) {
   function renderRows() {
     const query = $('[data-filter]').value.toLocaleLowerCase('fr')
     const rows = data[selectedTable].filter(row => JSON.stringify(row).toLocaleLowerCase('fr').includes(query))
-    $('[data-rows]').innerHTML = `<p>${rows.length} ligne(s) · ${data.review.filter(r => r.status === 'pending').length} à vérifier</p>` + rows.slice(0, 100).map((row, index) => `<article class="dataRow"><div><b>${esc(row.name || row.label || row.reason || row.id)}</b><small>${esc(row.excerpt || row.status || row.objectId || '')}</small></div><button data-edit="${index}" class="ghost">${selectedTable === 'review' ? 'Examiner' : 'Modifier'}</button></article>`).join('') + (rows.length > 100 ? '<p>Affichage limité à 100 lignes. Affinez le filtre.</p>' : '')
+    const fieldsOf = row => soundFields(row)
+    $('[data-rows]').innerHTML = `<p>${rows.length} ligne(s) · ${data.review.filter(r => r.status === 'pending').length} à vérifier</p>` + rows.slice(0, 100).map((row, index) => {
+      const sounds = fieldsOf(row)
+      const detail = [sounds.hear && `Entendre : ${sounds.hear}`, sounds.imagine && `Imaginer : ${sounds.imagine}`, row.provenance && provenanceLabel(row.provenance), row.excerpt || row.status || row.objectId || ''].filter(Boolean).join(' · ')
+      return `<article class="dataRow"><div><b>${esc(row.name || row.label || row.reason || row.id)}</b><small>${esc(detail)}</small></div><button data-edit="${index}" class="ghost">${selectedTable === 'review' ? 'Examiner' : 'Modifier'}</button></article>`
+    }).join('') + (rows.length > 100 ? '<p>Affichage limité à 100 lignes. Affinez le filtre.</p>' : '')
     dialog.querySelectorAll('[data-edit]').forEach(button => button.onclick = () => editRow(rows[Number(button.dataset.edit)]))
   }
   function editRow(row = {}) {
@@ -80,6 +85,13 @@ export async function openDataBruitage({ db, changed, files = [] }) {
   $('[data-import]').onclick = () => $('[data-files]').click()
   $('[data-files]').onchange = event => { const selected = [...event.target.files]; event.target.value = ''; void previewFiles(selected) }
   $('[data-export]').onclick = async () => { try { downloadWorkbook(await readData(db)); status('XLSX exporté avec toutes les tables et corrections.') } catch (error) { status(error.message) } }
+  $('[data-binder]').onclick = async () => { try { downloadBinder(await readData(db)); status('Classeur exporté : index, objets, sons, sources, doublons. Les deux sons restent des colonnes distinctes.') } catch (error) { status(error.message) } }
+  $('[data-csv]').onclick = async () => { try { downloadIndexCsv(await readData(db)); status('Index CSV exporté. La restauration complète des relations passe par le classeur XLSX ou la sauvegarde JSON.') } catch (error) { status(error.message) } }
+  $('[data-duplicates]').onclick = () => {
+    const groups = findDuplicates(data)
+    $('[data-preview]').innerHTML = groups.length ? `<p>${groups.length} groupe(s) de doublons possibles. Rien n’est fusionné automatiquement.</p>` + groups.slice(0, 50).map(group => `<article class="dataRow"><div><b>${esc(group.cle)}</b><small>${esc(provenanceLabel(group.provenance))} · ${esc(group.table)} · ${esc(group.ids)}</small></div></article>`).join('') : '<p>Aucun doublon de nom détecté.</p>'
+    status(groups.length ? `${groups.length} doublon(s) à vérifier.` : 'Aucun doublon de nom.')
+  }
   dialog.showModal(); renderRows()
   if (files.length) await previewFiles(files)
 }

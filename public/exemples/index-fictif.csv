@@ -1,0 +1,4 @@
+﻿id,nom,son à entendre,son à imaginer,objet ou dispositif nécessaire,famille,source,statut,notes,provenance,relations,sons
+obj-fictif-bouteille,Bouteille fictive,glouglou fictif,océan imaginé fictif,Bouteille en verre fictive,Eau & liquides,FICTIF-carnet-bruitage.txt,review,Exemple public fictif. Entendre et imaginer restent séparés.,user-document,rel-fictif-1|rel-fictif-2,snd-fictif-glouglou|snd-fictif-ocean
+obj-fictif-bouteille-2,Bouteille fictive,clapotis fictif,pluie imaginée fictive,Seconde bouteille fictive,Eau & liquides,FICTIF-carnet-bruitage.txt,available,"Doublon de nom volontaire, fiches distinctes.",user-document,,
+obj-fictif-papier,Papier froissé fictif,froissement fictif,feu imaginé fictif,Feuille de papier fictive,Feu & textures,FICTIF-carnet-bruitage.txt,available,Ne pas recopier le son imaginé dans le son à entendre.,user-document,,

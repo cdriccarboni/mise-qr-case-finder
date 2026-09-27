@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - mise/google-autonomous-auth-20260925
+      - grok/mise-finalisation-20260927
   pull_request:
     branches:
       - main
@@ -23,4 +23,7 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
+      - run: npm test
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser

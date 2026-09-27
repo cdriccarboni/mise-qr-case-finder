@@ -13,7 +13,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved }) {
   const context = mise?.name || ''
   dialog.innerHTML = `<div class="form"><div class="dialoghead"><div><b>${mise ? 'Contrôle photo de mise' : 'Détection photo · bêta locale'}</b><small>${esc(mise?.name || 'Data Bruitage · tous les objets')}</small></div><button data-close class="ghost">Fermer</button></div>
     <div class="visionFrame"><img data-photo class="photoPreview" alt="Photo à analyser"><div data-boxes></div></div>
-    <p class="hint">Analyse sur cet appareil. Les objets spécialisés peuvent être omis. Corrigez les propositions et cochez uniquement les objets réellement vérifiés. Le score est un indice, pas une certitude.</p>
+    <p class="hint">Analyse sur cet appareil. Les objets spécialisés peuvent être omis. Corrigez les propositions et cochez uniquement les objets réellement vérifiés. Le score est un indice, pas une certitude. Une correction mémorisée est une association locale pour ce contexte : le modèle n’est pas réentraîné.</p>
     <p data-status role="status">Chargement du modèle local… Vous pouvez déjà saisir un objet.</p>
     <div data-proposals></div><button data-manual class="ghost">+ Objet omis / saisie manuelle</button>
     ${mise ? `<h3>Checklist humaine</h3><div data-checklist>${(mise.objectIds || []).map(id => `<label class="check"><input data-expected type="checkbox" value="${esc(id)}" ${(mise.checked || []).includes(id) ? 'checked' : ''}><span>${esc(catalogue.find(o => o.id === id)?.name || id)}</span></label>`).join('')}</div><p data-summary role="status"></p>` : ''}
@@ -76,7 +76,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved }) {
         const existing = p.objectId ? await tx.objectStore('objects').get(p.objectId) : null
         if (p.objectId && !existing) throw new Error('Objet supprimé depuis l’ouverture. Rouvrez la photo pour actualiser la base.')
         p.objectId = existing?.id || newId('obj')
-        await tx.objectStore('objects').put({ ...(existing || { id: p.objectId, photo, owned: true, tags: [], contexts: [], source: 'photo locale' }), name: p.label, sounds: p.sounds, humanValidated: true, updatedAt: new Date().toISOString() })
+        await tx.objectStore('objects').put({ ...(existing || { id: p.objectId, photo, owned: true, tags: [], contexts: [], source: 'photo locale', provenance: p.rawLabel ? 'generated' : 'user-document', hear: '', imagine: '' }), name: p.label, sounds: p.sounds, humanValidated: true, provenance: existing?.provenance || (p.rawLabel ? 'generated' : 'user-document'), updatedAt: new Date().toISOString() })
       }
       for (const p of reviewed.filter(p => p.learn && p.rawLabel && (p.validated || p.rejected))) await tx.objectStore('corrections').put({ id: correctionKey(p.rawLabel, context), label: p.rawLabel, context, action: p.rejected ? 'reject' : 'match', objectId: p.objectId, humanValidated: true, updatedAt: new Date().toISOString() })
       let next

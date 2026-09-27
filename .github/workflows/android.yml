@@ -4,16 +4,30 @@ on:
   push:
     branches:
       - main
-      - mise/android-play-prep-20260925
+      - grok/mise-finalisation-20260927
     paths:
       - "android/**"
       - ".github/workflows/android.yml"
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.js"
+      - "scripts/**"
   pull_request:
     branches:
       - main
     paths:
       - "android/**"
       - ".github/workflows/android.yml"
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.js"
+      - "scripts/**"
   workflow_dispatch:
 
 permissions:
@@ -28,6 +42,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Build the local PWA embedded in the APK
+        run: |
+          npm ci
+          npm run build
+          rm -rf android/app/src/main/assets/www
+          mkdir -p android/app/src/main/assets/www
+          cp -a dist/. android/app/src/main/assets/www/
 
       - uses: actions/setup-java@v5
         with:
@@ -44,13 +71,14 @@ jobs:
         with:
           gradle-version: "8.13"
 
-      - name: Build debug APK and release AAB
-        run: gradle -p android :app:assembleDebug :app:bundleRelease --stacktrace
+      - name: Build test APK and test-signed AAB
+        run: gradle -p android :app:assembleDebug :app:assembleRelease :app:bundleRelease --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
           name: MISE-Android-build
           path: |
             android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/apk/release/*.apk
             android/app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
