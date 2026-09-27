@@ -37,6 +37,8 @@ https://cdriccarboni.github.io/mise-qr-case-finder/ répond HTTP 200. Contrôle 
 
 Merger la PR #7 dans `main` pousse sur `main`. Le workflow `Deploy GitHub Pages` se déclenche alors sur une branche autorisée par l’environnement `github-pages` et remplace le site public par le build `0.2.2-beta.1`.
 
+Le commit de documentation `3fe94c7` a rejoué les workflows sans changer les binaires publiés : web [36313863079](https://github.com/cdriccarboni/mise-qr-case-finder/actions/runs/36313863079) et [36313865329](https://github.com/cdriccarboni/mise-qr-case-finder/actions/runs/36313865329) succès, Android [36313865276](https://github.com/cdriccarboni/mise-qr-case-finder/actions/runs/36313865276) succès, Pages [36313863075](https://github.com/cdriccarboni/mise-qr-case-finder/actions/runs/36313863075) `build` succès et `deploy` refusé pour la même règle.
+
 ## Déjà en place
 
 Voir `docs/COMMENCER.md`, `docs/MESURES.md`, `docs/PLATEFORMES.md` et `docs/DEMANDES.md`.
