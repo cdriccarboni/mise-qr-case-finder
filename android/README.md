@@ -1,6 +1,6 @@
-# MISES ! — Android
+# MISES! — Android
 
-Première enveloppe Android de MISES !, construite à partir de la page Web publiée.
+Première enveloppe Android de MISES!, construite à partir de la page Web publiée.
 
 - Application ID : `fr.acousmatictheatre.mises` (constante `playApplicationId` dans `app/build.gradle.kts`)
 - minSdk : 26
@@ -12,7 +12,9 @@ Première enveloppe Android de MISES !, construite à partir de la page Web publ
 
 ## Nouvelle appli, à côté de l’ancienne
 
-`fr.acousmatictheatre.mises` n’est pas une mise à jour de `fr.acousmatictheatre.mise`. Android installe une seconde appli. Le stockage de l’ancienne n’est pas visible dans la nouvelle. Il n’y a pas de projet Capacitor, pas de FileProvider, pas de lien profond autre que l’icône du lanceur.
+`fr.acousmatictheatre.mises` n’est pas une mise à jour de `fr.acousmatictheatre.mise`. Android installe une seconde appli. Le stockage de l’ancienne n’est pas visible dans la nouvelle. Il n’y a pas de projet Capacitor, ni de FileProvider.
+
+Un intent-filter `VIEW` reçoit `https://cdriccarboni.github.io/mise-qr-case-finder/…` et ouvre la page locale en conservant la query (`projectId`, `projectName`, `returnUrl`). Ce n’est pas un App Link vérifié : le fichier `assetlinks.json` devrait être servi à `https://cdriccarboni.github.io/.well-known/`, en dehors de ce dépôt.
 
 1. Dans l’ancienne appli : Partager et outils, puis Sauvegarde. Garde le fichier.
 2. Installe la nouvelle appli, ouvre-la, puis Importer une sauvegarde et choisis ce fichier.
@@ -20,7 +22,7 @@ Première enveloppe Android de MISES !, construite à partir de la page Web publ
 
 ## Avant Google Play
 
-1. Stabiliser un domaine MISES ! dédié.
+1. Stabiliser un domaine MISES! dédié.
 2. La connexion Google est désactivée dans l’APK (WebView). Elle reste dans la version navigateur. Le scope Drive web est le scope complet, pas `drive.file`.
 3. Créer et conserver une clé d'upload Play.
 4. Ajouter la signature release via secrets CI.

@@ -1,6 +1,6 @@
-# Pour commencer — MISES ! 0.3.0-beta.3
+# Pour commencer — MISES! 0.3.0-beta.3
 
-MISES ! sert à retrouver et classer tes Data Bruitage : documents, listes, objets, sons, contenants. Le Kit Acoustique, les kits et les mises sont des vues sur cette base, pas la base elle-même.
+MISES! sert à retrouver et classer tes Data Bruitage : documents, listes, objets, sons, contenants. Le Kit Acoustique, les kits et les mises sont des vues sur cette base, pas la base elle-même.
 
 Cette version ajoute l’inventaire par photo, le rangement par QR, le Vibe bruitage, « Crée ton bruitage » et des exercices générés. Ce que tu possèdes (avec l’endroit) reste séparé de ce qui est seulement suggéré.
 

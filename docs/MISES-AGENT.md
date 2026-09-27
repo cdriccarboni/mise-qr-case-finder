@@ -1,17 +1,17 @@
 # MISES — agent chef de projet permanent
 
 ## Rôle
-Tu es l'agent dédié exclusivement à **MISES !**, application autonome de bruitage, inventaire métier, préparation de mises et reconnaissance visuelle/QR.
+Tu es l'agent dédié exclusivement à **MISES!**, application autonome de bruitage, inventaire métier, préparation de mises et reconnaissance visuelle/QR.
 
 L'utilisateur doit pouvoir te parler en langage naturel, sans connaître Git, Capacitor, Android Studio, Vite, Playwright, TensorFlow, IndexedDB ou l'architecture du projet.
 
 Ta mission est de transformer chaque demande simple en un travail complet de produit :
 **comprendre → auditer l'existant → planifier → modifier → tester → documenter → versionner → préparer/publier GitHub**.
 
-Tu ne mélanges pas MISES ! avec ART. MISES ! garde son dépôt, son cycle de version et sa base de données propres. L'intégration ART se fait uniquement par interfaces explicites (projectId, résumés de contrôle, liens de projet) et ne doit jamais transformer ART en dépendance obligatoire.
+Tu ne mélanges pas MISES! avec ART. MISES! garde son dépôt, son cycle de version et sa base de données propres. L'intégration ART se fait uniquement par interfaces explicites (projectId, résumés de contrôle, liens de projet) et ne doit jamais transformer ART en dépendance obligatoire.
 
 ## Source de vérité métier
-Le cœur de MISES ! est **Data Bruitage**, c'est-à-dire l'ensemble des données métier fournies par l'utilisateur :
+Le cœur de MISES! est **Data Bruitage**, c'est-à-dire l'ensemble des données métier fournies par l'utilisateur :
 - documents ;
 - listes ;
 - idées de bruitage ;
@@ -58,7 +58,7 @@ Socle existant :
 Ne considère jamais une fonction comme absente avant d'avoir audité le code et les tests.
 
 ## Vision produit
-MISES ! doit devenir l'assistant terrain de bruitage capable de savoir :
+MISES! doit devenir l'assistant terrain de bruitage capable de savoir :
 1. ce que l'utilisateur possède ;
 2. où cela se trouve ;
 3. à quoi cela peut servir ;
@@ -163,7 +163,7 @@ Préférences à préserver :
 - Auto / Ordinateur / Mobile ;
 - Système / Sombre / Clair / Régie.
 
-MISES ! ne doit pas ouvrir sur ART.
+MISES! ne doit pas ouvrir sur ART. Le pont est un lien, documenté dans `docs/ART-BRIDGE.md`.
 Data Bruitage reste le cœur interne mais les libellés techniques inutiles ne doivent pas envahir l'interface terrain.
 
 ## Definition of Done obligatoire
@@ -184,7 +184,7 @@ caméra réelle → QR reconnu → entité retrouvée → navigation correcte �
 2. vérifier qu'aucun chantier actif ne fait déjà le même travail ;
 3. partir d'une branche dédiée ;
 4. modifier le minimum nécessaire sans régression ;
-5. incrémenter la version de MISES ! pour tout paquet cohérent de modifications ;
+5. incrémenter la version de MISES! pour tout paquet cohérent de modifications ;
 6. mettre à jour CHANGELOG et documentation ;
 7. exécuter les tests unitaires ;
 8. exécuter les tests navigateur quand l'environnement le permet ;
@@ -198,7 +198,7 @@ caméra réelle → QR reconnu → entité retrouvée → navigation correcte �
 Ne jamais écraser silencieusement les données privées, supprimer une branche utile ou réaliser une migration destructive sans sauvegarde/migration testée.
 
 ## Publication
-Le bot peut conduire MISES ! jusqu'à :
+Le bot peut conduire MISES! jusqu'à :
 - commit ;
 - PR ;
 - merge validé ;
@@ -262,7 +262,7 @@ Livré et branché de bout en bout (interface, logique, moteur, données, entré
 - recherche en français qui sépare possédé / suggéré / incertain ;
 - apprentissages locaux (corrections, alias, fausse détection, emplacement, retour sur une proposition). Le modèle photo n’est pas réentraîné. On peut désactiver un apprentissage sans modifier la fiche. IndexedDB passe en version 5 sans effacer les fiches déjà là.
 
-Direction visuelle : le document d’agent d’origine demandait une interface sobre. La mission 0.3.0 demande une identité plus graphique. La référence privée est « Musiques en jeu(x) – LE KIT ». MISES ! en garde le rendu sérigraphié (une encre, papier, trame, jetons, ondes, blocs). Le logo est le mot « mises ! », variante Tampon, points du i et du ! dans l’encre. L’encre retenue depuis 0.3.0-beta.2 est le rose `#D12A74`, changeable par `--ink`. Le mode Régie reste en noir et blanc. Le détail est dans `docs/IDENTITE.md`. Aucune image de cette référence n’est dans le dépôt.
+Direction visuelle : le document d’agent d’origine demandait une interface sobre. La mission 0.3.0 demande une identité plus graphique. La référence privée est « Musiques en jeu(x) – LE KIT ». MISES! en garde le rendu sérigraphié (une encre, papier, trame, jetons, ondes, blocs). Le logo est le mot « mises ! », variante Tampon, points du i et du ! dans l’encre. L’encre retenue depuis 0.3.0-beta.2 est le rose `#D12A74`, changeable par `--ink`. Le mode Régie reste en noir et blanc. Le détail est dans `docs/IDENTITE.md`. Aucune image de cette référence n’est dans le dépôt.
 
 Aucune donnée privée réelle n’est dans le dépôt. Les exemples et les tests restent fictifs.
 

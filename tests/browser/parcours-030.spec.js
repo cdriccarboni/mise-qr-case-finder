@@ -26,7 +26,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await page.locator('#aboutHome').click()
   const about = page.locator('#aboutDlg')
   await expect(about).toBeVisible()
-  await expect(about).toContainText('MISES ! — Une création de Cédric Carboni pour Acousmatic Theatre')
+  await expect(about).toContainText('MISES! — Une création de Cédric Carboni pour Acousmatic Theatre')
   await expect(about.locator('a[href="https://www.acousmatic-theatre.fr/"]')).toHaveAttribute('target', '_blank')
   await expect(about.locator('#aboutVersion')).toHaveText('0.3.0-beta.3')
   const author = about.locator('[data-author]')

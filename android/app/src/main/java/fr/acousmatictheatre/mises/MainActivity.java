@@ -145,7 +145,7 @@ public final class MainActivity extends Activity {
         });
 
         if (state == null) {
-            webView.loadUrl(getString(R.string.mise_url));
+            webView.loadUrl(localUrlFor(getIntent()));
         } else {
             webView.restoreState(state);
         }
@@ -161,6 +161,30 @@ public final class MainActivity extends Activity {
                         + "r.setProperty('--android-safe-bottom','0px');"
                         + "r.setProperty('--android-safe-left','0px');})()",
                 null);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (webView != null && intent != null && intent.getData() != null) {
+            webView.loadUrl(localUrlFor(intent));
+        }
+    }
+
+    private String localUrlFor(Intent intent) {
+        String base = getString(R.string.mise_url);
+        if (intent == null || intent.getData() == null) return base;
+        Uri data = intent.getData();
+        String scheme = data.getScheme() == null ? "" : data.getScheme().toLowerCase();
+        String host = data.getHost() == null ? "" : data.getHost().toLowerCase();
+        String path = data.getPath() == null ? "" : data.getPath();
+        if (!"https".equals(scheme) || !"cdriccarboni.github.io".equals(host) || !path.startsWith("/mise-qr-case-finder")) {
+            return base;
+        }
+        String query = data.getEncodedQuery();
+        if (query == null || query.isEmpty()) return base;
+        return base + "?" + query;
     }
 
     private boolean staysInApp(Uri uri) {

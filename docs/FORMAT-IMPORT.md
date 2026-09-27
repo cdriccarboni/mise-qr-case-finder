@@ -1,4 +1,4 @@
-# Format d’import — MISES ! 0.2.2-beta.1
+# Format d’import — MISES! 0.2.2-beta.1
 
 Les fichiers restent sur l’appareil. Ne pas les committer dans ce dépôt public, même fictifs s’ils sont en réalité les 29 documents privés.
 

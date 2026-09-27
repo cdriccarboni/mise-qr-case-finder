@@ -1,4 +1,4 @@
-# Identité visuelle — MISES ! 0.3.0-beta.3
+# Identité visuelle — MISES! 0.3.0-beta.3
 
 ## D’où vient l’esprit
 
@@ -6,7 +6,7 @@ Le nom réel n’est pas dans le dépôt. Il est dans un dossier privé : **Musi
 
 Dans le dépôt public, on ne trouve qu’une mention pédagogique (`inspired_by_musiques_en_jeux` dans `public/data.json`). La branche `codex/modern-project-vision-20260925` est une autre direction, plus sobre. Ce n’est pas cette charte.
 
-C’est une marque tierce. MISES ! n’en reprend ni le logo, ni le mot, ni les photos, ni les dessins, ni les lettres posées dans les jetons. Les images de référence ne sont pas dans ce dépôt.
+C’est une marque tierce. MISES! n’en reprend ni le logo, ni le mot, ni les photos, ni les dessins, ni les lettres posées dans les jetons. Les images de référence ne sont pas dans ce dépôt.
 
 Ce qui est gardé, c’est le rendu **sérigraphié, une seule encre** : un aplat fort, le blanc du papier, le noir pour lire, des blocs plats, une trame de points, des jetons vides (cercle, hexagone, pentagone), des ondes. L’encre est un rose d’imprimerie. Le terrain (recherche, fiches, caisses) reste lisible, avec un liseré de la même encre. Le jeu est réservé au Vibe, aux exercices et à « Crée ton bruitage ». Régie enlève la trame, les jetons et la couleur.
 

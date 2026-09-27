@@ -5,7 +5,7 @@ import QRCode from 'qrcode'
 import { BrowserQRCodeReader } from '@zxing/browser'
 import { openDB } from 'idb'
 import { registerSW } from 'virtual:pwa-register'
-import { readProjectContext, makeControlSummary, makeProjectSummary } from './project-control.js'
+import { readProjectContext, makeControlSummary, makeProjectSummary, planProjectOpen, makeArtLinkExport } from './project-control.js'
 import { artGoogleSession, requestGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState, createSharePackage, loadSharePackage, androidGoogleSignInBlocked, googleSignInUnavailableMessage } from './google-sync.js'
 
 import { readData, enrichObjects, assignSoundFields, soundFields, PROVENANCE, provenanceLabel } from './data-bruitage.js'
@@ -30,7 +30,14 @@ migrateLocalKeys()
 migrateSessionKeys()
 applyInk(localStorage.getItem(LOCAL_KEYS.ink))
 
-registerSW({ immediate:true })
+let applySwUpdate=()=>{}
+applySwUpdate=registerSW({
+  immediate:true,
+  onNeedRefresh(){
+    toast('Nouvelle version disponible')
+    setTimeout(()=>applySwUpdate(true),1600)
+  }
+})
 
 const $=(s,r=document)=>r.querySelector(s)
 const $$=(s,r=document)=>[...r.querySelectorAll(s)]
@@ -150,12 +157,12 @@ async function connectGoogle(){
     await requestGoogleSession()
     const profile=await connectedGoogleProfile(),email=String(profile?.email||'').trim()
     if(!email)throw new Error('Compte Google non identifiable')
-    if(!confirm(`Utiliser ce compte Google pour la base privée MISES ! ?\n\n${email}\n\nRien ne sera partagé publiquement.`))return
+    if(!confirm(`Utiliser ce compte Google pour la base privée MISES! ?\n\n${email}\n\nRien ne sera partagé publiquement.`))return
     await db.put('settings',{id:'google-account',email,name:profile?.name||'',confirmedAt:new Date().toISOString()})
     await updateAccountStatus();toast('Compte validé · vérification du Drive privé…')
     const remote=await loadPrivateState(),localCount=objects.length+cases.length+kits.length+mises.length
     if(remote.payload){
-      if(localCount===0||confirm('Une sauvegarde MISES ! privée existe sur Drive. La charger sur cet appareil ?')){await applyPrivateState(remote.payload);toast('Base privée chargée depuis Drive')}
+      if(localCount===0||confirm('Une sauvegarde MISES! privée existe sur Drive. La charger sur cet appareil ?')){await applyPrivateState(remote.payload);toast('Base privée chargée depuis Drive')}
     }else{
       await savePrivateState(await privateStatePayload());toast('Base privée créée dans Drive / _ART / MISES !')
     }
@@ -199,9 +206,65 @@ function recordControl(m,details){
 }
 function renderProjectContext(){
   const el=$('#projectContext');if(!el)return
-  el.hidden=true
-  el.innerHTML=''
+  if(!project.projectId){
+    el.hidden=true
+    el.innerHTML=''
+    if(projectSyncFailed)toast('Mise enregistrée ici · synchronisation locale à vérifier')
+    return
+  }
+  const plan=planProjectOpen(mises, project)
+  const label=project.projectName||project.projectId
+  const attach=plan.action==='attach'?`<label>Une mise existe déjà ici, sans projet<select id="artAttach">${plan.candidates.map(m=>`<option value="${esc(m.id)}">${esc(m.name||'Mise')}</option>`).join('')}</select></label><button id="artAttachBtn" type="button">Rattacher</button>`:''
+  const back=project.returnUrl?`<a id="artReturn" class="artReturn" href="${esc(project.returnUrl)}">Retour à ART</a>`:''
+  el.hidden=false
+  el.innerHTML=`<div class="artBridge"><p><b>${esc(label)}</b><small>Projet ART · les données restent dans MISES!, hors ligne</small></p><div class="row">${attach}<button id="artSummary" type="button" class="ghost">Exporter le résumé</button>${back}</div></div>`
+  const attachBtn=$('#artAttachBtn')
+  if(attachBtn)attachBtn.onclick=()=>attachExistingMise($('#artAttach').value)
+  const summary=$('#artSummary')
+  if(summary)summary.onclick=()=>downloadArtSummary()
   if(projectSyncFailed)toast('Mise enregistrée ici · synchronisation locale à vérifier')
+}
+function latestTouch(){
+  return [...objects,...cases,...mises].map(x=>x.updatedAt||x.createdAt||'').filter(Boolean).sort().at(-1)||null
+}
+function downloadArtSummary(){
+  const payload=makeArtLinkExport({
+    projectId:project.projectId,
+    projectName:project.projectName,
+    objectCount:objects.length,
+    caseCount:cases.length,
+    updatedAt:latestTouch()
+  })
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'})
+  const url=URL.createObjectURL(blob)
+  const a=document.createElement('a');a.href=url;a.download='MISES-resume-art.json';document.body.append(a);a.click();a.remove()
+  setTimeout(()=>URL.revokeObjectURL(url),2000)
+}
+async function attachExistingMise(id){
+  const m=miseBy(id)
+  if(!m||m.projectId)return
+  linkToProject(m)
+  await saveMise(m)
+  activeMise=m.id
+  await refresh()
+  setTab('mises')
+  renderProjectContext()
+  toast('Mise rattachée à ce projet')
+}
+async function settleArtProject(){
+  if(!project.projectId){renderProjectContext();return}
+  const plan=planProjectOpen(mises, project)
+  if(plan.action==='open'){
+    activeMise=plan.mise.id
+    setTab('mises')
+  }else if(plan.action==='create'){
+    const m=linkToProject({id:uid('mise'),name:plan.name,kitId:null,objectIds:[],checked:[],createdAt:new Date().toISOString()})
+    await saveMise(m)
+    activeMise=m.id
+    await refresh()
+    setTab('mises')
+  }
+  renderProjectContext()
 }
 
 const caseBy=id=>cases.find(c=>c.id===id)
@@ -323,7 +386,7 @@ async function showObjectQr(o){await openEntityLabel('object', o)}
 function pageOrigin(){return location.href.split('?')[0].split('#')[0]}
 function sendSystemPrint(dataUrl, jobName){
   if(window.MisesAndroidPrinter&&typeof window.MisesAndroidPrinter.printWithSystem==='function'){
-    window.MisesAndroidPrinter.printWithSystem(jobName||'MISES !', dataUrl)
+    window.MisesAndroidPrinter.printWithSystem(jobName||'MISES!', dataUrl)
     toast('Impression Android lancée')
     return 'android-print'
   }
@@ -331,7 +394,7 @@ function sendSystemPrint(dataUrl, jobName){
   return 'window-print'
 }
 async function openEntityLabel(kind, entity, {next}={}){
-  const name=kind==='case'?caseName(entity):(entity.name||'MISES !')
+  const name=kind==='case'?caseName(entity):(entity.name||'MISES!')
   const spec={name, shortId:shortId(entity.id), id:entity.id, qrText:entityUrl(pageOrigin(), kind, entity.id), location:kind==='object'?caseName(caseBy(entity.caseId||entity.container_id)):'', category:entity.family||entity.type||kind}
   const image=renderLabelDataUrl(spec)
   const d=$('#printDlg')
@@ -375,12 +438,12 @@ function openShareDialog(){
   <label class="check"><input type="checkbox" id="shareMedia"><span>Inclure photos et mémos sonores</span></label>
   <label>Destinataires Google<textarea id="shareRecipients" rows="3" placeholder="prenom.nom@example.com, autre@example.com">${esc(members.join(', '))}</textarea></label>
   <button id="createShare">Créer le partage privé + QR</button><div id="shareResult"></div></div>`
-  d.showModal();$('#closeShare').onclick=()=>d.close();$('#createShare').onclick=async()=>{const btn=$('#createShare');btn.disabled=true;try{const recipients=$('#shareRecipients').value.split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);if(!recipients.length)throw new Error('Ajoute au moins une adresse destinataire');const payload=sharePayload({miseIds:$$('[data-share-mise]:checked',d).map(x=>x.value),kitIds:$$('[data-share-kit]:checked',d).map(x=>x.value),caseIds:$$('[data-share-case]:checked',d).map(x=>x.value),objectIds:$$('[data-share-object]:checked',d).map(x=>x.value),includeMedia:$('#shareMedia').checked});if(!payload.objects.length&&!payload.mises.length&&!payload.kits.length&&!payload.cases.length)throw new Error('Sélectionne au moins un élément');const out=await createSharePackage(payload,recipients);const shareTarget=new URL(location.href);shareTarget.search='';shareTarget.hash='';shareTarget.searchParams.set('shareFile',out.file.id);const url=shareTarget.href,qr=await QRCode.toDataURL(url,{width:420,margin:2,errorCorrectionLevel:'M'});$('#shareResult').innerHTML=`<div class="shareDone"><img class="qr" src="${qr}"><b>${out.recipients.length} destinataire${out.recipients.length>1?'s':''}</b><small>Le QR ouvre uniquement ce paquet MISES !.</small><button id="shareNative">Partager le lien</button></div>`;$('#shareNative').onclick=async()=>{try{if(navigator.share)await navigator.share({title:'MISES !',text:'Partage MISES !',url});else{await navigator.clipboard.writeText(url);toast('Lien copié')}}catch{}};toast('Partage créé')}catch(error){toast(error instanceof Error?error.message:'Partage impossible')}finally{btn.disabled=false}}
+  d.showModal();$('#closeShare').onclick=()=>d.close();$('#createShare').onclick=async()=>{const btn=$('#createShare');btn.disabled=true;try{const recipients=$('#shareRecipients').value.split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);if(!recipients.length)throw new Error('Ajoute au moins une adresse destinataire');const payload=sharePayload({miseIds:$$('[data-share-mise]:checked',d).map(x=>x.value),kitIds:$$('[data-share-kit]:checked',d).map(x=>x.value),caseIds:$$('[data-share-case]:checked',d).map(x=>x.value),objectIds:$$('[data-share-object]:checked',d).map(x=>x.value),includeMedia:$('#shareMedia').checked});if(!payload.objects.length&&!payload.mises.length&&!payload.kits.length&&!payload.cases.length)throw new Error('Sélectionne au moins un élément');const out=await createSharePackage(payload,recipients);const shareTarget=new URL(location.href);shareTarget.search='';shareTarget.hash='';shareTarget.searchParams.set('shareFile',out.file.id);const url=shareTarget.href,qr=await QRCode.toDataURL(url,{width:420,margin:2,errorCorrectionLevel:'M'});$('#shareResult').innerHTML=`<div class="shareDone"><img class="qr" src="${qr}"><b>${out.recipients.length} destinataire${out.recipients.length>1?'s':''}</b><small>Le QR ouvre uniquement ce paquet MISES!.</small><button id="shareNative">Partager le lien</button></div>`;$('#shareNative').onclick=async()=>{try{if(navigator.share)await navigator.share({title:'MISES!',text:'Partage MISES!',url});else{await navigator.clipboard.writeText(url);toast('Lien copié')}}catch{}};toast('Partage créé')}catch(error){toast(error instanceof Error?error.message:'Partage impossible')}finally{btn.disabled=false}}
 }
 async function openSharedPackage(fileId){
   if(androidGoogleSignInBlocked()){explainAndroidGoogle();return}
   const d=$('#modal')
-  try{const pack=await loadSharePackage(fileId);d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Partage MISES !</b><small>${esc(pack.project?.name||'Sélection partagée')}</small></div><button id="closeShared" class="ghost">×</button></div>${(pack.mises||[]).map(m=>`<article class="card"><b>${esc(m.name)}</b><span>${(m.objectIds||[]).length} objets</span></article>`).join('')}${(pack.objects||[]).map(o=>`<article class="result"><div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div><div><h3>${esc(o.name)}</h3><p>${(o.sounds||[]).slice(0,5).map(chip).join(' ')}</p><small>${esc(caseName((pack.cases||[]).find(c=>c.id===(o.caseId||o.container_id))))}</small>${o.audioMemo?`<audio controls src="${o.audioMemo}"></audio>`:''}</div></article>`).join('')}</div>`;d.showModal();$('#closeShared').onclick=()=>d.close()}catch(error){toast(error instanceof Error?error.message:'Partage inaccessible')}
+  try{const pack=await loadSharePackage(fileId);d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Partage MISES!</b><small>${esc(pack.project?.name||'Sélection partagée')}</small></div><button id="closeShared" class="ghost">×</button></div>${(pack.mises||[]).map(m=>`<article class="card"><b>${esc(m.name)}</b><span>${(m.objectIds||[]).length} objets</span></article>`).join('')}${(pack.objects||[]).map(o=>`<article class="result"><div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div><div><h3>${esc(o.name)}</h3><p>${(o.sounds||[]).slice(0,5).map(chip).join(' ')}</p><small>${esc(caseName((pack.cases||[]).find(c=>c.id===(o.caseId||o.container_id))))}</small>${o.audioMemo?`<audio controls src="${o.audioMemo}"></audio>`:''}</div></article>`).join('')}</div>`;d.showModal();$('#closeShared').onclick=()=>d.close()}catch(error){toast(error instanceof Error?error.message:'Partage inaccessible')}
 }
 
 $('#app').innerHTML=`
@@ -427,7 +490,7 @@ $('#app').innerHTML=`
 <section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
 <section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation : spectacle, atelier, tournée ou besoin ponctuel.</p><div id="kitCards" class="cards"></div></section>
 <section id="mises" class="tab"><div class="miseSectionHead"><div><small>MISES ET CONTRÔLE</small><h2>Mises et contrôle</h2><p>Préparer, ouvrir et vérifier la mise du spectacle.</p></div><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards miseCards"></div></section>
-<section id="vibe" class="tab"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 220 40"><circle cx="20" cy="20" r="12"/><polygon points="62,6 78,16 72,34 52,34 46,16"/><polygon points="108,8 128,20 108,32 88,20"/><path d="M150 24c8-10 14-10 22 0s14 10 22 0"/></svg></div><h2>Vibe bruitage</h2><p>Décris un univers. MISES ! reste hors ligne et sépare ce que tu possèdes de ce qui est seulement suggéré.</p><label>Univers<textarea id="vibePrompt" rows="3" placeholder="Une forêt inquiétante la nuit…"></textarea></label><div class="row"><button id="runVibe" type="button">Proposer</button><button type="button" class="ghost" data-vibe-preset="Une forêt inquiétante la nuit avec quelque chose qui rôde au loin">Forêt</button><button type="button" class="ghost" data-vibe-preset="Une vieille maison qui travaille pendant une tempête">Maison</button><button type="button" class="ghost" data-vibe-preset="un bateau en bois pris dans une mer violente">Bateau</button></div><div id="vibeOut"></div></div></section>
+<section id="vibe" class="tab"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 220 40"><circle cx="20" cy="20" r="12"/><polygon points="62,6 78,16 72,34 52,34 46,16"/><polygon points="108,8 128,20 108,32 88,20"/><path d="M150 24c8-10 14-10 22 0s14 10 22 0"/></svg></div><h2>Vibe bruitage</h2><p>Décris un univers. MISES! reste hors ligne et sépare ce que tu possèdes de ce qui est seulement suggéré.</p><label>Univers<textarea id="vibePrompt" rows="3" placeholder="Une forêt inquiétante la nuit…"></textarea></label><div class="row"><button id="runVibe" type="button">Proposer</button><button type="button" class="ghost" data-vibe-preset="Une forêt inquiétante la nuit avec quelque chose qui rôde au loin">Forêt</button><button type="button" class="ghost" data-vibe-preset="Une vieille maison qui travaille pendant une tempête">Maison</button><button type="button" class="ghost" data-vibe-preset="un bateau en bois pris dans une mer violente">Bateau</button></div><div id="vibeOut"></div></div></section>
 <section id="exercises" class="tab"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 220 40"><circle cx="20" cy="20" r="12"/><polygon points="62,6 78,16 72,34 52,34 46,16"/><polygon points="108,8 128,20 108,32 88,20"/><path d="M150 24c8-10 14-10 22 0s14 10 22 0"/></svg></div><h2>Exercice</h2><p>Généré à partir de ta base. Ce n’est pas une liste figée, et ce n’est pas une fiche.</p><div class="grid2"><label>Durée<select id="exDuration"><option value="0.5">30 secondes</option><option value="1">1 min</option><option value="3">3 min</option><option value="5" selected>5 min</option></select></label><label>Personnes<input id="exPeople" type="number" min="1" value="1"></label><label>Niveau<select id="exLevel"><option value="découverte">Découverte</option><option value="atelier" selected>Atelier</option><option value="avancé">Avancé</option></select></label><label>Mode<select id="exMode"><option value="">Plusieurs modes</option><option value="decouverte">Découverte</option><option value="echauffement">Échauffement</option><option value="improvisation">Improvisation</option><option value="contrainte">Contrainte</option><option value="defi">Défi</option><option value="ambiance">Création d’ambiance</option><option value="histoire">Histoire sonore</option><option value="detournement">Détournement d’objet</option><option value="meme-objet">Même objet, plusieurs sons</option><option value="plusieurs-un-son">Plusieurs objets, un seul son</option></select></label></div><label>Univers (facultatif)<input id="exUniverse" placeholder="port, forêt, cuisine…"></label><button id="runExercise" type="button">Générer</button><div id="exerciseOut"></div></div></section>
 <section id="creator" class="tab">
   <div class="panel"><h2>Créateur de bruitage</h2><p>Décrivez une ambiance ou un son pour explorer votre parc et les références.</p>
@@ -457,25 +520,24 @@ $('#app').innerHTML=`
 </div></dialog>
 <dialog id="aboutDlg"><div class="form aboutSheet"><div class="dialoghead"><div><b>À propos</b></div><button id="closeAbout" class="ghost" type="button">×</button></div>
 <div class="wordmark aboutMark">${wordmarkSvg}</div>
-<p class="aboutCredit">MISES ! — Une création de Cédric Carboni pour Acousmatic Theatre</p>
+<p class="aboutCredit">MISES! — Une création de Cédric Carboni pour Acousmatic Theatre</p>
 <p class="aboutLinks">${externalAnchor(ACOUSMATIC_THEATRE_URL, 'Acousmatic Theatre')}${externalAnchor(AUTHOR_WEBSITE_URL, 'Site de Cédric Carboni', 'data-author')}</p>
 <p class="aboutVersion muted">Version <span id="aboutVersion">${APP_VERSION}</span></p>
 </div></dialog>
-<dialog id="manualDlg"><div class="manual"><div class="dialoghead"><div><b>MISES ! · Mini-manuel</b><small>QR Case Finder · prise en main rapide</small></div><button id="closeManual" class="ghost" type="button">×</button></div>
+<dialog id="manualDlg"><div class="manual"><div class="dialoghead"><div><b>MISES! · Mini-manuel</b><small>QR Case Finder · prise en main rapide</small></div><button id="closeManual" class="ghost" type="button">×</button></div>
 <div class="manualSteps">
-<article><b>1 · Chercher une ambiance</b><span>Écris ou dicte « mer », « forêt », « vieille maison »… MISES ! remonte vers tes sons, objets, photos et valises.</span></article>
+<article><b>1 · Chercher une ambiance</b><span>Écris ou dicte « mer », « forêt », « vieille maison »… MISES! remonte vers tes sons, objets, photos et valises.</span></article>
 <article><b>2 · Ajouter un objet</b><span>Photographie-le ou importe une photo, donne-lui ton nom personnel, ses sons et son contenant.</span></article>
 <article><b>3 · Ranger</b><span>Crée une valise ou une caisse, nomme-la clairement puis imprime son QR.</span></article>
 <article><b>4 · Préparer</b><span>Crée un kit ou une mise, éventuellement rattachée à un spectacle/EAC ART, puis coche ce qui est prêt.</span></article>
 <article><b>5 · Contrôler</b><span>Scanne les QR ou utilise le contrôle photo avant départ / avant jeu. Toute proposition photo reste à valider humainement.</span></article>
 <article><b>6 · Imprimer</b><span>Ouvre une valise → Étiquette / imprimer. L’impression système fonctionne partout ; Bluetooth direct dépend du protocole de l’imprimante.</span></article>
 <article><b>7 · Travailler plus vite</b><span>Favoris, alternatives, photo de groupe, mémo sonore, déplacement par scans et impression en série sont dans les trois menus par objectif.</span></article>
-<article><b>8 · Partager</b><span>« Partager par QR » crée un paquet séparé sur Drive avec seulement ce que tu sélectionnes. Photos et mémos sonores sont optionnels. Dans l’application Android, la connexion Google est désactivée : exporte une sauvegarde JSON, ou ouvre MISES ! dans Chrome pour Drive.</span></article>
+<article><b>8 · Partager</b><span>« Partager par QR » crée un paquet séparé sur Drive avec seulement ce que tu sélectionnes. Photos et mémos sonores sont optionnels. Dans l’application Android, la connexion Google est désactivée : exporte une sauvegarde JSON, ou ouvre MISES! dans Chrome pour Drive.</span></article>
 <article id="manualIos"><b>9 · iPhone / iPad</b><span>Dans Safari : bouton Partager → « Sur l’écran d’accueil » → garder « Ouvrir comme app Web » activé. Si ta base était déjà dans Safari, reconnecte Google ou importe une sauvegarde dans l’app installée.</span></article><article><b>10 · Confidentialité</b><span>Ta base personnelle n’est jamais incluse dans l’application publique. Les données de projet restent privées tant que tu ne les partages pas explicitement.</span></article>
-</div><p class="manualNote">Le bouton ⇩ crée une sauvegarde locale de ta base.</p><p class="manualJoke">Toi aussi, tu as acheté une mini-imprimante thermique avec des oreilles de chat pour ta fille… puis tu t’es rendu compte que ce serait incroyablement pratique au boulot ? Voilà. MISES ! est née à peu près comme ça.</p></div></dialog>
+</div><p class="manualNote">Le bouton ⇩ crée une sauvegarde locale de ta base.</p><p class="manualJoke">Toi aussi, tu as acheté une mini-imprimante thermique avec des oreilles de chat pour ta fille… puis tu t’es rendu compte que ce serait incroyablement pratique au boulot ? Voilà. MISES! est née à peu près comme ça.</p></div></dialog>
 <div id="toast" role="status"></div>`
 
-renderProjectContext()
 function renderNetworkStatus(){
   $('#networkStatus').textContent=navigator.onLine?'En ligne':'Hors ligne · données locales'
 }
@@ -770,15 +832,15 @@ function wrapCanvasText(ctx,text,maxWidth){
   for(const word of words){const next=(line+' '+word).trim();if(line&&ctx.measureText(next).width>maxWidth){lines.push(line);line=word}else line=next}
   if(line)lines.push(line);return lines
 }
-async function makeThermalLabel({title='MISES !',qrDataUrl='',subtitle='',logoOnly=false}){
+async function makeThermalLabel({title='MISES!',qrDataUrl='',subtitle='',logoOnly=false}){
   const canvas=document.createElement('canvas');canvas.width=384;canvas.height=logoOnly?190:500
   const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#000';ctx.textAlign='center'
-  ctx.font='900 70px Arial, sans-serif';ctx.fillText('MISES !',192,82)
+  ctx.font='900 70px Arial, sans-serif';ctx.fillText('MISES!',192,82)
   ctx.font='700 18px Arial, sans-serif';ctx.fillText('QR CASE FINDER',192,112)
-  if(logoOnly){ctx.font='16px Arial, sans-serif';ctx.fillText('Test imprimante · MISES !',192,154);return canvas.toDataURL('image/png')}
+  if(logoOnly){ctx.font='16px Arial, sans-serif';ctx.fillText('Test imprimante · MISES!',192,154);return canvas.toDataURL('image/png')}
   ctx.fillRect(28,132,328,3)
-  if(title&&title!=='MISES !'){ctx.font='700 22px Arial, sans-serif';const lines=wrapCanvasText(ctx,title,330).slice(0,2);lines.forEach((line,i)=>ctx.fillText(line,192,168+i*26))}
-  let qrTop=title&&title!=='MISES !'?220:165
+  if(title&&title!=='MISES!'){ctx.font='700 22px Arial, sans-serif';const lines=wrapCanvasText(ctx,title,330).slice(0,2);lines.forEach((line,i)=>ctx.fillText(line,192,168+i*26))}
+  let qrTop=title&&title!=='MISES!'?220:165
   if(qrDataUrl){const qr=await loadImage(qrDataUrl);ctx.imageSmoothingEnabled=false;ctx.drawImage(qr,72,qrTop,240,240)}
   if(subtitle){ctx.font='14px Arial, sans-serif';const lines=wrapCanvasText(ctx,subtitle,340).slice(0,2);lines.forEach((line,i)=>ctx.fillText(line,192,qrTop+270+i*18))}
   return canvas.toDataURL('image/png')
@@ -786,10 +848,10 @@ async function makeThermalLabel({title='MISES !',qrDataUrl='',subtitle='',logoOn
 async function makePrinterTestImages(){
   const target=location.href.split('?')[0].split('#')[0]
   const qr=await QRCode.toDataURL(target,{width:280,margin:1,errorCorrectionLevel:'M'})
-  return [await makeThermalLabel({logoOnly:true}),await makeThermalLabel({title:'MISES !',qrDataUrl:qr,subtitle:'Scanne pour ouvrir MISES !'})]
+  return [await makeThermalLabel({logoOnly:true}),await makeThermalLabel({title:'MISES!',qrDataUrl:qr,subtitle:'Scanne pour ouvrir MISES!'})]
 }
 async function nativePrint(address,images){
-  if(!hasNativePrinter()){toast('Le pilote natif est disponible dans l’app Android MISES !');return false}
+  if(!hasNativePrinter()){toast('Le pilote natif est disponible dans l’app Android MISES!');return false}
   if(!address){toast('Choisis d’abord une imprimante');return false}
   try{window.MisesAndroidPrinter.printImages(address,JSON.stringify(images));return true}catch(error){toast('Impossible de lancer l’impression native');return false}
 }
@@ -799,7 +861,7 @@ async function openNativePrinterDialog(){
   <p class="hint">Jumelle d’abord l’imprimante dans Android. Les modèles WalkPrint de cette famille apparaissent souvent comme « YHK-… » ou « Mini Printer ».</p>
   <div class="printerDevices">${devices.map(device=>`<button class="printerDevice ${saved?.deviceId===device.address?'selected':''}" data-native-printer="${esc(device.address)}" data-native-name="${esc(device.name)}"><b>${device.likelyPrinter?'● ':''}${esc(device.name)}</b><small>${esc(device.address)}${device.likelyPrinter?' · profil probable WalkPrint/YHK':''}</small></button>`).join('')||'<div class="empty">Aucune imprimante appairée détectée.</div>'}</div>
   <div class="row"><button id="openBtSettings" class="ghost">Réglages Bluetooth Android</button><button id="refreshNativePrinters" class="ghost">Actualiser</button></div>
-  <div class="printerTest"><b>Test prêt</b><span>Étiquette 1 : logo MISES ! · Étiquette 2 : logo + trait + QR vers MISES !</span><button id="runPrinterTest" ${!saved?.deviceId?'disabled':''}>Imprimer les 2 étiquettes test</button></div></div>`
+  <div class="printerTest"><b>Test prêt</b><span>Étiquette 1 : logo MISES! · Étiquette 2 : logo + trait + QR vers MISES!</span><button id="runPrinterTest" ${!saved?.deviceId?'disabled':''}>Imprimer les 2 étiquettes test</button></div></div>`
   d.showModal();$('#closeNativePrinter').onclick=()=>d.close();$('#openBtSettings').onclick=()=>window.MisesAndroidPrinter.openBluetoothSettings();$('#refreshNativePrinters').onclick=()=>{d.close();setTimeout(openNativePrinterDialog,250)}
   $$('[data-native-printer]',d).forEach(button=>button.onclick=async()=>{await db.put('settings',{id:'printer',name:button.dataset.nativeName,deviceId:button.dataset.nativePrinter,native:true,pairedAt:new Date().toISOString()});await updatePrinterStatus();d.close();setTimeout(openNativePrinterDialog,80);toast(`Imprimante choisie : ${button.dataset.nativeName}`)})
   $('#runPrinterTest').onclick=async()=>{const current=await db.get('settings','printer');if(!current?.deviceId){toast('Choisis l’imprimante');return}toast('Préparation des 2 étiquettes test…');const images=await makePrinterTestImages();await nativePrint(current.deviceId,images)}
@@ -1083,7 +1145,7 @@ $('#goalBatchPrint').onclick=openBatchPrint
 const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)
 const isStandalone=window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true
 if(isIOS&&!isStandalone){$('#goalIosInstall').hidden=false;$('#goalIosInstall').onclick=()=>{$('#manualDlg').showModal();setTimeout(()=>$('#manualIos')?.scrollIntoView({block:'center',behavior:'smooth'}),80)}}
-if(isIOS&&isStandalone){setTimeout(async()=>{const account=await db.get('settings','google-account');if(!account&&!objects.length&&!cases.length)toast('MISES ! installée · reconnecte Google ou importe ta sauvegarde si tu en avais une dans Safari')},700)}
+if(isIOS&&isStandalone){setTimeout(async()=>{const account=await db.get('settings','google-account');if(!account&&!objects.length&&!cases.length)toast('MISES! installée · reconnecte Google ou importe ta sauvegarde si tu en avais une dans Safari')},700)}
 updatePrinterStatus();updateAccountStatus()
 
 $$('[data-action]').forEach(b=>b.onclick=()=>{
@@ -1147,9 +1209,10 @@ $('#backupBtn').onclick=async()=>{
 
 $('#restoreInput').onchange=async event=>{
   const file=event.target.files?.[0];if(!file)return
-  try{const payload=JSON.parse(await file.text());if(!confirm('Importer cette sauvegarde MISES ! et remplacer les données locales de cet appareil ?'))return;await applyPrivateState(payload);scheduleDriveSync();toast('Sauvegarde importée')}catch(error){toast(error instanceof Error?error.message:'Import impossible')}finally{event.target.value=''}
+  try{const payload=JSON.parse(await file.text());if(!confirm('Importer cette sauvegarde MISES! et remplacer les données locales de cet appareil ?'))return;await applyPrivateState(payload);scheduleDriveSync();toast('Sauvegarde importée')}catch(error){toast(error instanceof Error?error.message:'Import impossible')}finally{event.target.value=''}
 }
 
+await settleArtProject()
 if(params.get('shareFile'))setTimeout(()=>openSharedPackage(params.get('shareFile')),300)
 else if(params.get('case'))setTimeout(()=>showCase(params.get('case')),250)
 else if(params.get('kit'))setTimeout(()=>showKit(params.get('kit')),250)

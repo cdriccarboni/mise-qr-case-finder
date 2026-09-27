@@ -3,10 +3,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   base:'./',
   plugins:[VitePWA({
-    registerType:'autoUpdate',
+    registerType:'prompt',
     includeAssets:['favicon.svg','icon.svg','icon-maskable.svg','apple-touch-icon.png','icon-192.png','icon-512.png'],
     manifest:{
-      name:'MISES ! — QR Case Finder', short_name:'MISES !',
+      name:'MISES! — QR Case Finder', short_name:'MISES!',
       description:'Cherche tes mises — inventaire de bruitage, matériel, QR et préparation.',
       theme_color:'#D12A74', background_color:'#141311',
       display:'standalone', start_url:'./', scope:'./', lang:'fr',
@@ -23,7 +23,8 @@ export default defineConfig({
       navigateFallback:'index.html',
       globPatterns:['**/*.{js,mjs,css,html,svg,json,bin,png,ttf}','models/coco-ssd/*'],
       maximumFileSizeToCacheInBytes:8*1024*1024,
-      cleanupOutdatedCaches:true
+      cleanupOutdatedCaches:true,
+      clientsClaim:true
     }
   })]
 })
