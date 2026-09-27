@@ -5,10 +5,10 @@ Première enveloppe Android de MISE!, construite à partir de la page Web publi�
 - Application ID : `fr.acousmatictheatre.mise`
 - minSdk : 26
 - targetSdk / compileSdk : 36
-- Version : `0.2.3-beta.1` (`versionCode` 5)
+- Version : `0.3.0-beta.1` (`versionCode` 6)
 - La PWA est embarquée dans l’APK (`src/main/assets/www`, copiée depuis `dist/` par le workflow). L’application ne charge pas la page ART.
 - Signature des artefacts CI : keystore debug, pour test. La clé d’upload Play n’est pas dans le dépôt.
-- Le workflow produit un APK debug, un APK release et un AAB, tous signés avec la clé de debug pour installation de test. Le pilote Android inclut un essai WalkPrint/YHK par Bluetooth Classic/RFCOMM.
+- Le workflow produit un APK debug, un APK release et un AAB, tous signés avec la clé de debug pour installation de test. L’impression passe par le service d’impression Android. L’essai WalkPrint/YHK par Bluetooth Classic/RFCOMM reste disponible à part.
 
 ## Avant Google Play
 

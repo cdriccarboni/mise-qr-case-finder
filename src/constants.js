@@ -1,0 +1,1 @@
+export const FAMILIES = ['Vie quotidienne', 'Musique & percussions', 'Nature & matières', 'Pas & surfaces', 'Eau & liquides', 'Vent & air', 'Feu & textures', 'Animaux & voix', 'Technique audio', 'Technique scène', 'À classer']

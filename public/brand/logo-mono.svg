@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MISE !">
+  <path fill="none" stroke="#000" stroke-width="2.6" stroke-linejoin="round" d="M10 28 32 16l22 12v22L32 62 10 50V28Z"/>
+  <path fill="none" stroke="#000" stroke-width="2.4" stroke-linejoin="round" d="M10 28l22 12 22-12M32 40v22"/>
+  <path fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" d="M16 20c6-8 12-8 16 0s10 8 16 0"/>
+  <circle cx="50" cy="14" r="3.2" fill="#000"/>
+</svg>

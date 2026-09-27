@@ -1,10 +1,11 @@
 import { enrichObjects, normalize } from './data-bruitage.js'
+import { labelPreference } from './learning.js'
 
 // COCO labels are generic visual clues, never proof of a specific prop or sound.
 const FRENCH = { bottle: 'bouteille', cup: 'tasse', 'wine glass': 'verre', bowl: 'bol', spoon: 'cuillère', fork: 'fourchette', knife: 'couteau', chair: 'chaise', 'dining table': 'table', book: 'livre', suitcase: 'valise', backpack: 'sac à dos', handbag: 'sac à main', umbrella: 'parapluie', scissors: 'ciseaux', clock: 'horloge', vase: 'vase', bench: 'banc', keyboard: 'clavier', laptop: 'ordinateur portable', 'cell phone': 'téléphone', remote: 'télécommande', tv: 'téléviseur', 'teddy bear': 'peluche', 'sports ball': 'ballon', bicycle: 'vélo', car: 'voiture', boat: 'bateau', bird: 'oiseau', cat: 'chat', dog: 'chien', 'potted plant': 'plante', couch: 'canapé', bed: 'lit', toothbrush: 'brosse à dents' }
 export const translateLabel = label => FRENCH[label] || label
 export function correctionKey(label, context = '') { return JSON.stringify([normalize(label), normalize(context)]) }
-export function matchDetections(detections, data, context = '') {
+export function matchDetections(detections, data, context = '', learnings = []) {
   const objects = enrichObjects(data), contextual = normalize(context).split(' ').filter(w => w.length > 2)
   return detections.filter(d => normalize(d.class || d.label) !== 'person').map((d, index) => {
     const rawLabel = d.class || d.label, label = translateLabel(rawLabel)
@@ -27,11 +28,29 @@ export function matchDetections(detections, data, context = '') {
       if (object) { best = { objectId: object.id, name: object.name, score: 1 }; learnedApplied = true }
     }
     if (learned?.action === 'reject') { best = undefined; learnedApplied = true }
+    let fromPreference = false
+    if (!learnedApplied && learned?.action !== 'reject') {
+      const pref = labelPreference(rawLabel, objects, learnings)
+      if (pref) {
+        const object = objects.find(item => item.id === pref.objectId)
+        best = { objectId: object.id, name: object.name, score: .97 }
+        learnedApplied = true
+        fromPreference = true
+      }
+    }
+    if (!learnedApplied && candidates.length && learnings.length) {
+      for (const candidate of candidates) {
+        const boost = learnings.filter(item => item && item.active !== false && item.objectId === candidate.objectId && (item.kind === 'use' || item.kind === 'photo-object' || (item.kind === 'vibe-feedback' && item.useful))).length
+        candidate.score = Math.min(.99, candidate.score + Math.min(.08, boost * .02))
+      }
+      candidates.sort((a, b) => b.score - a.score)
+      best = candidates[0]
+    }
     const ambiguous = !learnedApplied && candidates.length > 1 && candidates[0].score - candidates[1].score < .12
     return { id: `detection-${index}`, rawLabel, label: best?.name || label, objectId: best?.objectId || '', bbox: d.bbox,
       confidence: best?.score || visionScore, visionScore, candidates: candidates.slice(0, 5), ambiguous,
       learned: learnedApplied, rejected: learned?.action === 'reject', validated: false, quantity: d.quantity || 1,
-      needsReview: true, evidence: learnedApplied ? 'Correction humaine mémorisée pour ce contexte' : best ? 'Vision + nom/alias + contexte sonore' : 'Vision seule · aucune correspondance métier' }
+      needsReview: true, evidence: fromPreference ? 'Apprentissage local · association validée, sans réentraînement' : learnedApplied ? 'Correction humaine mémorisée pour ce contexte' : best ? 'Vision + nom/alias + contexte sonore' : 'Vision seule · aucune correspondance métier' }
   })
 }
 export function analyseMise(mise, proposals, confirmedIds = mise.checked || []) {

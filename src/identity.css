@@ -1,0 +1,82 @@
+:root{
+  --bg:#160910;--bg-elev:#160910f2;--surface:#2a1220;--surface-2:#3a182c;--line:#6d3954;
+  --text:#fff7fb;--muted:#f6d0e0;--accent:#ff6aaa;--button:#9d1458;--button-text:#fff;
+  --paper:#fff7fb;--ink:#2a1020;--active-bg:#fff7fb;--active-text:#2a1020;
+  --chip:#4a2438;--shadow:#0008;--radius:16px;
+  --font:ui-sans-serif,system-ui,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html[data-theme=light]{
+  --bg:#fff7fb;--bg-elev:#fff7fbf2;--surface:#fff;--surface-2:#ffe4f1;--line:#e4b3cb;
+  --text:#2a1020;--muted:#5c3144;--accent:#8f124e;--button:#8f124e;--button-text:#fff;
+  --paper:#fff;--ink:#2a1020;--active-bg:#2a1020;--active-text:#fff7fb;--chip:#ffd6ea;
+  color-scheme:light;
+}
+@media(prefers-color-scheme:light){
+  html[data-theme=system]{
+    --bg:#fff7fb;--bg-elev:#fff7fbf2;--surface:#fff;--surface-2:#ffe4f1;--line:#e4b3cb;
+    --text:#2a1020;--muted:#5c3144;--accent:#8f124e;--button:#8f124e;--button-text:#fff;
+    --paper:#fff;--ink:#2a1020;--active-bg:#2a1020;--active-text:#fff7fb;--chip:#ffd6ea;
+    color-scheme:light;
+  }
+}
+html[data-theme=regie]{
+  --bg:#000;--bg-elev:#000;--surface:#070707;--surface-2:#111;--line:#8a8a8a;
+  --text:#fff;--muted:#e8e8e8;--accent:#ff6aaa;--button:#fff;--button-text:#000;
+  --paper:#fff;--ink:#000;--active-bg:#fff;--active-text:#000;--chip:#1a1a1a;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font)}
+header,.goalNav{background:var(--bg-elev);border-color:var(--line)}
+button{background:var(--button);color:var(--button-text);border-color:transparent;border-radius:var(--radius);min-height:48px}
+.ghost,.searchbox button,.headerChip,.headerIcon,.miniAction{background:var(--surface-2);color:var(--text);border-color:var(--line)}
+.goalNav details,.panel,.card,.result,.empty,.checklist,.preferenceState,.miseSectionHead,.challenge,.manualSteps article,.shareColumns>div,.printerDevice,.visionProposal,.historyList small,.searchbox,.corpusMeta{background:var(--surface);color:var(--text);border-color:var(--line);border-radius:var(--radius)}
+.goalNav summary,.goalNav button,.card,.result h3,.miseTitle b,.sub{color:var(--text)}
+.goalNav button.active,nav button.active{background:var(--active-bg);color:var(--active-text);border-color:var(--active-bg)}
+.muted,.hint,small,.miseSectionHead p,.preferenceState span,.tag{color:var(--muted)}
+.form input,.form select,.form textarea,.searchbox input{background:var(--bg);color:var(--text);border-color:var(--line);border-radius:12px}
+dialog{background:var(--surface);color:var(--text);border-color:var(--line);border-radius:20px}
+.chip{background:var(--chip);color:var(--text)}
+.miseLogo4{width:56px;height:56px;border-radius:18px;background:var(--button);border-color:transparent}
+.miseLogo4 svg{width:46px;height:46px}
+.miseLogo4 .crate{fill:var(--button-text);stroke:none}
+.miseLogo4 .lid,.miseLogo4 .wave{fill:none;stroke:var(--button-text);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.miseLogo4 .dot{fill:var(--button-text);stroke:none}
+.quick button{min-height:72px;border-radius:18px;font-weight:800}
+.terrainQuick button{background:var(--surface);border:1px solid var(--line)}
+.playful{background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line)}
+.assistant,.ownedCard,.suggestCard,.uncertain{border-radius:16px;padding:.8rem;margin:.45rem 0}
+.ownedCard{background:var(--surface-2);border:1px solid var(--accent)}
+.suggestCard{background:transparent;border:1px dashed var(--line)}
+.uncertain{color:var(--muted);border:1px dashed var(--line)}
+.scanFeedback{font-weight:800}
+.labelPreview,.qr{background:#fff;color:#000}
+.labelPreview img{width:min(360px,86vw);height:auto;background:#fff}
+#scanVideo{width:100%;max-height:62dvh;object-fit:cover;background:#000;border-radius:16px}
+@media(orientation:landscape){#scanVideo{max-height:70dvh;object-fit:contain}}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+html[data-theme=light] body,html[data-theme=light] header,html[data-theme=light] .goalNav{background:var(--bg);color:var(--text)}
+html[data-theme=light] .goalNav details,html[data-theme=light] .result,html[data-theme=light] .empty,html[data-theme=light] .checklist,html[data-theme=light] .preferenceState,html[data-theme=light] .miseSectionHead,html[data-theme=light] .card,html[data-theme=light] .panel{background:var(--surface);color:var(--text);border-color:var(--line)}
+html[data-theme=light] .goalNav summary,html[data-theme=light] .goalNav button,html[data-theme=light] .result h3{color:var(--text)}
+html[data-theme=light] .goalNav button{background:var(--surface-2)}
+html[data-theme=light] .goalNav button.active{background:var(--active-bg);color:var(--active-text)}
+html[data-theme=light] .searchbox input,html[data-theme=light] .form input,html[data-theme=light] .form select,html[data-theme=light] .form textarea{color:var(--text);background:var(--paper);border-color:var(--line)}
+html[data-theme=light] .ghost,html[data-theme=light] .searchbox button,html[data-theme=light] .headerChip,html[data-theme=light] .headerIcon{background:var(--surface-2);color:var(--text);border-color:var(--line)}
+html[data-theme=light] .muted,html[data-theme=light] .hint,html[data-theme=light] small{color:var(--muted)}
+@media(prefers-color-scheme:light){
+  html[data-theme=system] body,html[data-theme=system] header,html[data-theme=system] .goalNav{background:var(--bg);color:var(--text)}
+  html[data-theme=system] .goalNav details,html[data-theme=system] .result,html[data-theme=system] .empty,html[data-theme=system] .checklist,html[data-theme=system] .preferenceState,html[data-theme=system] .miseSectionHead,html[data-theme=system] .card{background:var(--surface);color:var(--text);border-color:var(--line)}
+  html[data-theme=system] .goalNav button.active{background:var(--active-bg);color:var(--active-text)}
+  html[data-theme=system] .searchbox input,html[data-theme=system] .form input,html[data-theme=system] .form select,html[data-theme=system] .form textarea{color:var(--text);background:#fff;border-color:var(--line)}
+  html[data-theme=system] .ghost,html[data-theme=system] .headerChip,html[data-theme=system] .headerIcon{background:var(--surface-2);color:var(--text)}
+  html[data-theme=system] .muted,html[data-theme=system] .hint,html[data-theme=system] small{color:var(--muted)}
+}
+html[data-theme=regie] body,html[data-theme=regie] header,html[data-theme=regie] .goalNav{background:#000;color:#fff;border-color:#888}
+html[data-theme=regie] .goalNav details,html[data-theme=regie] .result,html[data-theme=regie] .empty,html[data-theme=regie] .checklist,html[data-theme=regie] .preferenceState,html[data-theme=regie] .miseSectionHead,html[data-theme=regie] .card,html[data-theme=regie] .panel{background:#070707;color:#fff;border-color:#888}
+html[data-theme=regie] .playful{background:#070707}
+html[data-theme=regie] .miseLogo4{background:#fff}
+html[data-theme=regie] .miseLogo4 .crate{fill:#000}
+html[data-theme=regie] .miseLogo4 .lid,html[data-theme=regie] .miseLogo4 .wave,html[data-theme=regie] .miseLogo4 .dot{stroke:#000;fill:#000}
+html[data-theme=regie] .miseLogo4 .lid,html[data-theme=regie] .miseLogo4 .wave{fill:none}
+.splash{min-height:100dvh;display:grid;place-items:center;gap:.6rem}
+.splash b{font-size:2.4rem;letter-spacing:-.06em}

@@ -1,5 +1,7 @@
 # Plateformes
 
+> **Code de cette branche : 0.3.0-beta.1, `versionCode` 6.** Le récit historique ci-dessous décrit les pré-versions 0.2.x. Le site Pages public ne change qu’au merge dans `main`. La clé d’envoi Play n’est toujours pas dans le dépôt.
+
 ## Web / PWA
 
 Le site GitHub Pages du dépôt sert la PWA. Le workflow `.github/workflows/pages.yml` publie `main` et la branche `grok/mise-finalisation-20260927`.

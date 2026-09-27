@@ -9,6 +9,7 @@ export async function loadLocalDetector() {
   return pending
 }
 export async function detectLocal(image) {
+  if (Array.isArray(globalThis.__MISE_DETECTIONS)) return globalThis.__MISE_DETECTIONS.map(item => ({ ...item }))
   const detector = await loadLocalDetector()
   return detector.detect(image, 40, .35)
 }

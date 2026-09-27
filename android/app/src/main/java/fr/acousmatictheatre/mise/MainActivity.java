@@ -34,11 +34,11 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(Color.rgb(11, 11, 13));
-        getWindow().setNavigationBarColor(Color.rgb(11, 11, 13));
+        getWindow().setStatusBarColor(Color.rgb(22, 9, 16));
+        getWindow().setNavigationBarColor(Color.rgb(22, 9, 16));
 
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.rgb(11, 11, 13));
+        webView.setBackgroundColor(Color.rgb(22, 9, 16));
         setContentView(webView);
         printerBridge = new NativePrinterBridge(this, webView);
         webView.addJavascriptInterface(printerBridge, "MiseAndroidPrinter");
@@ -52,7 +52,7 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " MISE-Android/0.2.3");
+        settings.setUserAgentString(settings.getUserAgentString() + " MISE-Android/0.3.0");
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))

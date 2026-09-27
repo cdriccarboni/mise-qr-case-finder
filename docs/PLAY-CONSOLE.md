@@ -1,5 +1,7 @@
 # MISE ! — Dossier Google Play Console (test fermé)
 
+> **Code actuel : 0.3.0-beta.1 (`versionCode` 6).** Les statuts « vérifié » de ce dossier portent sur les binaires `0.2.3-beta.1` déjà mesurés. Ils ne sont pas réécrits. La clé d’envoi Play est toujours absente du dépôt : elle n’a pas été recréée, ni devinée. Les APK de test 0.3.0 restent signés avec la clé debug.
+
 Mis à jour le 27/09/2026 sur la branche `grok/mise-playconsole-20260927`, à partir du code de `0.2.3-beta.1` (`versionCode` 5) et des binaires construits dans cette session. Statuts : **vérifié** / **partiel** / **bloqué** / **non testé**. Les inconnues restent marquées **à confirmer par Cédric**.
 
 Ce document prépare une fiche. Il n’annonce pas une publication Play, n’envoie rien à la Play Console et ne contacte aucun testeur.

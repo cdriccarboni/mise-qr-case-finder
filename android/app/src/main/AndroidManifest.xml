@@ -11,7 +11,7 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher_mise"
+        android:icon="@mipmap/ic_launcher"
         android:label="MISE !"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
