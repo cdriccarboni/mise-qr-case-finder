@@ -52,6 +52,8 @@ L’icône de l’application est le mot réduit à **m!**, en blanc sur le carr
 
 Les pistes dessinées avant ce choix (caisse dans un jeton, objet qui devient une onde, point d’exclamation sur une ligne) ne sont plus le logo.
 
+Cinq autres études du mot, à choisir, sont dans `docs/design/` : mailloche, jeton, onde, tampon, pile. Elles ne sont pas branchées dans l’application.
+
 ## Système retenu
 
 - Encre `#0B3D91` pour les aplats et pour les deux points du mot, sur le papier. Papier `#f4f1ea`, texte `#161513` (contraste 16,2).
