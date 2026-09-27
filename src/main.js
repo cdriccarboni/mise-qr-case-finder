@@ -137,13 +137,13 @@ async function applyPrivateState(payload){
 }
 async function updateAccountStatus(){
   const saved=await db.get('settings','google-account'),session=artGoogleSession(),button=$('#accountBtn')
-  const blocked=androidGoogleSignInBlocked()
+  const blocked=androidGoogleSignInBlocked(),fromArt=project.source==='art'
   if(button){
-    button.textContent=blocked?'Google · Indisponible dans l’app':saved?.email?(session?`Google · ${saved.email}`:'Google · Reconnecter'):'Google · À connecter'
+    button.textContent=blocked?'Google · Indisponible dans l’app':saved?.email?(session?`Google · ${saved.email}`:'Google · Reconnecter'):(fromArt?'Google · Continuer depuis ART':'Google · À connecter')
     button.classList.toggle('connected',Boolean(!blocked&&saved&&session))
   }
   const goal=$('#goalGoogle')
-  if(goal)goal.textContent=blocked?'Connexion Google indisponible':'Connexion Google'
+  if(goal)goal.textContent=blocked?'Connexion Google indisponible':fromArt?'Continuer Google depuis ART':'Connexion Google'
 }
 function explainAndroidGoogle(){
   const d=$('#modal')
@@ -153,13 +153,15 @@ function explainAndroidGoogle(){
 }
 async function connectGoogle(){
   if(androidGoogleSignInBlocked()){explainAndroidGoogle();return}
+  const fromArt=project.source==='art'
   try{
-    await requestGoogleSession()
+    await requestGoogleSession({fromArt,interactive:true})
     const profile=await connectedGoogleProfile(),email=String(profile?.email||'').trim()
     if(!email)throw new Error('Compte Google non identifiable')
-    if(!confirm(`Utiliser ce compte Google pour la base privée MISES! ?\n\n${email}\n\nRien ne sera partagé publiquement.`))return
-    await db.put('settings',{id:'google-account',email,name:profile?.name||'',confirmedAt:new Date().toISOString()})
-    await updateAccountStatus();toast('Compte validé · vérification du Drive privé…')
+    const saved=await db.get('settings','google-account')
+    if(!fromArt&&!saved?.email&&!confirm(`Utiliser ce compte Google pour la base privée MISES! ?\n\n${email}\n\nRien ne sera partagé publiquement.`))return
+    await db.put('settings',{id:'google-account',email,name:profile?.name||'',confirmedAt:new Date().toISOString(),source:fromArt?'art-continuity':'mises'})
+    await updateAccountStatus();applyUiPreferences();toast(fromArt?'Google repris depuis ART · vérification du Drive privé…':'Compte validé · vérification du Drive privé…')
     const remote=await loadPrivateState(),localCount=objects.length+cases.length+kits.length+mises.length
     if(remote.payload){
       if(localCount===0||confirm('Une sauvegarde MISES! privée existe sur Drive. La charger sur cet appareil ?')){await applyPrivateState(remote.payload);toast('Base privée chargée depuis Drive')}
@@ -416,9 +418,18 @@ function openCaseCreator(c){
   d.showModal();$('#closeCaseCreator').onclick=()=>d.close();const renderScoped=()=>{const q=$('#caseCreatorQ').value,found=scopedCaseSearch(c,q);$('#caseCreatorResults').innerHTML=found.map(o=>`<article class="card"><b>${esc(o.name)}</b><span>${(o.sounds||[]).slice(0,5).join(' · ')||'Usage à préciser'}</span><button data-caseadd="${o.id}">Ajouter à la mise</button></article>`).join('')||'<div class="empty">Rien de convaincant dans cette valise pour cette recherche.</div>';$$('[data-caseadd]',d).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.caseadd))};$('#caseCreatorQ').oninput=renderScoped;renderScoped()
 }
 function openChallenge(){
-  const pools=['mer','forêt','pluie','orage','pas','maison','vent','mécanique','nuit','feu'],pick=pools[Math.floor(Math.random()*pools.length)],count=Math.min(3,Math.max(1,objects.length)),d=$('#modal')
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Défi bruitage</b><small>Mallette pédagogique</small></div><button id="closeChallenge" class="ghost">×</button></div><div class="challenge"><strong>Crée « ${esc(pick)} » avec ${count} objet${count>1?'s':''} maximum.</strong><p>Proposition générée pour s’exercer. Ce n’est pas un document de ta base.</p></div><div class="row"><button id="tryChallenge">Voir mes pistes</button><button id="newChallenge" class="ghost">Autre défi</button></div></div>`
-  d.showModal();$('#closeChallenge').onclick=()=>d.close();$('#newChallenge').onclick=()=>{d.close();openChallenge()};$('#tryChallenge').onclick=()=>{d.close();$('#q').value=pick;setTab('creator');renderCreator()}
+  const pick=list=>list[Math.floor(Math.random()*list.length)]
+  const universes=['mer de nuit','forêt inquiétante','pluie sur une verrière','orage lointain','pas dans un couloir','vieille maison','vent dans des cordages','atelier mécanique','nuit en ville','feu qui reprend','gare presque vide','cuisine nocturne','bateau en bois','grenier vivant','machine fantastique','fête derrière un mur','grotte humide','marché au petit matin','tempête miniature','ascenseur capricieux','port dans le brouillard','jardin après la pluie','chantier au loin','cabane sous le vent','métro imaginaire','animal invisible','horloge géante','orage dans une boîte','rivière souterraine','coulisses avant l’entrée']
+  const constraints=['sans voix','un seul objet à la fois','commencer presque inaudible','finir par un silence net','aucun rythme régulier','faire croire que le son se rapproche','faire croire que le son s’éloigne','alterner très doux / très fort','un geste long, puis trois gestes courts','ne jamais répéter exactement le même geste','changer de rôle au milieu','laisser 5 secondes de silence au centre','jouer uniquement avec les mains','aucun objet posé au sol pendant le son','faire deux plans sonores très différents']
+  const games=['une personne lance, les autres répondent','construire trois couches puis les retirer une à une','faire deviner le lieu sans le nommer','créer un début, un accident et une fin','faire un faux raccord sonore volontaire','faire passer le son de gauche à droite','commencer réaliste puis dériver vers l’imaginaire','faire croire qu’un objet est beaucoup plus grand qu’il ne l’est','transformer progressivement un bruit en autre chose','faire une version sérieuse puis une version absurde']
+  const surprises=['interdire l’objet qui semblait le plus évident','échanger les objets à mi-parcours','rejouer le même défi deux fois avec des gestes différents','ajouter un silence surprise choisi par quelqu’un d’autre','terminer avec un seul objet','faire la seconde moitié deux fois plus lentement','faire une reprise en ne gardant qu’un seul son']
+  const durations=['20 secondes','30 secondes','45 secondes','1 minute','1 min 30','2 minutes']
+  const available=Math.max(1,objects.length)
+  const count=1+Math.floor(Math.random()*Math.max(1,Math.min(5,available)))
+  const universe=pick(universes),constraint=pick(constraints),game=pick(games),duration=pick(durations),surprise=Math.random()<.7?pick(surprises):''
+  const d=$('#modal')
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Défi bruitage</b><small>Random terrain · nouveau tirage à chaque fois</small></div><button id="closeChallenge" class="ghost">×</button></div><div class="challenge"><strong>Crée « ${esc(universe)} » · ${duration} · ${count} objet${count>1?'s':''} maximum.</strong><p><b>Contrainte :</b> ${esc(constraint)}.</p><p><b>Jeu :</b> ${esc(game)}.</p>${surprise?`<p><b>Surprise :</b> ${esc(surprise)}.</p>`:''}<small>Proposition générée pour s’exercer. Ce n’est pas un document de ta base.</small></div><div class="row"><button id="tryChallenge">Voir mes pistes</button><button id="newChallenge" class="ghost">Encore plus random</button></div></div>`
+  d.showModal();$('#closeChallenge').onclick=()=>d.close();$('#newChallenge').onclick=()=>{d.close();openChallenge()};$('#tryChallenge').onclick=()=>{d.close();$('#q').value=universe;setTab('creator');renderCreator()}
 }
 function sharePayload({miseIds=[],kitIds=[],caseIds=[],objectIds=[],includeMedia=false}={}){
   const selectedMises=mises.filter(x=>miseIds.includes(x.id)),selectedKits=kits.filter(x=>kitIds.includes(x.id)),selectedCases=cases.filter(x=>caseIds.includes(x.id))
@@ -464,7 +475,6 @@ $('#app').innerHTML=`
 <main>
 <section id="projectContext" class="projectContext" aria-label="Contexte du projet" hidden></section>
 <section class="hero">
-  <label class="searchLabel" for="q">Rechercher</label>
   <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance ou contenant"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
   <div class="quick">
     <button data-action="search">Rechercher</button>
@@ -478,20 +488,19 @@ $('#app').innerHTML=`
     <button data-action="hands">Crée ton bruitage</button>
     <button data-action="exercise">Exercice</button>
   </div>
-  <p class="homeCredit"><button id="aboutHome" type="button">À propos</button></p>
 </section>
 <div class="goalNav" aria-label="Navigation MISES">
  <details open><summary>Trouver & créer</summary><div><button data-tab="search" class="active">Recherche</button><button data-tab="creator">Créateur d’ambiance</button><button data-tab="vibe">Vibe bruitage</button><button id="goalHands" type="button">Crée ton bruitage</button><button id="goalExercise" type="button">Exercice</button><button id="goalGroupPhoto" type="button">Photo de groupe</button><button id="goalUniverse" type="button">Univers d’une photo</button><button id="goalChallenge" type="button">Défi bruitage</button></div></details>
- <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
- <details><summary>Partager & outils</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Imprimer série QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalAbout" type="button">À propos</button><button id="goalDataBruitage" type="button">Data Bruitage · importer / exporter</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
+ <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
+ <details><summary>Partager & outils</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Data Bruitage · importer / exporter</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="search" class="tab active"><div id="searchResults"></div></section>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
-<section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
+<section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Crée une valise ou une caisse, puis ouvre-la pour créer / imprimer son QR code. Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
 <section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation : spectacle, atelier, tournée ou besoin ponctuel.</p><div id="kitCards" class="cards"></div></section>
 <section id="mises" class="tab"><div class="miseSectionHead"><div><small>MISES ET CONTRÔLE</small><h2>Mises et contrôle</h2><p>Préparer, ouvrir et vérifier la mise du spectacle.</p></div><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards miseCards"></div></section>
-<section id="vibe" class="tab"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 220 40"><circle cx="20" cy="20" r="12"/><polygon points="62,6 78,16 72,34 52,34 46,16"/><polygon points="108,8 128,20 108,32 88,20"/><path d="M150 24c8-10 14-10 22 0s14 10 22 0"/></svg></div><h2>Vibe bruitage</h2><p>Décris un univers. MISES! reste hors ligne et sépare ce que tu possèdes de ce qui est seulement suggéré.</p><label>Univers<textarea id="vibePrompt" rows="3" placeholder="Une forêt inquiétante la nuit…"></textarea></label><div class="row"><button id="runVibe" type="button">Proposer</button><button type="button" class="ghost" data-vibe-preset="Une forêt inquiétante la nuit avec quelque chose qui rôde au loin">Forêt</button><button type="button" class="ghost" data-vibe-preset="Une vieille maison qui travaille pendant une tempête">Maison</button><button type="button" class="ghost" data-vibe-preset="un bateau en bois pris dans une mer violente">Bateau</button></div><div id="vibeOut"></div></div></section>
-<section id="exercises" class="tab"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 220 40"><circle cx="20" cy="20" r="12"/><polygon points="62,6 78,16 72,34 52,34 46,16"/><polygon points="108,8 128,20 108,32 88,20"/><path d="M150 24c8-10 14-10 22 0s14 10 22 0"/></svg></div><h2>Exercice</h2><p>Généré à partir de ta base. Ce n’est pas une liste figée, et ce n’est pas une fiche.</p><div class="grid2"><label>Durée<select id="exDuration"><option value="0.5">30 secondes</option><option value="1">1 min</option><option value="3">3 min</option><option value="5" selected>5 min</option></select></label><label>Personnes<input id="exPeople" type="number" min="1" value="1"></label><label>Niveau<select id="exLevel"><option value="découverte">Découverte</option><option value="atelier" selected>Atelier</option><option value="avancé">Avancé</option></select></label><label>Mode<select id="exMode"><option value="">Plusieurs modes</option><option value="decouverte">Découverte</option><option value="echauffement">Échauffement</option><option value="improvisation">Improvisation</option><option value="contrainte">Contrainte</option><option value="defi">Défi</option><option value="ambiance">Création d’ambiance</option><option value="histoire">Histoire sonore</option><option value="detournement">Détournement d’objet</option><option value="meme-objet">Même objet, plusieurs sons</option><option value="plusieurs-un-son">Plusieurs objets, un seul son</option></select></label></div><label>Univers (facultatif)<input id="exUniverse" placeholder="port, forêt, cuisine…"></label><button id="runExercise" type="button">Générer</button><div id="exerciseOut"></div></div></section>
+<section id="vibe" class="tab"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 300 46"><circle cx="22" cy="23" r="12"/><polygon points="78,7 98,18 91,39 66,39 59,18"/><polygon points="158,7 183,23 158,39 133,23"/><path d="M222 29c11-13 21-13 32 0s21 13 32 0"/></svg></div><h2>Vibe bruitage</h2><p>Décris un univers. MISES! reste hors ligne et sépare ce que tu possèdes de ce qui est seulement suggéré.</p><label>Univers<textarea id="vibePrompt" rows="3" placeholder="Une forêt inquiétante la nuit…"></textarea></label><div class="row"><button id="runVibe" type="button">Proposer</button><button type="button" class="ghost" data-vibe-preset="Une forêt inquiétante la nuit avec quelque chose qui rôde au loin">Forêt</button><button type="button" class="ghost" data-vibe-preset="Une vieille maison qui travaille pendant une tempête">Maison</button><button type="button" class="ghost" data-vibe-preset="un bateau en bois pris dans une mer violente">Bateau</button></div><div id="vibeOut"></div></div></section>
+<section id="exercises" class="tab"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 300 46"><circle cx="22" cy="23" r="12"/><polygon points="78,7 98,18 91,39 66,39 59,18"/><polygon points="158,7 183,23 158,39 133,23"/><path d="M222 29c11-13 21-13 32 0s21 13 32 0"/></svg></div><h2>Exercice</h2><p>Généré à partir de ta base. Ce n’est pas une liste figée, et ce n’est pas une fiche.</p><div class="grid2"><label>Durée<select id="exDuration"><option value="0.5">30 secondes</option><option value="1">1 min</option><option value="3">3 min</option><option value="5" selected>5 min</option></select></label><label>Personnes<input id="exPeople" type="number" min="1" value="1"></label><label>Niveau<select id="exLevel"><option value="découverte">Découverte</option><option value="atelier" selected>Atelier</option><option value="avancé">Avancé</option></select></label><label>Mode<select id="exMode"><option value="">Plusieurs modes</option><option value="decouverte">Découverte</option><option value="echauffement">Échauffement</option><option value="improvisation">Improvisation</option><option value="contrainte">Contrainte</option><option value="defi">Défi</option><option value="ambiance">Création d’ambiance</option><option value="histoire">Histoire sonore</option><option value="detournement">Détournement d’objet</option><option value="meme-objet">Même objet, plusieurs sons</option><option value="plusieurs-un-son">Plusieurs objets, un seul son</option></select></label></div><label>Univers (facultatif)<input id="exUniverse" placeholder="port, forêt, cuisine…"></label><button id="runExercise" type="button">Générer</button><div id="exerciseOut"></div></div></section>
 <section id="creator" class="tab">
   <div class="panel"><h2>Créateur de bruitage</h2><p>Décrivez une ambiance ou un son pour explorer votre parc et les références.</p>
   <div class="row"><button data-preset="mer" class="ghost">Mer</button><button data-preset="forêt" class="ghost">Forêt</button><button data-preset="feu" class="ghost">Feu</button><button data-preset="orage" class="ghost">Orage</button></div></div>
@@ -520,8 +529,7 @@ $('#app').innerHTML=`
 </div></dialog>
 <dialog id="aboutDlg"><div class="form aboutSheet"><div class="dialoghead"><div><b>À propos</b></div><button id="closeAbout" class="ghost" type="button">×</button></div>
 <div class="wordmark aboutMark">${wordmarkSvg}</div>
-<p class="aboutCredit">MISES! — Une création de Cédric Carboni pour Acousmatic Theatre</p>
-<p class="aboutLinks">${externalAnchor(ACOUSMATIC_THEATRE_URL, 'Acousmatic Theatre')}${externalAnchor(AUTHOR_WEBSITE_URL, 'Site de Cédric Carboni', 'data-author')}</p>
+<p class="aboutCredit">MISES! — Une création de ${externalAnchor(AUTHOR_WEBSITE_URL, 'Cédric Carboni', 'data-author')} pour ${externalAnchor(ACOUSMATIC_THEATRE_URL, 'Acousmatic Theatre')}</p>
 <p class="aboutVersion muted">Version <span id="aboutVersion">${APP_VERSION}</span></p>
 </div></dialog>
 <dialog id="manualDlg"><div class="manual"><div class="dialoghead"><div><b>MISES! · Mini-manuel</b><small>QR Case Finder · prise en main rapide</small></div><button id="closeManual" class="ghost" type="button">×</button></div>
@@ -711,7 +719,7 @@ async function showCase(id){
   <div class="miniList">${items.map(o=>`<span>${esc(o.name)} <button type="button" data-remove-object="${o.id}" class="ghost">Retirer</button></span>`).join('')||'<span>Aucun objet dans cette caisse.</span>'}</div>
   <label>Ajouter un objet<select id="caseAddObject"><option value="">Choisir</option>${elsewhere.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join('')}</select></label>
   <p class="hint">${missing.length?`Dans la mise active, pas dans cette caisse : ${missing.map(o=>`${esc(o.name)} (${esc(caseName(caseBy(o.caseId||o.container_id)))})`).join(', ')}`:'Contrôle : rien de la mise active ne manque ici, ou aucune mise n’est active.'}</p>
-  <div class="row"><button id="caseCreator">Avec ce que j’ai ici</button><button id="printLabel">Étiquette / imprimer</button><button id="scanNext" type="button" class="ghost">Scanner le suivant</button><button id="editCase" class="ghost">Modifier</button></div></div>`
+  <div class="row"><button id="caseCreator">Avec ce que j’ai ici</button><button id="printLabel">Créer / imprimer le QR</button><button id="scanNext" type="button" class="ghost">Scanner le suivant</button><button id="editCase" class="ghost">Modifier</button></div></div>`
   m.showModal()
   $('#closeCase').onclick=()=>m.close()
   $('#caseCreator').onclick=()=>{m.close();openCaseCreator(c)}
@@ -1059,7 +1067,7 @@ function applyUiPreferences(){
       const account=$('#accountBtn')?.textContent||''
       const connected=/connecté|reconnecter/i.test(account)&&!/non connecté/i.test(account)
       googleState.innerHTML=`<b>Google Drive</b><span>${connected?esc(account):'Non connecté'}</span>`
-      $('#preferencesGoogle').textContent=connected?'Reconnecter Google Drive':'Raccorder Google Drive'
+      $('#preferencesGoogle').textContent=connected?'Reconnecter Google Drive':project.source==='art'?'Continuer avec Google depuis ART':'Raccorder Google Drive'
     }
   }
   db.get('settings','linked-folder').then(linked=>{
@@ -1099,8 +1107,6 @@ function openAbout(){
   if($('#preferencesDlg')?.open)$('#preferencesDlg').close()
   $('#aboutDlg').showModal()
 }
-$('#aboutHome').onclick=openAbout
-$('#goalAbout').onclick=openAbout
 $('#preferencesAbout').onclick=openAbout
 $('#closeAbout').onclick=()=>$('#aboutDlg').close()
 document.addEventListener('click',event=>{
@@ -1177,7 +1183,7 @@ function render(){
     <b>${o.favorite?'★ ':''}${esc(o.name)}</b><span>${esc(soundSummary(o)||'Son à préciser')}</span><small>${esc(caseName(caseBy(o.caseId||o.container_id)))}${o.audioMemo?' · mémo sonore':''} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></button>`).join(''):'<div class="empty"><b>Aucun objet pour l’instant.</b><span>Importe tes Data Bruitage ou ajoute une fiche. Rien n’est inventé à ta place.</span></div>'
   $$('[data-object]').forEach(b=>b.onclick=()=>openObject(objects.find(o=>o.id===b.dataset.object)))
 
-  $('#caseCards').innerHTML=cases.length?cases.map(c=>`<button class="card caseCard" data-case="${c.id}"><b>${esc(caseName(c))}</b><span>${objects.filter(o=>(o.caseId||o.container_id)===c.id).length} objets</span><small>QR prêt</small></button>`).join(''):'<div class="empty"><b>Aucun contenant.</b><span>Crée une valise ou une caisse, puis imprime son QR.</span></div>'
+  $('#caseCards').innerHTML=cases.length?cases.map(c=>`<button class="card caseCard" data-case="${c.id}"><b>${esc(caseName(c))}</b><span>${objects.filter(o=>(o.caseId||o.container_id)===c.id).length} objets</span><small>QR prêt · ouvrir pour créer / imprimer</small></button>`).join(''):'<div class="empty"><b>Aucun contenant.</b><span>Crée une valise ou une caisse, puis crée / imprime son QR code.</span></div>'
   $$('[data-case]').forEach(b=>b.onclick=()=>showCase(b.dataset.case))
 
   $('#kitCards').innerHTML=kits.length?kits.map(k=>`<article class="card"><b>${esc(k.name)}</b><span>${(k.objectIds||[]).length} objets · ${esc((k.contexts||[]).join(' · ')||'indépendant')}</span><small>${esc(k.source||'manuel')} · un kit n’est qu’une vue</small>

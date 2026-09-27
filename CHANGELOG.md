@@ -1,3 +1,13 @@
+## 0.3.0-beta.4 — 2026-09-27
+
+- Interface : les trois cartouches « Trouver & créer », « Ranger & préparer » et « Partager & outils » gardent désormais leur hauteur propre et s’alignent en haut. Les champs, listes et boutons des blocs Vibe / Exercice restent dans leur cartouche en desktop comme en mobile. Les cartes de jeu reprennent le même arrondi que les autres cartouches.
+- Accueil : suppression du libellé « Rechercher » au-dessus du grand champ. « À propos » n’apparaît plus sur l’accueil ni dans « Partager & outils » ; il reste uniquement dans Préférences.
+- À propos : crédit beaucoup plus discret dans le popup. « Cédric Carboni » et « Acousmatic Theatre » sont les deux liens directement intégrés à la phrase, avec un survol/focus léger.
+- QR : les libellés disent explicitement « créer / imprimer » un QR code pour les valises et les séries.
+- Vibe / Exercice : motifs nodaux plus espacés en haut des cartouches. Le Défi bruitage tire maintenant au hasard l’univers, la durée, le nombre maximal d’objets, une contrainte, un mode de jeu et souvent une surprise.
+- ART → MISES ! : l’arrivée avec `source=art` est traitée comme une continuité. MISES ! utilise le même client Google de production, ignore les anciens overrides OAuth locaux en production et évite de redemander un consentement complet quand l’autorisation existe déjà. Aucun jeton Google n’est placé dans l’URL.
+- Version 0.3.0-beta.4, Android `versionCode` 9.
+
 # Changelog
 
 ## 0.3.0-beta.3 — 2026-09-27

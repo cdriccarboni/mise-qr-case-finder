@@ -2,6 +2,7 @@ import { LOCAL_KEYS, SESSION_TOKEN_KEY } from './storage.js'
 
 const ART_TOKEN_KEY='art-google-oauth-session-v1'
 const GOOGLE_CLIENT_META='mises-google-client-id'
+const GOOGLE_GRANT_STATE='mises-google-oauth-grant-v1'
 export const DRIVE_FOLDER_NAME='MISES !'
 export const LEGACY_DRIVE_FOLDER_NAME='MISE !'
 export const DRIVE_STATE_NAME='mises-data.json'
@@ -52,18 +53,30 @@ export function artGoogleSession(){
   return readStoredSession(SESSION_TOKEN_KEY)||readStoredSession(ART_TOKEN_KEY)
 }
 
-function directClientId(){
-  const meta=typeof document!=='undefined'
-    ?document.querySelector(`meta[name="${GOOGLE_CLIENT_META}"]`)?.content||''
-    :''
-  if(validClientId(meta))return meta.trim()
-  try{
-    const local=localStorage.getItem(LOCAL_KEYS.googleClientId)||''
-    if(validClientId(local))return local.trim()
-  }catch{}
-  return GOOGLE_PRODUCTION_CLIENT_ID
+function productionClientId(){
+  if(typeof location==='undefined')return ''
+  const host=String(location.hostname||'').replace(/\.$/,'')
+  return host==='cdriccarboni.github.io'?GOOGLE_PRODUCTION_CLIENT_ID:''
 }
-
+function directClientId(){
+  const meta=typeof document!=='undefined'?document.querySelector(`meta[name="${GOOGLE_CLIENT_META}"]`)?.content||'':''
+  const deployed=validClientId(meta)?meta.trim():productionClientId()
+  if(deployed){try{localStorage.removeItem(LOCAL_KEYS.googleClientId)}catch{};return deployed}
+  try{const local=localStorage.getItem(LOCAL_KEYS.googleClientId)||'';if(validClientId(local))return local.trim()}catch{}
+  return ''
+}
+function scopeSet(scope){return new Set(String(scope||'').split(/\s+/).map(x=>x.trim()).filter(Boolean))}
+export function googleOAuthPreviouslyGranted(scope=DRIVE_SCOPE){
+  try{const saved=JSON.parse(localStorage.getItem(GOOGLE_GRANT_STATE)||'null'),granted=scopeSet(saved?.scope||'');return [...scopeSet(scope)].every(value=>granted.has(value))}catch{return false}
+}
+function rememberGrantScope(scope){try{localStorage.setItem(GOOGLE_GRANT_STATE,JSON.stringify({scope:String(scope||GOOGLE_SCOPES),grantedAt:new Date().toISOString()}))}catch{}}
+function googleOAuthUserMessage(error='',description=''){
+  const code=String(error||'').toLowerCase(),detail=String(description||'').toLowerCase()
+  if(code==='invalid_client'||code==='deleted_client'||detail.includes('deleted_client')||detail.includes('oauth client was deleted'))return'Connexion Google temporairement indisponible côté MISES !. Aucun réglage à faire sur cet appareil : le client Google du service doit être réactivé.'
+  if(code==='origin_mismatch'||code==='redirect_uri_mismatch'||detail.includes('origin_mismatch')||detail.includes('redirect_uri_mismatch'))return'Connexion Google temporairement indisponible côté MISES !. Aucun réglage à faire sur cet appareil : le domaine public MISES ! doit être autorisé côté Google.'
+  if(code==='access_denied')return'Autorisation Google refusée.'
+  return description||error||'Connexion Google impossible'
+}
 async function ensureGoogleIdentity(){
   if(globalThis.google?.accounts?.oauth2)return globalThis.google
   if(gisPromise)return gisPromise
@@ -86,7 +99,7 @@ async function ensureGoogleIdentity(){
   return gisPromise
 }
 
-export async function requestGoogleSession(){
+export async function requestGoogleSession(options={}){
   if(androidGoogleSignInBlocked())throw new Error(googleSignInUnavailableMessage())
   const current=artGoogleSession()
   if(current)return current
@@ -94,43 +107,29 @@ export async function requestGoogleSession(){
   if(!validClientId(clientId))throw new Error('Connexion Google MISES! non configurée')
   const googleApi=await ensureGoogleIdentity()
   if(!googleApi?.accounts?.oauth2)throw new Error('Google Identity indisponible')
-
   return await new Promise((resolve,reject)=>{
     let settled=false
     const done=(fn,value)=>{if(settled)return;settled=true;fn(value)}
     const client=googleApi.accounts.oauth2.initTokenClient({
-      client_id:clientId,
-      scope:GOOGLE_SCOPES,
+      client_id:clientId,scope:GOOGLE_SCOPES,
       callback:response=>{
-        if(response?.error){
-          done(reject,new Error(response.error_description||response.error||'Connexion Google refusée'))
-          return
-        }
+        if(response?.error){done(reject,new Error(googleOAuthUserMessage(response.error,response.error_description)));return}
         const expiresIn=Math.max(60,Number(response?.expires_in)||3600)
-        const session={
-          token:response.access_token,
-          scope:response.scope||GOOGLE_SCOPES,
-          expiresAt:Date.now()+expiresIn*1000,
-          source:'mises-direct'
-        }
+        const session={token:response.access_token,scope:response.scope||GOOGLE_SCOPES,expiresAt:Date.now()+expiresIn*1000,source:options.fromArt?'art-continuity':'mises-direct'}
         try{sessionStorage.setItem(SESSION_TOKEN_KEY,JSON.stringify(session))}catch{}
-        done(resolve,session)
+        rememberGrantScope(session.scope);done(resolve,session)
       },
       error_callback:error=>{
         const type=String(error?.type||'')
-        const message=type==='popup_closed'
-          ?'Connexion Google annulée'
-          :type==='popup_failed_to_open'
-            ?'La fenêtre Google a été bloquée par le navigateur'
-            :'Connexion Google impossible pour ce domaine'
+        const message=type==='popup_closed'?'Connexion Google annulée':type==='popup_failed_to_open'?'La fenêtre Google a été bloquée par le navigateur':'Connexion Google impossible pour ce domaine'
         done(reject,new Error(message))
       }
     })
-    try{client.requestAccessToken({prompt:'consent'})}
-    catch(error){done(reject,error instanceof Error?error:new Error('Connexion Google impossible'))}
+    const alreadyGranted=googleOAuthPreviouslyGranted(DRIVE_SCOPE)
+    const prompt=options.selectAccount?'select_account':(options.fromArt||alreadyGranted?'':'consent')
+    try{client.requestAccessToken({prompt})}catch(error){done(reject,new Error(googleOAuthUserMessage('',error instanceof Error?error.message:'')))}
   })
 }
-
 export function clearMisesGoogleSession(){
   try{sessionStorage.removeItem(SESSION_TOKEN_KEY)}catch{}
 }

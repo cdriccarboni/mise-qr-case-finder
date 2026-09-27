@@ -155,3 +155,24 @@ html[data-theme=light]{--stroke:var(--ink)}
 @media(prefers-color-scheme:light){html[data-theme=system]{--stroke:var(--ink)}}
 html:not([data-theme=regie]) .goalNav details,html:not([data-theme=regie]) .panel:not(.playful),html:not([data-theme=regie]) .card,html:not([data-theme=regie]) .result,html:not([data-theme=regie]) .empty,html:not([data-theme=regie]) .checklist,html:not([data-theme=regie]) .preferenceState,html:not([data-theme=regie]) .miseSectionHead,html:not([data-theme=regie]) .challenge,html:not([data-theme=regie]) .manualSteps article,html:not([data-theme=regie]) .shareColumns>div,html:not([data-theme=regie]) .printerDevice,html:not([data-theme=regie]) .visionProposal,html:not([data-theme=regie]) .searchbox,html:not([data-theme=regie]) .corpusMeta{border:2px solid var(--stroke)}
 html[data-theme=regie] .goalNav details,html[data-theme=regie] .panel,html[data-theme=regie] .card,html[data-theme=regie] .result,html[data-theme=regie] .empty,html[data-theme=regie] .checklist,html[data-theme=regie] .preferenceState,html[data-theme=regie] .miseSectionHead,html[data-theme=regie] .challenge,html[data-theme=regie] .searchbox,html[data-theme=regie] .corpusMeta{border-color:#888}
+
+/* 0.3.0-beta.4 · layout polish */
+.goalNav{align-items:start}
+.goalNav details{align-self:start;height:auto}
+.goalNav details>div{grid-auto-rows:minmax(48px,auto)}
+.goalNav button{min-height:48px;display:flex;align-items:center}
+.playful{border-radius:var(--radius)}
+.playful .grid2>*,.playful label,.playful .row>*{min-width:0}
+.playful input,.playful select,.playful textarea{width:100%;max-width:100%;min-width:0}
+.playful .row{align-items:stretch}
+.playful .row>button{flex:1 1 120px}
+.playful .challenge,.playful .ownedCard,.playful .suggestCard,.playful .uncertain,.playful .assistant{border-radius:var(--radius)}
+.tokenStrip{margin:.05rem 0 .6rem;opacity:.82}
+.tokenStrip svg{width:min(320px,88%);height:48px}
+.aboutSheet{width:min(520px,88vw);min-height:250px}
+.aboutMark{width:min(210px,60%);opacity:.9}
+.aboutCredit{margin:auto 0 0;align-self:flex-start;font-size:.61rem;line-height:1.45;letter-spacing:.01em;color:var(--muted);opacity:.62;text-align:left}
+.aboutCredit .aboutLink{color:inherit;text-decoration:none;border-bottom:1px dotted transparent;padding:0}
+.aboutCredit .aboutLink:hover,.aboutCredit .aboutLink:focus-visible{opacity:1;color:var(--text);border-bottom-color:currentColor}
+.aboutVersion{font-size:.61rem;margin:.25rem 0 0;opacity:.55}
+@media(max-width:620px){.playful .grid2{grid-template-columns:1fr}.playful .row>button{flex:1 1 46%}}
