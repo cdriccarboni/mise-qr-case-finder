@@ -1,13 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { ACOUSMATIC_THEATRE_URL, AUTHOR_WEBSITE_URL, externalAnchor } from '../src/about.js'
+import { ACOUSMATIC_THEATRE_URL, AUTHOR_WEBSITE_URL, PRIVACY_URL, REPOSITORY_URL, externalAnchor } from '../src/about.js'
 
 const AUTHOR_URL = 'https://carboni-cedric.pages-perso.free.fr/'
 
 test('the about screen links to Acousmatic Theatre and to the author site', () => {
   assert.equal(AUTHOR_WEBSITE_URL, AUTHOR_URL)
   assert.equal(ACOUSMATIC_THEATRE_URL, 'https://www.acousmatic-theatre.fr/')
+  assert.equal(REPOSITORY_URL, 'https://github.com/cdriccarboni/mise-qr-case-finder')
+  assert.equal(PRIVACY_URL, 'https://cdriccarboni.github.io/mise-qr-case-finder/privacy.html')
   assert.equal(externalAnchor('', 'Site de Cédric Carboni', 'data-author'), '')
   const author = externalAnchor(AUTHOR_WEBSITE_URL, 'Site de Cédric Carboni', 'data-author')
   assert.match(author, /href="https:\/\/carboni-cedric\.pages-perso\.free\.fr\/"/)

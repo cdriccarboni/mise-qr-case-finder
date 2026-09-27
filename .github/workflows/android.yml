@@ -1,4 +1,4 @@
-name: Build MISE Android
+name: Build MISES Android
 
 on:
   push:

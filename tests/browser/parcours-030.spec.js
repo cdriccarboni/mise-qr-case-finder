@@ -9,7 +9,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   page.on('pageerror', error => errors.push(error.message))
   await page.addInitScript(() => {
     window.__prints = []
-    window.MiseAndroidPrinter = {
+    window.MisesAndroidPrinter = {
       listPairedPrinters: () => '[]',
       printImages: () => {},
       openBluetoothSettings: () => {},
@@ -69,7 +69,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await page.locator('#closeCase').click()
 
   await page.evaluate(() => {
-    window.__MISE_DETECTIONS = [
+    window.__MISES_DETECTIONS = [
       { class: 'bottle', score: 0.92, bbox: [12, 18, 90, 110] },
       { class: 'cup', score: 0.84, bbox: [120, 20, 70, 80] },
       { class: 'spoon', score: 0.8, bbox: [210, 30, 50, 40] },
@@ -135,7 +135,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await expect(page.locator('#exerciseOut')).toContainText('Chaîne moyenne')
 
   await page.evaluate(() => {
-    window.__MISE_DETECTIONS = [
+    window.__MISES_DETECTIONS = [
       { class: 'wine glass', score: 0.9, bbox: [20, 20, 70, 90] },
       { class: 'spoon', score: 0.86, bbox: [140, 30, 40, 70] },
       { class: 'person', score: 0.95, bbox: [240, 10, 40, 180] }
@@ -151,7 +151,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await dialog.locator('[data-close]').click()
 
   await page.evaluate(() => {
-    window.__MISE_DETECTIONS = [{ class: 'chair', score: 0.93, bbox: [30, 20, 100, 120] }]
+    window.__MISES_DETECTIONS = [{ class: 'chair', score: 0.93, bbox: [30, 20, 100, 120] }]
   })
   await page.locator('#photoInput').setInputFiles({ name: 'chaise.png', mimeType: 'image/png', buffer: image })
   await expect(dialog).toBeVisible()
@@ -168,7 +168,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
 
   await page.setViewportSize({ width: 390, height: 844 })
   for (const theme of ['dark', 'light', 'regie']) {
-    await page.evaluate(value => localStorage.setItem('mise-theme-mode', value), theme)
+    await page.evaluate(value => localStorage.setItem('mises-theme-mode', value), theme)
     await page.reload()
     await page.screenshot({ path: `${shots}/accueil-${theme}.png`, fullPage: false })
     await page.locator('#aboutHome').click()
@@ -187,7 +187,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await page.getByText('Partager & outils', { exact: true }).click()
   await page.locator('#goalBackup').click()
   const backup = await (await downloadPromise).path()
-  await page.evaluate(() => indexedDB.deleteDatabase('mise-db'))
+  await page.evaluate(() => indexedDB.deleteDatabase('mises-db'))
   await page.reload()
   page.once('dialog', dialogBox => dialogBox.accept())
   await page.locator('#restoreInput').setInputFiles(backup)

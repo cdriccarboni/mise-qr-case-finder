@@ -11,7 +11,7 @@ test('sans pont Android, la connexion Google reste proposée et Identity Service
 
 test('le pont Android affiche le refus et n’appelle pas Google', async ({ page }) => {
   await page.addInitScript(() => {
-    window.MiseAndroid = {
+    window.MisesAndroid = {
       googleSignInAvailable: () => false,
       googleSignInMessage: () => 'Connexion Google bloquée dans ce test Android.'
     }

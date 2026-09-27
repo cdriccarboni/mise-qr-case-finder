@@ -29,7 +29,7 @@ test('le dernier cartouche reste entier en bas d’écran, dans les trois thème
     for (const [width, height] of sizes) {
       await page.setViewportSize({ width, height })
       await page.goto('/')
-      await page.evaluate(mode => localStorage.setItem('mise-theme-mode', mode), theme)
+      await page.evaluate(mode => localStorage.setItem('mises-theme-mode', mode), theme)
       await page.reload()
       await page.evaluate(async () => { await navigator.serviceWorker.ready })
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme)

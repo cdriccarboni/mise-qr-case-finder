@@ -8,7 +8,7 @@ Tout ce que tu importes reste sur l’appareil (IndexedDB), sauf si tu connectes
 
 ## Ouvrir
 
-1. Ouvre la PWA. Le site public https://cdriccarboni.github.io/mise-qr-case-finder/ suit `main` seulement après un merge. Cette branche est `0.3.0-beta.3` (`versionCode` 8). L’APK de test est signé avec la clé debug tant que la clé d’upload Play n’est pas fournie.
+1. Ouvre la PWA. Le site public https://cdriccarboni.github.io/mise-qr-case-finder/ suit `main` seulement après un merge. L’URL du dépôt et celle de la confidentialité sont dans `src/about.js` (`REPOSITORY_URL`, `PRIVACY_URL`) : elles ne changent pas avec le nom MISES. Cette branche est `0.3.0-beta.3` (`versionCode` 8). L’APK de test est signé avec la clé debug tant que la clé d’upload Play n’est pas fournie.
 2. La première page est vide de tes données. L’application publique n’embarque pas ton inventaire.
 3. Un exemple fictif est fourni dans `public/exemples/` (`classeur-fictif.xlsx`, `index-fictif.csv`). Ce n’est pas ta base.
 

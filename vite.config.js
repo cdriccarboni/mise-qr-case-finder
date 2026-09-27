@@ -7,7 +7,7 @@ export default defineConfig({
     includeAssets:['favicon.svg','icon.svg','icon-maskable.svg','apple-touch-icon.png','icon-192.png','icon-512.png'],
     manifest:{
       name:'MISES ! — QR Case Finder', short_name:'MISES !',
-      description:'Cherche ta mise — inventaire de bruitage, matériel, QR et préparation.',
+      description:'Cherche tes mises — inventaire de bruitage, matériel, QR et préparation.',
       theme_color:'#D12A74', background_color:'#141311',
       display:'standalone', start_url:'./', scope:'./', lang:'fr',
       icons:[
@@ -19,7 +19,7 @@ export default defineConfig({
       ]
     },
     workbox:{
-      cacheId:'mise-0.3.0-beta.3',
+      cacheId:'mises-0.3.0-beta.3',
       navigateFallback:'index.html',
       globPatterns:['**/*.{js,mjs,css,html,svg,json,bin,png,ttf}','models/coco-ssd/*'],
       maximumFileSizeToCacheInBytes:8*1024*1024,

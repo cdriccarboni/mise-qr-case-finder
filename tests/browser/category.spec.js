@@ -5,7 +5,7 @@ test('one gesture replaces the water-bottle category with the fiche and remember
   await expect(page.locator('#appVersion')).toHaveText('0.3.0-beta.3')
   await page.evaluate(async () => {
     const db = await new Promise((resolve, reject) => {
-      const request = indexedDB.open('mise-db')
+      const request = indexedDB.open('mises-db')
       request.onsuccess = () => resolve(request.result)
       request.onerror = () => reject(request.error)
     })
@@ -32,7 +32,7 @@ test('one gesture replaces the water-bottle category with the fiche and remember
     return canvas.toDataURL('image/png').split(',')[1]
   }), 'base64')
   await page.evaluate(() => {
-    window.__MISE_DETECTIONS = [{ class: 'bottle', score: 0.93, bbox: [8, 8, 40, 60] }]
+    window.__MISES_DETECTIONS = [{ class: 'bottle', score: 0.93, bbox: [8, 8, 40, 60] }]
   })
   await page.locator('#inventoryInput').setInputFiles({ name: 'bouteille.png', mimeType: 'image/png', buffer: image })
   const dialog = page.locator('.visionDialog')
@@ -47,7 +47,7 @@ test('one gesture replaces the water-bottle category with the fiche and remember
   await expect(dialog).toHaveCount(0)
 
   await page.evaluate(() => {
-    window.__MISE_DETECTIONS = [{ class: 'bottle', score: 0.9, bbox: [8, 8, 40, 60] }]
+    window.__MISES_DETECTIONS = [{ class: 'bottle', score: 0.9, bbox: [8, 8, 40, 60] }]
   })
   await page.locator('#inventoryInput').setInputFiles({ name: 'bouteille-2.png', mimeType: 'image/png', buffer: image })
   const again = page.locator('.visionDialog')

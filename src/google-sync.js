@@ -1,7 +1,11 @@
+import { LOCAL_KEYS, SESSION_TOKEN_KEY } from './storage.js'
+
 const ART_TOKEN_KEY='art-google-oauth-session-v1'
-const MISE_TOKEN_KEY='mise-google-oauth-session-v1'
-const CLIENT_ID_KEY='mise-google-oauth-client-id'
-const GOOGLE_CLIENT_META='mise-google-client-id'
+const GOOGLE_CLIENT_META='mises-google-client-id'
+export const DRIVE_FOLDER_NAME='MISES !'
+export const LEGACY_DRIVE_FOLDER_NAME='MISE !'
+export const DRIVE_STATE_NAME='mises-data.json'
+export const LEGACY_DRIVE_STATE_NAME='mise-data.json'
 // drive.file ne liste que les fichiers créés ou ouverts par l’app.
 // La synchro cherche un dossier « _ART » déjà présent (par nom) et un partage s’ouvre par identifiant :
 // ces deux lectures échouent avec drive.file, donc le scope complet reste en place.
@@ -9,7 +13,6 @@ export const DRIVE_SCOPE='https://www.googleapis.com/auth/drive'
 export const GOOGLE_SCOPES=`openid email profile ${DRIVE_SCOPE}`
 export const ANDROID_GOOGLE_SIGNIN_MESSAGE='La connexion Google n’est pas disponible dans l’application Android : Google bloque l’identification dans la fenêtre intégrée. Tu peux continuer sans compte. Tes objets, photos et mémos restent sur l’appareil. Exporte une sauvegarde depuis Partager et outils, ou ouvre MISES ! dans Chrome pour synchroniser ton propre Google Drive.'
 const FOLDER_MIME='application/vnd.google-apps.folder'
-const STATE_NAME='mise-data.json'
 const GOOGLE_PRODUCTION_CLIENT_ID=String.fromCharCode(50,51,52,54,53,55,55,57,57,48,52,57,45,109,57,112,53,97,112,98,106,101,57,110,117,114,117,109,56,110,100,104,118,100,114,56,111,104,54,107,103,49,98,100,117,46,97,112,112,115,46,103,111,111,103,108,101,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109)
 
 let gisPromise=null
@@ -28,14 +31,14 @@ function readStoredSession(key){
 
 export function androidGoogleSignInBlocked(){
   try{
-    const bridge=globalThis.MiseAndroid
+    const bridge=globalThis.MisesAndroid
     return Boolean(bridge&&typeof bridge.googleSignInAvailable==='function'&&bridge.googleSignInAvailable()===false)
   }catch{return false}
 }
 
 export function googleSignInUnavailableMessage(){
   try{
-    const bridge=globalThis.MiseAndroid
+    const bridge=globalThis.MisesAndroid
     if(bridge&&typeof bridge.googleSignInMessage==='function'){
       const text=String(bridge.googleSignInMessage()||'').trim()
       if(text)return text
@@ -46,7 +49,7 @@ export function googleSignInUnavailableMessage(){
 
 export function artGoogleSession(){
   if(androidGoogleSignInBlocked())return null
-  return readStoredSession(MISE_TOKEN_KEY)||readStoredSession(ART_TOKEN_KEY)
+  return readStoredSession(SESSION_TOKEN_KEY)||readStoredSession(ART_TOKEN_KEY)
 }
 
 function directClientId(){
@@ -55,7 +58,7 @@ function directClientId(){
     :''
   if(validClientId(meta))return meta.trim()
   try{
-    const local=localStorage.getItem(CLIENT_ID_KEY)||''
+    const local=localStorage.getItem(LOCAL_KEYS.googleClientId)||''
     if(validClientId(local))return local.trim()
   }catch{}
   return GOOGLE_PRODUCTION_CLIENT_ID
@@ -65,7 +68,7 @@ async function ensureGoogleIdentity(){
   if(globalThis.google?.accounts?.oauth2)return globalThis.google
   if(gisPromise)return gisPromise
   gisPromise=new Promise((resolve,reject)=>{
-    const existing=document.querySelector('script[data-mise-google-identity]')
+    const existing=document.querySelector('script[data-mises-google-identity]')
     if(existing){
       existing.addEventListener('load',()=>resolve(globalThis.google),{once:true})
       existing.addEventListener('error',()=>reject(new Error('Chargement Google impossible')),{once:true})
@@ -75,7 +78,7 @@ async function ensureGoogleIdentity(){
     script.src='https://accounts.google.com/gsi/client'
     script.async=true
     script.defer=true
-    script.dataset.miseGoogleIdentity='1'
+    script.dataset.misesGoogleIdentity='1'
     script.onload=()=>resolve(globalThis.google)
     script.onerror=()=>reject(new Error('Chargement Google impossible'))
     document.head.appendChild(script)
@@ -108,9 +111,9 @@ export async function requestGoogleSession(){
           token:response.access_token,
           scope:response.scope||GOOGLE_SCOPES,
           expiresAt:Date.now()+expiresIn*1000,
-          source:'mise-direct'
+          source:'mises-direct'
         }
-        try{sessionStorage.setItem(MISE_TOKEN_KEY,JSON.stringify(session))}catch{}
+        try{sessionStorage.setItem(SESSION_TOKEN_KEY,JSON.stringify(session))}catch{}
         done(resolve,session)
       },
       error_callback:error=>{
@@ -128,8 +131,8 @@ export async function requestGoogleSession(){
   })
 }
 
-export function clearMiseGoogleSession(){
-  try{sessionStorage.removeItem(MISE_TOKEN_KEY)}catch{}
+export function clearMisesGoogleSession(){
+  try{sessionStorage.removeItem(SESSION_TOKEN_KEY)}catch{}
 }
 
 async function api(url,init={}){
@@ -152,38 +155,55 @@ async function searchFolders(clause){
 }
 
 async function createFolder(name,parentId){
-  const metadata={name,mimeType:FOLDER_MIME,appProperties:{miseManaged:'1'}}
+  const metadata={name,mimeType:FOLDER_MIME,appProperties:{misesManaged:'1'}}
   if(parentId)metadata.parents=[parentId]
   const response=await api('https://www.googleapis.com/drive/v3/files?fields=id,name,parents,webViewLink,appProperties',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(metadata)})
   return await response.json()
 }
 
-export async function ensureMiseFolder(){
-  let art=(await searchFolders(`name = '_ART'`))[0]
-  if(!art)art=await createFolder('_ART')
-  let mise=(await searchFolders(`name = 'MISE !' and '${q(art.id)}' in parents`))[0]
-  if(!mise)mise=await createFolder('MISE !',art.id)
-  return {art,mise}
+async function folderNamed(name,parentId){
+  const parent=parentId?` and '${q(parentId)}' in parents`:''
+  return (await searchFolders(`name = '${name}'${parent}`))[0]||null
 }
 
-async function findState(folderId){
-  const params=new URLSearchParams({q:`'${q(folderId)}' in parents and name = '${STATE_NAME}' and trashed = false`,fields:'files(id,name,modifiedTime,version,webViewLink)',pageSize:'10',spaces:'drive'})
+export async function ensureMisesFolder(){
+  let art=await folderNamed('_ART')
+  if(!art)art=await createFolder('_ART')
+  let mises=await folderNamed(DRIVE_FOLDER_NAME,art.id)
+  if(!mises)mises=await createFolder(DRIVE_FOLDER_NAME,art.id)
+  return {art,mises}
+}
+
+async function findNamed(folderId,name){
+  const params=new URLSearchParams({q:`'${q(folderId)}' in parents and name = '${name}' and trashed = false`,fields:'files(id,name,modifiedTime,version,webViewLink)',pageSize:'10',spaces:'drive'})
   const response=await api('https://www.googleapis.com/drive/v3/files?'+params.toString())
   return (await response.json()).files?.[0]||null
 }
 
-export async function loadPrivateState(){
-  const {mise}=await ensureMiseFolder(),file=await findState(mise.id)
-  if(!file)return {folder:mise,file:null,payload:null}
+async function readFilePayload(file){
   const response=await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}?alt=media`)
-  return {folder:mise,file,payload:await response.json()}
+  return await response.json()
+}
+
+export async function loadPrivateState(){
+  const art=await folderNamed('_ART')
+  if(art){
+    const mises=await folderNamed(DRIVE_FOLDER_NAME,art.id)
+    const current=mises?await findNamed(mises.id,DRIVE_STATE_NAME):null
+    if(current)return {folder:mises,file:current,payload:await readFilePayload(current)}
+    const legacyFolder=await folderNamed(LEGACY_DRIVE_FOLDER_NAME,art.id)
+    const legacy=legacyFolder?await findNamed(legacyFolder.id,LEGACY_DRIVE_STATE_NAME):null
+    if(legacy)return {folder:legacyFolder,file:legacy,payload:await readFilePayload(legacy),legacy:true}
+  }
+  return {folder:null,file:null,payload:null}
 }
 
 export async function savePrivateState(payload){
-  const {mise}=await ensureMiseFolder(),current=await findState(mise.id)
-  const boundary='mise_'+Date.now()
-  const metadata={name:STATE_NAME,mimeType:'application/json',appProperties:{miseKind:'personal-state',miseVersion:'1'}}
-  if(!current)metadata.parents=[mise.id]
+  const {mises}=await ensureMisesFolder()
+  const current=await findNamed(mises.id,DRIVE_STATE_NAME)
+  const boundary='mises_'+Date.now()
+  const metadata={name:DRIVE_STATE_NAME,mimeType:'application/json',appProperties:{misesKind:'personal-state',misesVersion:'1'}}
+  if(!current)metadata.parents=[mises.id]
   const body=new Blob([
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,JSON.stringify(payload),`\r\n--${boundary}--`
@@ -192,18 +212,18 @@ export async function savePrivateState(payload){
     ?`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(current.id)}?uploadType=multipart&fields=id,name,modifiedTime,version,webViewLink`
     :'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,modifiedTime,version,webViewLink'
   const response=await api(endpoint,{method:current?'PATCH':'POST',headers:{'Content-Type':`multipart/related; boundary=${boundary}`},body})
-  return {folder:mise,file:await response.json()}
+  return {folder:mises,file:await response.json()}
 }
 
 async function ensureSharesFolder(){
-  const {mise}=await ensureMiseFolder()
-  let shares=(await searchFolders(`name = 'Partages' and '${q(mise.id)}' in parents`))[0]
-  if(!shares)shares=await createFolder('Partages',mise.id)
+  const {mises}=await ensureMisesFolder()
+  let shares=(await searchFolders(`name = 'Partages' and '${q(mises.id)}' in parents`))[0]
+  if(!shares)shares=await createFolder('Partages',mises.id)
   return shares
 }
 async function createJsonFile(name,payload,parentId,kind='share-package'){
-  const boundary='mise_share_'+Date.now()
-  const metadata={name,mimeType:'application/json',parents:[parentId],appProperties:{miseKind:kind,miseVersion:'1'}}
+  const boundary='mises_share_'+Date.now()
+  const metadata={name,mimeType:'application/json',parents:[parentId],appProperties:{misesKind:kind,misesVersion:'1'}}
   const body=new Blob([
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,JSON.stringify(payload),`\r\n--${boundary}--`
@@ -220,7 +240,7 @@ async function grantFileReader(fileId,email){
 export async function createSharePackage(payload,recipientEmails=[]){
   const shares=await ensureSharesFolder()
   const stamp=new Date().toISOString().replace(/[:.]/g,'-')
-  const file=await createJsonFile(`MISE-partage-${stamp}.json`,payload,shares.id)
+  const file=await createJsonFile(`MISES-partage-${stamp}.json`,payload,shares.id)
   const recipients=[...new Set(recipientEmails.map(x=>String(x||'').trim().toLowerCase()).filter(Boolean))]
   const permissions=[]
   for(const email of recipients) permissions.push(await grantFileReader(file.id,email))

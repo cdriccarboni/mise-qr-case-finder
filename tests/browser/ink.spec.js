@@ -122,5 +122,5 @@ test('ink choice recolors the logo, stays readable, and is restored', async ({ p
   await expect(page.locator('#appVersion')).toHaveText('0.3.0-beta.3')
   const restored = await fills(page)
   expect(restored.dot).toBe('rgb(209, 42, 116)')
-  expect(await page.evaluate(() => localStorage.getItem('mise-ink'))).toBeNull()
+  expect(await page.evaluate(() => localStorage.getItem('mises-ink'))).toBeNull()
 })

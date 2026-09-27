@@ -99,7 +99,7 @@ test('bad audio, refused microphone, container QR and unconfirmed photo stay exp
   await expect(page.locator('#audioNote')).toContainText('Permission micro refusée')
   await page.locator('#saveObject').click()
   await page.evaluate(() => new Promise((resolve, reject) => {
-    const request = indexedDB.open('mise-db')
+    const request = indexedDB.open('mises-db')
     request.onerror = () => reject(request.error)
     request.onsuccess = () => {
       const db = request.result

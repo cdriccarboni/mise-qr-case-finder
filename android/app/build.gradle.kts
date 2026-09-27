@@ -2,12 +2,19 @@ plugins {
     id("com.android.application")
 }
 
+// Identifiant Play. Un seul endroit : cette constante.
+// Ne pas la changer tant qu’on ne sait pas si une version est déjà sur le Play Store.
+// Le jour venu : modifier playApplicationId, déplacer le dossier
+// android/app/src/main/java/fr/acousmatictheatre/mise vers le nouveau chemin,
+// et la ligne package de chaque fichier Java. Le détail est dans android/README.md.
+val playApplicationId = "fr.acousmatictheatre.mise"
+
 android {
-    namespace = "fr.acousmatictheatre.mise"
+    namespace = playApplicationId
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "fr.acousmatictheatre.mise"
+        applicationId = playApplicationId
         minSdk = 26
         targetSdk = 36
         versionCode = 8

@@ -63,8 +63,8 @@ public final class MainActivity extends Activity {
         webView.setBackgroundColor(Color.rgb(20, 19, 17));
         setContentView(webView);
         printerBridge = new NativePrinterBridge(this, webView);
-        webView.addJavascriptInterface(printerBridge, "MiseAndroidPrinter");
-        webView.addJavascriptInterface(new AndroidShellBridge(), "MiseAndroid");
+        webView.addJavascriptInterface(printerBridge, "MisesAndroidPrinter");
+        webView.addJavascriptInterface(new AndroidShellBridge(), "MisesAndroid");
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -74,7 +74,7 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " MISE-Android/0.3.0-beta.3");
+        settings.setUserAgentString(settings.getUserAgentString() + " MISES-Android/0.3.0-beta.3");
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))

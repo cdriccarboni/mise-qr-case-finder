@@ -49,7 +49,7 @@ export async function detectMultipass(detector, image) {
 }
 
 export async function detectLocal(image) {
-  if (Array.isArray(globalThis.__MISE_DETECTIONS)) return globalThis.__MISE_DETECTIONS.map(item => ({ ...item }))
+  if (Array.isArray(globalThis.__MISES_DETECTIONS)) return globalThis.__MISES_DETECTIONS.map(item => ({ ...item }))
   const detector = await loadLocalDetector()
   return detectMultipass(detector, image)
 }

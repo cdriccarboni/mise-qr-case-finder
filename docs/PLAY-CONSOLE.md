@@ -139,8 +139,8 @@ Conséquence, inchangée pour le web : scope restreint. En mode test OAuth, les 
 
 ## 8. Règles de confidentialité
 
-- Fichier : `public/privacy.html` (texte du 27/09/2026). Il cite Google Drive, `cdric.carboni@gmail.com`, IndexedDB, les photos, les mémos sonores, le fichier `mise-data.json`, et le fait que l’application Android 0.2.3 ne transmet pas ces données.
-- URL prévue : https://cdriccarboni.github.io/mise-qr-case-finder/privacy.html
+- Fichier : `public/privacy.html` (texte du 27/09/2026). Il cite Google Drive, `cdric.carboni@gmail.com`, IndexedDB, les photos, les mémos sonores, le fichier `mises-data.json` (l’ancien `mise-data.json` reste relu et n’est pas supprimé), et le fait que l’application Android ne transmet pas ces données.
+- URL prévue : https://cdriccarboni.github.io/mise-qr-case-finder/privacy.html (constante `PRIVACY_URL` dans `src/about.js`, le dépôt n’est pas renommé)
 - **Partiel** : le 27/09/2026, cette URL répond HTTP 200 avec l’ancien texte (pas de Google Drive, pas d’adresse). Le workflow Pages ne déploie que `main`. Le nouveau texte sera en ligne seulement après merge de cette branche dans `main`. Ne pas coller l’URL dans la Console tant que le texte en ligne n’est pas celui du dépôt.
 
 Correspondance avec le code (**vérifié** par lecture, test unitaire sur les phrases du HTML) :
@@ -149,11 +149,11 @@ Correspondance avec le code (**vérifié** par lecture, test unitaire sur les ph
 |---|---|
 | Base locale IndexedDB, pas envoyée au développeur | `src/data-bruitage.js` (`DATA_STORES`) + `kits` + `settings` dans IndexedDB (`src/main.js`) |
 | Photos JPEG réduites et mémos audio dans les fiches | `resizePhoto` (JPEG, côté appareil) ; `audioMemo` en data URL via `MediaRecorder` |
-| Synchro Drive facultative dans le navigateur : e-mail via userinfo, fichier `mise-data.json` sous `_ART` / `MISE !`, photos et mémos inclus | `connectedGoogleProfile`, `privateStatePayload` = `readData` + `kits` (les champs photo et audio sont dans les objets) |
+| Synchro Drive facultative dans le navigateur : e-mail via userinfo, fichier `mises-data.json` sous `_ART` / `MISES !`, photos et mémos inclus. L’ancien `mise-data.json` dans « MISE ! » est relu s’il n’y a pas encore de copie, et il n’est pas supprimé. | `connectedGoogleProfile`, `privateStatePayload` = `readData` + `kits` (les champs photo et audio sont dans les objets) |
 | Partage : fichier séparé, médias seulement si la case est cochée, adresses envoyées à l’API Permissions | `sharePayload`, `createSharePackage`, `grantFileReader` (`sendNotificationEmail=true`) |
 | Android 0.2.3 : pas de connexion, pas d’envoi | `AndroidShellBridge`, blocage des hôtes Google dans `MainActivity` |
 | Reconnaissance sur l’appareil, image non envoyée | `src/local-vision.js` charge `models/coco-ssd`. `requestPhotoAnalysis` (`/api/staging-analyse`) n’est appelé par aucun écran. Playwright hors ligne vérifie qu’aucune requête vers cette route ne part |
-| Jeton en session navigateur | `sessionStorage`, clé `mise-google-oauth-session-v1` |
+| Jeton en session navigateur | `sessionStorage`, clé `mises-google-oauth-session-v1` (copie de `mise-google-oauth-session-v1` si la nouvelle est absente) |
 
 ## 9. Sécurité des données
 
@@ -170,7 +170,7 @@ Dans cet APK, la connexion Google ne démarre pas et les hôtes Google sont bloq
 | Type Play | Collecté par l’APK 0.2.3 | Partagé | Pourquoi |
 |---|---|---|---|
 | Adresse e-mail | Non | Non | userinfo n’est appelé que dans le navigateur, après connexion. L’APK ne lance pas cette connexion. |
-| Photos | Non | Non | stockées dans IndexedDB. Incluses dans `mise-data.json` seulement si l’utilisateur synchronise depuis un navigateur. |
+| Photos | Non | Non | stockées dans IndexedDB. Incluses dans `mises-data.json` seulement si l’utilisateur synchronise depuis un navigateur. |
 | Enregistrements vocaux | Non | Non | même règle que les photos (`audioMemo`). |
 | Fichiers et documents | Non | Non | import et base restent locaux. L’export JSON est un fichier que l’utilisateur enregistre lui-même. |
 

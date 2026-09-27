@@ -24,7 +24,10 @@ import { newLearning } from './learning.js'
 import { answerBlock, vibeBlock, exerciseBlock } from './terrain-ui.js'
 import './identity.css'
 import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSetting, parseInk } from './ink.js'
-applyInk(localStorage.getItem('mise-ink'))
+import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
+migrateLocalKeys()
+migrateSessionKeys()
+applyInk(localStorage.getItem(LOCAL_KEYS.ink))
 
 registerSW({ immediate:true })
 
@@ -38,10 +41,9 @@ const safeExternal=x=>!/(gun|weapon|arme|fusil|pisto|coup de feu|explosi|knife)/
 const params=new URLSearchParams(location.search)
 const project=readProjectContext(location.search,location.href)
 
-const db=await openDB('mise-db',5,{upgrade(d){
-  for(const s of [...DATA_STORES,'kits','settings','learnings']) {
-    if(!d.objectStoreNames.contains(s)) d.createObjectStore(s,{keyPath:'id'})
-  }
+await migrateDatabase()
+const db=await openDB(DB_NAME,DB_VERSION,{upgrade(d){
+  createStores(d)
 }})
 const undoStack=[]
 
@@ -129,8 +131,8 @@ async function applyPrivateState(payload){
     await db.clear('settings')
     for(const item of payload.settings) if(item?.id) await db.put('settings',item)
     const savedInk = inkFromSettings(payload.settings)
-    if(savedInk) localStorage.setItem(INK_KEY, savedInk)
-    else localStorage.removeItem(INK_KEY)
+    if(savedInk) localStorage.setItem(LOCAL_KEYS.ink, savedInk)
+    else localStorage.removeItem(LOCAL_KEYS.ink)
     applyInk(savedInk)
     paintInkSwatches(savedInk || DEFAULT_INK)
   }
@@ -165,7 +167,7 @@ async function connectGoogle(){
     if(remote.payload){
       if(localCount===0||confirm('Une sauvegarde MISES ! privée existe sur Drive. La charger sur cet appareil ?')){await applyPrivateState(remote.payload);toast('Base privée chargée depuis Drive')}
     }else{
-      await savePrivateState(await privateStatePayload());toast('Base privée créée dans Drive / _ART / MISE !')
+      await savePrivateState(await privateStatePayload());toast('Base privée créée dans Drive / _ART / MISES !')
     }
   }catch(error){toast(error instanceof Error?error.message:'Connexion Google impossible')}
 }
@@ -188,9 +190,9 @@ function publishProject(m){
   if(!m.projectId)return
   const summary=makeProjectSummary(m)
   try{
-    localStorage.setItem(`art-mise-project-v1:${m.projectId}`,JSON.stringify(summary))
+    localStorage.setItem(`${PROJECT_PREFIX}${m.projectId}`,JSON.stringify(summary))
     projectSyncFailed=false
-    window.dispatchEvent(new CustomEvent('art-mise-project-change',{detail:summary}))
+    window.dispatchEvent(new CustomEvent('art-mises-project-change',{detail:summary}))
   }catch{projectSyncFailed=true}
   renderProjectContext()
 }
@@ -330,8 +332,8 @@ async function captureAudioMemo(o,button){
 async function showObjectQr(o){await openEntityLabel('object', o)}
 function pageOrigin(){return location.href.split('?')[0].split('#')[0]}
 function sendSystemPrint(dataUrl, jobName){
-  if(window.MiseAndroidPrinter&&typeof window.MiseAndroidPrinter.printWithSystem==='function'){
-    window.MiseAndroidPrinter.printWithSystem(jobName||'MISES !', dataUrl)
+  if(window.MisesAndroidPrinter&&typeof window.MisesAndroidPrinter.printWithSystem==='function'){
+    window.MisesAndroidPrinter.printWithSystem(jobName||'MISES !', dataUrl)
     toast('Impression Android lancée')
     return 'android-print'
   }
@@ -371,7 +373,7 @@ function sharePayload({miseIds=[],kitIds=[],caseIds=[],objectIds=[],includeMedia
   selectedMises.forEach(x=>(x.objectIds||[]).forEach(id=>ids.add(id)));selectedKits.forEach(x=>(x.objectIds||[]).forEach(id=>ids.add(id)));selectedCases.forEach(c=>objects.filter(o=>(o.caseId||o.container_id)===c.id).forEach(o=>ids.add(o.id)))
   const sharedObjects=objects.filter(o=>ids.has(o.id)).map(o=>{const x={...o};if(!includeMedia){delete x.photo;delete x.audioMemo;delete x.controlPhoto}return x})
   const referencedCases=cases.filter(c=>caseIds.includes(c.id)||sharedObjects.some(o=>(o.caseId||o.container_id)===c.id))
-  return {version:1,kind:'mise-share',createdAt:new Date().toISOString(),project:project.projectId?{id:project.projectId,name:project.projectName,type:project.projectType}:null,includeMedia,objects:sharedObjects,cases:referencedCases,kits:selectedKits,mises:selectedMises}
+  return {version:1,kind:'mises-share',createdAt:new Date().toISOString(),project:project.projectId?{id:project.projectId,name:project.projectName,type:project.projectType}:null,includeMedia,objects:sharedObjects,cases:referencedCases,kits:selectedKits,mises:selectedMises}
 }
 function openShareDialog(){
   if(androidGoogleSignInBlocked()){explainAndroidGoogle();return}
@@ -767,10 +769,10 @@ function showLatestControl(m){
   d.showModal();$('#closeControl').onclick=()=>d.close()
 }
 
-function hasNativePrinter(){return Boolean(window.MiseAndroidPrinter&&typeof window.MiseAndroidPrinter.listPairedPrinters==='function')}
+function hasNativePrinter(){return Boolean(window.MisesAndroidPrinter&&typeof window.MisesAndroidPrinter.listPairedPrinters==='function')}
 function nativePrinterDevices(){
   if(!hasNativePrinter())return[]
-  try{return JSON.parse(window.MiseAndroidPrinter.listPairedPrinters()||'[]').sort((a,b)=>Number(b.likelyPrinter)-Number(a.likelyPrinter))}catch{return[]}
+  try{return JSON.parse(window.MisesAndroidPrinter.listPairedPrinters()||'[]').sort((a,b)=>Number(b.likelyPrinter)-Number(a.likelyPrinter))}catch{return[]}
 }
 function loadImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src})}
 function wrapCanvasText(ctx,text,maxWidth){
@@ -799,7 +801,7 @@ async function makePrinterTestImages(){
 async function nativePrint(address,images){
   if(!hasNativePrinter()){toast('Le pilote natif est disponible dans l’app Android MISES !');return false}
   if(!address){toast('Choisis d’abord une imprimante');return false}
-  try{window.MiseAndroidPrinter.printImages(address,JSON.stringify(images));return true}catch(error){toast('Impossible de lancer l’impression native');return false}
+  try{window.MisesAndroidPrinter.printImages(address,JSON.stringify(images));return true}catch(error){toast('Impossible de lancer l’impression native');return false}
 }
 async function openNativePrinterDialog(){
   const d=$('#modal'),devices=nativePrinterDevices(),saved=await db.get('settings','printer')
@@ -808,7 +810,7 @@ async function openNativePrinterDialog(){
   <div class="printerDevices">${devices.map(device=>`<button class="printerDevice ${saved?.deviceId===device.address?'selected':''}" data-native-printer="${esc(device.address)}" data-native-name="${esc(device.name)}"><b>${device.likelyPrinter?'● ':''}${esc(device.name)}</b><small>${esc(device.address)}${device.likelyPrinter?' · profil probable WalkPrint/YHK':''}</small></button>`).join('')||'<div class="empty">Aucune imprimante appairée détectée.</div>'}</div>
   <div class="row"><button id="openBtSettings" class="ghost">Réglages Bluetooth Android</button><button id="refreshNativePrinters" class="ghost">Actualiser</button></div>
   <div class="printerTest"><b>Test prêt</b><span>Étiquette 1 : logo MISES ! · Étiquette 2 : logo + trait + QR vers MISES !</span><button id="runPrinterTest" ${!saved?.deviceId?'disabled':''}>Imprimer les 2 étiquettes test</button></div></div>`
-  d.showModal();$('#closeNativePrinter').onclick=()=>d.close();$('#openBtSettings').onclick=()=>window.MiseAndroidPrinter.openBluetoothSettings();$('#refreshNativePrinters').onclick=()=>{d.close();setTimeout(openNativePrinterDialog,250)}
+  d.showModal();$('#closeNativePrinter').onclick=()=>d.close();$('#openBtSettings').onclick=()=>window.MisesAndroidPrinter.openBluetoothSettings();$('#refreshNativePrinters').onclick=()=>{d.close();setTimeout(openNativePrinterDialog,250)}
   $$('[data-native-printer]',d).forEach(button=>button.onclick=async()=>{await db.put('settings',{id:'printer',name:button.dataset.nativeName,deviceId:button.dataset.nativePrinter,native:true,pairedAt:new Date().toISOString()});await updatePrinterStatus();d.close();setTimeout(openNativePrinterDialog,80);toast(`Imprimante choisie : ${button.dataset.nativeName}`)})
   $('#runPrinterTest').onclick=async()=>{const current=await db.get('settings','printer');if(!current?.deviceId){toast('Choisis l’imprimante');return}toast('Préparation des 2 étiquettes test…');const images=await makePrinterTestImages();await nativePrint(current.deviceId,images)}
 }
@@ -839,7 +841,7 @@ async function updatePrinterStatus(){
   const label=saved?.name?`Imprimante · ${saved.name}`:'Imprimante · À connecter'
   const button=$('#printerBtn');if(button){button.textContent=label;button.classList.toggle('connected',Boolean(saved))}
 }
-window.addEventListener('mise-native-printer-status',event=>{const message=String(event.detail||'');if(message)toast(message)})
+window.addEventListener('mises-native-printer-status',event=>{const message=String(event.detail||'');if(message)toast(message)})
 
 async function pairPrinter(){
   if(hasNativePrinter())return openNativePrinterDialog()
@@ -964,24 +966,23 @@ function startVoice(){
   r.start()
 }
 $('#mic').onclick=startVoice
-const DISPLAY_KEY='mise-display-mode',THEME_KEY='mise-theme-mode',INK_KEY='mise-ink'
-applyInk(localStorage.getItem(INK_KEY))
+applyInk(localStorage.getItem(LOCAL_KEYS.ink))
 const savedInk = inkFromSettings([await db.get('settings', 'ink')].filter(Boolean))
 if(savedInk){
-  localStorage.setItem(INK_KEY, savedInk)
+  localStorage.setItem(LOCAL_KEYS.ink, savedInk)
   applyInk(savedInk)
 }
 async function rememberInk(hex){
   const ink = parseInk(hex) || DEFAULT_INK
   const custom = ink !== DEFAULT_INK
-  if(custom) localStorage.setItem(INK_KEY, ink)
-  else localStorage.removeItem(INK_KEY)
+  if(custom) localStorage.setItem(LOCAL_KEYS.ink, ink)
+  else localStorage.removeItem(LOCAL_KEYS.ink)
   applyInk(ink)
   if(custom) await db.put('settings', inkSetting(ink))
   else await db.delete('settings', 'ink')
   paintInkSwatches(ink)
 }
-function paintInkSwatches(current = parseInk(localStorage.getItem(INK_KEY)) || DEFAULT_INK){
+function paintInkSwatches(current = parseInk(localStorage.getItem(LOCAL_KEYS.ink)) || DEFAULT_INK){
   const box = $('#inkSwatches')
   if(!box) return
   box.innerHTML = INK_PALETTE.map(item => `<button type="button" data-ink="${item.hex}" style="background:${item.hex};color:${contrastOn(item.hex)}" aria-label="${item.name}" aria-pressed="${item.hex === current ? 'true' : 'false'}"></button>`).join('')
@@ -990,8 +991,8 @@ function paintInkSwatches(current = parseInk(localStorage.getItem(INK_KEY)) || D
   if(custom) custom.value = current.toLowerCase()
 }
 function applyUiPreferences(){
-  paintInkSwatches(parseInk(localStorage.getItem(INK_KEY)) || DEFAULT_INK)
-  const display=localStorage.getItem(DISPLAY_KEY)||'auto',theme=localStorage.getItem(THEME_KEY)||'system'
+  paintInkSwatches(parseInk(localStorage.getItem(LOCAL_KEYS.ink)) || DEFAULT_INK)
+  const display=localStorage.getItem(LOCAL_KEYS.display)||'auto',theme=localStorage.getItem(LOCAL_KEYS.theme)||'system'
   document.documentElement.dataset.display=display
   document.documentElement.dataset.theme=theme
   const displaySelect=$('#displayMode'),themeSelect=$('#themeMode')
@@ -1018,8 +1019,8 @@ applyUiPreferences()
 $('#inkCustom').addEventListener('input', event => { void rememberInk(event.target.value) })
 $('#inkDefault').onclick = () => { void rememberInk(DEFAULT_INK) }
 $('#preferencesBtn').onclick=()=>{applyUiPreferences();$('#preferencesDlg').showModal()}
-$('#displayMode').onchange=e=>{localStorage.setItem(DISPLAY_KEY,e.target.value);applyUiPreferences()}
-$('#themeMode').onchange=e=>{localStorage.setItem(THEME_KEY,e.target.value);applyUiPreferences()}
+$('#displayMode').onchange=e=>{localStorage.setItem(LOCAL_KEYS.display,e.target.value);applyUiPreferences()}
+$('#themeMode').onchange=e=>{localStorage.setItem(LOCAL_KEYS.theme,e.target.value);applyUiPreferences()}
 $('#closePreferences').onclick=()=>$('#preferencesDlg').close()
 $('#preferencesGoogle').onclick=()=>connectGoogle()
 $('#preferencesBackup').onclick=()=>$('#backupBtn').click()
@@ -1052,7 +1053,7 @@ $('#preferencesAbout').onclick=openAbout
 $('#closeAbout').onclick=()=>$('#aboutDlg').close()
 document.addEventListener('click',event=>{
   const link=event.target.closest?.('a[data-external]')
-  if(!link||!window.MiseAndroid)return
+  if(!link||!window.MisesAndroid)return
   event.preventDefault()
   window.location.assign(link.href)
 })
@@ -1150,7 +1151,7 @@ $('#backupBtn').onclick=async()=>{
   const payload=await privateStatePayload()
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'})
   const url=URL.createObjectURL(blob)
-  const a=document.createElement('a');a.href=url;a.download='MISE-backup.json';document.body.append(a);a.click();a.remove()
+  const a=document.createElement('a');a.href=url;a.download='MISES-backup.json';document.body.append(a);a.click();a.remove()
   setTimeout(()=>URL.revokeObjectURL(url),2000)
 }
 

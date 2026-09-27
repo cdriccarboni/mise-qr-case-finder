@@ -151,7 +151,7 @@ public final class NativePrinterBridge {
             } finally {
                 if (socket != null) try { socket.close(); } catch (Exception ignored) {}
             }
-        }, "MISE-YHK-Printer").start();
+        }, "MISES-YHK-Printer").start();
     }
 
     private BluetoothSocket connect(BluetoothDevice device) throws Exception {
@@ -230,7 +230,7 @@ public final class NativePrinterBridge {
     }
 
     private void emit(String message) {
-        final String script = "window.dispatchEvent(new CustomEvent('mise-native-printer-status',{detail:" + JSONObject.quote(message) + "}))";
+        final String script = "window.dispatchEvent(new CustomEvent('mises-native-printer-status',{detail:" + JSONObject.quote(message) + "}))";
         webView.post(() -> webView.evaluateJavascript(script, null));
     }
 

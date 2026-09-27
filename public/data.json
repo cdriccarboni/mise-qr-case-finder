@@ -1,5 +1,5 @@
 {
-  "schema": "mise-meta-db/v1",
+  "schema": "mises-meta-db/v1",
   "version": "1.1.0",
   "generated_on": "2026-09-25",
   "principles": [

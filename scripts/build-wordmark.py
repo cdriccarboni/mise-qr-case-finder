@@ -624,7 +624,7 @@ def sync_chrome(ink):
     paint('index.html', r'(<meta name="theme-color" content=")#[0-9A-Fa-f]{6}', r'\1' + ink, 'theme-color')
     paint('vite.config.js', r"theme_color:'#[0-9A-Fa-f]{6}'", f"theme_color:'{ink}'", 'theme_color')
     paint('android/app/src/main/res/values/themes.xml', r'(<item name="android:colorAccent">)#[0-9A-Fa-f]{6}', r'\1' + ink, 'colorAccent')
-    legacy = ROOT / 'android/app/src/main/res/drawable/ic_launcher_mise.xml'
+    legacy = ROOT / 'android/app/src/main/res/drawable/ic_launcher_mises.xml'
     if legacy.exists():
         legacy.write_text(legacy.read_text().replace('#0B3D91', ink).replace('#0b3d91', ink))
 
