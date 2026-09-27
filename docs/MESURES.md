@@ -32,4 +32,11 @@ Le précache du service worker annonce 28 entrées, 22 966 Kio.
 
 ## APK
 
-Non mesuré dans cet environnement : le SDK Android n’y est pas installé. Les runs `36313309109` et `36313466568` échouent avant l’assemblage (`android.useAndroidX=false` avec `androidx.webkit`). La taille sera celle de l’artefact `MISE-Android-build` une fois le workflow vert. L’APK embarque `dist/`, donc il dépasse la taille web (packaging + modèle).
+Mesuré sur l’artefact du run [36313629669](https://github.com/cdriccarboni/mise-qr-case-finder/actions/runs/36313629669), puis revérifié par téléchargement de la pré-version `v0.2.2-beta.1-test` :
+
+- APK debug : **19 713 134 octets**, SHA-256 `a0c39fe80ca6631320df89657fa14b0b58bea145060e2f0ae184650a27b58557`
+- APK release signé debug : **19 151 070 octets**, SHA-256 `91f5d61d5ae15d5dca695bec49b739a2dffa2dd6a651da83b29f4ebbcf484277`
+- AAB release signé debug : **19 145 733 octets**, SHA-256 `341c09e4c09950901c411e9b74370908f17810b8dcc5ce3b6a6c2bdf9bc76467`
+- Zip web republé : **18 252 431 octets**, SHA-256 `bb92982f722fe23b68096d13d4a7b3fad8682d45c8440bdcf59ae20e549fd8d1`
+
+Les runs `36313309109` et `36313466568` avaient échoué avant l’assemblage (`android.useAndroidX=false`). Le correctif `5b5a700` est celui qui a produit ces fichiers.

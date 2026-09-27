@@ -6,7 +6,7 @@ Tout ce que tu importes reste sur l’appareil (IndexedDB), sauf si tu connectes
 
 ## Ouvrir
 
-1. Ouvre la PWA dans le navigateur, ou l’application Android de test une fois l’APK installé.
+1. Ouvre la PWA. Le site public https://cdriccarboni.github.io/mise-qr-case-finder/ sert encore `0.2.1-beta.1`. La `0.2.2-beta.1` de test est la pré-version [v0.2.2-beta.1-test](https://github.com/cdriccarboni/mise-qr-case-finder/releases/tag/v0.2.2-beta.1-test) : APK debug signé debug, et zip web à servir avec `python3 -m http.server` après décompression.
 2. La première page est vide de tes données. L’application publique n’embarque pas ton inventaire.
 3. Un exemple fictif est fourni dans `public/exemples/` (`classeur-fictif.xlsx`, `index-fictif.csv`). Ce n’est pas ta base.
 
