@@ -1,4 +1,4 @@
-# MISE ! — Android
+# MISES ! — Android
 
 Première enveloppe Android de MISE!, construite à partir de la page Web publiée.
 

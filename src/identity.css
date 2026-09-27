@@ -142,7 +142,7 @@ html[data-theme=regie] .miseWordmark .stampGhost,html[data-theme=regie] .miseWor
 .homeCredit{margin:.15rem 0 .35rem}
 .homeCredit button{width:auto;background:transparent;color:var(--muted);border:0;min-height:40px;padding:0;font-size:.75rem;font-weight:650;text-decoration:underline;text-underline-offset:.18em;border-radius:0}
 .aboutMark{margin:0 0 .35rem;line-height:0}
-.aboutMark .miseWordmark{width:8.2em}
+.aboutMark .miseWordmark{width:9.7em}
 .aboutCredit{margin:.2rem 0 .8rem;font-weight:750;line-height:1.35}
 .aboutLinks{display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;margin:0}
 .aboutSheet a.aboutLink{min-height:48px;font-weight:750;text-decoration:underline;text-underline-offset:.2em}

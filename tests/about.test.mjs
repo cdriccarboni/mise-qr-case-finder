@@ -19,7 +19,7 @@ test('the about screen links to Acousmatic Theatre and to the author site', () =
   assert.match(theatre, /target="_blank"/)
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8')
   const about = readFileSync(new URL('../src/about.js', import.meta.url), 'utf8')
-  assert.match(main, /MISE ! — Une création de Cédric Carboni pour Acousmatic Theatre/)
+  assert.match(main, /MISES ! — Une création de Cédric Carboni pour Acousmatic Theatre/)
   assert.match(main, /AUTHOR_WEBSITE_URL/)
   assert.doesNotMatch(about, /http:\/\/carboni\.cedric\.free\.fr/)
   assert.doesNotMatch(main, /http:\/\/carboni\.cedric\.free\.fr/)

@@ -7,7 +7,7 @@ const GOOGLE_CLIENT_META='mise-google-client-id'
 // ces deux lectures échouent avec drive.file, donc le scope complet reste en place.
 export const DRIVE_SCOPE='https://www.googleapis.com/auth/drive'
 export const GOOGLE_SCOPES=`openid email profile ${DRIVE_SCOPE}`
-export const ANDROID_GOOGLE_SIGNIN_MESSAGE='La connexion Google n’est pas disponible dans l’application Android : Google bloque l’identification dans la fenêtre intégrée. Tu peux continuer sans compte. Tes objets, photos et mémos restent sur l’appareil. Exporte une sauvegarde depuis Partager et outils, ou ouvre MISE ! dans Chrome pour synchroniser ton propre Google Drive.'
+export const ANDROID_GOOGLE_SIGNIN_MESSAGE='La connexion Google n’est pas disponible dans l’application Android : Google bloque l’identification dans la fenêtre intégrée. Tu peux continuer sans compte. Tes objets, photos et mémos restent sur l’appareil. Exporte une sauvegarde depuis Partager et outils, ou ouvre MISES ! dans Chrome pour synchroniser ton propre Google Drive.'
 const FOLDER_MIME='application/vnd.google-apps.folder'
 const STATE_NAME='mise-data.json'
 const GOOGLE_PRODUCTION_CLIENT_ID=String.fromCharCode(50,51,52,54,53,55,55,57,57,48,52,57,45,109,57,112,53,97,112,98,106,101,57,110,117,114,117,109,56,110,100,104,118,100,114,56,111,104,54,107,103,49,98,100,117,46,97,112,112,115,46,103,111,111,103,108,101,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109)
@@ -88,7 +88,7 @@ export async function requestGoogleSession(){
   const current=artGoogleSession()
   if(current)return current
   const clientId=directClientId()
-  if(!validClientId(clientId))throw new Error('Connexion Google MISE ! non configurée')
+  if(!validClientId(clientId))throw new Error('Connexion Google MISES ! non configurée')
   const googleApi=await ensureGoogleIdentity()
   if(!googleApi?.accounts?.oauth2)throw new Error('Google Identity indisponible')
 
@@ -134,7 +134,7 @@ export function clearMiseGoogleSession(){
 
 async function api(url,init={}){
   const session=artGoogleSession()
-  if(!session)throw new Error('Connecte Google dans MISE ! puis réessaie')
+  if(!session)throw new Error('Connecte Google dans MISES ! puis réessaie')
   const response=await fetch(url,{...init,headers:{Authorization:`Bearer ${session.token}`,...(init.headers||{})}})
   if(!response.ok){let detail='';try{detail=(await response.json())?.error?.message||''}catch{}throw new Error(detail||`Google Drive : erreur ${response.status}`)}
   return response

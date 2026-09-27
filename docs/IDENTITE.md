@@ -1,4 +1,4 @@
-# Identité visuelle — MISE ! 0.3.0-beta.3
+# Identité visuelle — MISES ! 0.3.0-beta.3
 
 ## D’où vient l’esprit
 
@@ -6,7 +6,7 @@ Le nom réel n’est pas dans le dépôt. Il est dans un dossier privé : **Musi
 
 Dans le dépôt public, on ne trouve qu’une mention pédagogique (`inspired_by_musiques_en_jeux` dans `public/data.json`). La branche `codex/modern-project-vision-20260925` est une autre direction, plus sobre. Ce n’est pas cette charte.
 
-C’est une marque tierce. MISE ! n’en reprend ni le logo, ni le mot, ni les photos, ni les dessins, ni les lettres posées dans les jetons. Les images de référence ne sont pas dans ce dépôt.
+C’est une marque tierce. MISES ! n’en reprend ni le logo, ni le mot, ni les photos, ni les dessins, ni les lettres posées dans les jetons. Les images de référence ne sont pas dans ce dépôt.
 
 Ce qui est gardé, c’est le rendu **sérigraphié, une seule encre** : un aplat fort, le blanc du papier, le noir pour lire, des blocs plats, une trame de points, des jetons vides (cercle, hexagone, pentagone), des ondes. L’encre est un rose d’imprimerie. Le terrain (recherche, fiches, caisses) reste lisible, avec un liseré de la même encre. Le jeu est réservé au Vibe, aux exercices et à « Crée ton bruitage ». Régie enlève la trame, les jetons et la couleur.
 
@@ -42,9 +42,9 @@ Rose fluo `#FF48B0`. Blanc dessus : contraste 3,1.
 
 ## Le logo est le mot
 
-Le mot **mise !** est le logo, dans la variante **Tampon** : une seconde passe du même dessin, décalée vers le bas et la droite, comme un tirage sérigraphié mal calé. Minuscules, sans capitale, dans une sans arrondie. La police est Fredoka (SIL Open Font License), embarquée dans `src/fonts/` avec sa licence `OFL.txt`. Le dessin du logo est vectorisé : il ne dépend pas du chargement de la police, et il reste net hors ligne.
+Le mot **mises !** est le logo, dans la variante **Tampon** : une seconde passe du même dessin, décalée vers le bas et la droite, comme un tirage sérigraphié mal calé. Minuscules, sans capitale, dans une sans arrondie. La police est Fredoka (SIL Open Font License), embarquée dans `src/fonts/` avec sa licence `OFL.txt`. Le dessin du logo est vectorisé : il ne dépend pas du chargement de la police, et il reste net hors ligne.
 
-![mise !](../public/brand/logo.svg)
+![mises !](../public/brand/logo.svg)
 
 Les lettres prennent la couleur de lecture : noir doux sur le papier, crème sur le fond sombre, blanc en Régie. Les deux points — celui du i, au-dessus, et celui du !, en dessous — prennent l’encre. Sur le fond sombre, l’encre brute est trop proche du noir : les points passent à une teinte claire de la même encre (mélange avec le blanc, contraste environ 9). En Régie, lettres et points sont noirs sur un blanc.
 
@@ -74,5 +74,5 @@ Les contrastes sont mesurés (WCAG, blanc `#ffffff` sur l’encre, encre sur `#f
 - Le fichier servi dans l’en-tête est `src/brand/wordmark.svg` (les mêmes tracés, couleurs laissées au thème).
 - PWA : `public/icon.svg` et les PNG, dessinés à partir de « m! ».
 - Android : icône adaptative, premier plan « m! », fond encre, couche monochrome noire.
-- Étiquette imprimée : le mot « mise ! » en noir, au-dessus du nom et du QR.
+- Étiquette imprimée : le mot « mises ! » en noir, au-dessus du nom et du QR.
 - Pour régénérer après un changement de `--ink` : `node scripts/export-icons.mjs`.

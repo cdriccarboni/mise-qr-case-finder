@@ -97,7 +97,7 @@ public final class NativePrinterBridge {
 
     @JavascriptInterface
     public void printWithSystem(String jobName, String dataUrl) {
-        final String safeName = jobName == null || jobName.trim().isEmpty() ? "MISE !" : jobName.trim();
+        final String safeName = jobName == null || jobName.trim().isEmpty() ? "MISES !" : jobName.trim();
         final Bitmap bitmap = decodeDataUrl(dataUrl);
         if (bitmap == null) {
             emit("Étiquette illisible pour l’impression Android.");

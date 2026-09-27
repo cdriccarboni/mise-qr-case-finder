@@ -137,7 +137,7 @@ function paintQr(img, text, left, top, maxSize) {
 
 export function renderLabelRgba(spec) {
   const width = 384
-  const nameLines = wrap(spec.name || 'MISE', 3, 360)
+  const nameLines = wrap(spec.name || 'MISES', 3, 360)
   const extra = [spec.location, spec.category].filter(Boolean)
   const height = 150 + nameLines.length * 28 + 280 + extra.length * 22 + 36
   const img = createImage(width, height, PAPER)

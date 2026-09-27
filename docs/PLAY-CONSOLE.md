@@ -1,4 +1,4 @@
-# MISE ! — Dossier Google Play Console (test fermé)
+# MISES ! — Dossier Google Play Console (test fermé)
 
 > **Code actuel : 0.3.0-beta.3 (`versionCode` 8).** Les statuts « vérifié » de ce dossier portent sur les binaires `0.2.3-beta.1` déjà mesurés. Ils ne sont pas réécrits. La clé d’envoi Play est toujours absente du dépôt : elle n’a pas été recréée, ni devinée. Les APK de test 0.3.0 restent signés avec la clé debug.
 
@@ -35,7 +35,7 @@ Un build local antérieur, sur une autre machine, a produit les mêmes versionCo
 **Nom de l'application** (6/30) :
 
 ```
-MISE !
+MISES !
 ```
 
 **Description courte** (70/80) :
@@ -47,7 +47,7 @@ Inventaire, QR et préparation de mises pour le bruitage et le plateau.
 **Description longue** :
 
 ```
-MISE ! aide à retrouver, préparer et contrôler les objets, valises, kits et mises utiles au bruitage et au travail de plateau.
+MISES ! aide à retrouver, préparer et contrôler les objets, valises, kits et mises utiles au bruitage et au travail de plateau.
 
 • Rechercher dans votre base de travail (objets, contenants, kits, sons)
 • Organiser objets et contenants, créer et imprimer des QR
@@ -60,7 +60,7 @@ MISE ! aide à retrouver, préparer et contrôler les objets, valises, kits et m
 
 Vos données restent sur l'appareil. Dans cette version Android, la synchronisation Google Drive n'est pas disponible : Google bloque l'identification dans la fenêtre intégrée. L'application fonctionne sans compte. Pas de publicité, pas de mesure d'audience.
 
-MISE ! est pensée pour le terrain et la répétition : utilisable hors ligne.
+MISES ! est pensée pour le terrain et la répétition : utilisable hors ligne.
 ```
 
 **Type** : Application · **Catégorie** : Outils (alternative : Productivité) · **Tags** : jusqu’à 5 tags proposés par la Console, proches de inventaire, QR, organisation (**à confirmer par Cédric**).

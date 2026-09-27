@@ -6,7 +6,7 @@ export default defineConfig({
     registerType:'autoUpdate',
     includeAssets:['favicon.svg','icon.svg','icon-maskable.svg','apple-touch-icon.png','icon-192.png','icon-512.png'],
     manifest:{
-      name:'MISE ! — QR Case Finder', short_name:'MISE !',
+      name:'MISES ! — QR Case Finder', short_name:'MISES !',
       description:'Cherche ta mise — inventaire de bruitage, matériel, QR et préparation.',
       theme_color:'#D12A74', background_color:'#141311',
       display:'standalone', start_url:'./', scope:'./', lang:'fr',

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Outline the mise ! wordmark from Fredoka (SIL OFL) and write the logo files.
+"""Outline the mises ! wordmark from Fredoka (SIL OFL) and write the logo files.
 
 The two dots are perfect circles of the same size. The i dot stays above the
 stem. The ! dot stays under the stem. Letters and dots are separate so the
@@ -132,7 +132,7 @@ def layout():
     font = instantiateVariableFont(TTFont(FONT), {'wght': 680, 'wdth': 100}, inplace=False)
     glyphs = font.getGlyphSet()
     cmap = font.getBestCmap()
-    sequence = ['m', 'i', 's', 'e', ' ', '!']
+    sequence = ['m', 'i', 's', 'e', 's', ' ', '!']
     cursor = 0
     letters = []
     dots = []
@@ -499,6 +499,25 @@ def raster_wordmark(mark, size_h, letter, dot):
     return image
 
 
+def raster_stamped(mark, size_h, letter, dot, sx, sy):
+    scale = size_h / mark['height']
+    w = max(1, round((mark['width'] + sx) * scale))
+    h = max(1, round((mark['height'] + sy) * scale))
+    image = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    paint_polygons(image, path_polygons(mark['letters']), letter, scale, sx * scale, sy * scale)
+    pen = ImageDraw.Draw(image)
+    for d in mark['dots']:
+        r = d['r'] * scale
+        cx, cy = (d['cx'] + sx) * scale, (d['cy'] + sy) * scale
+        pen.ellipse((cx - r, cy - r, cx + r, cy + r), fill=dot)
+    paint_polygons(image, path_polygons(mark['letters']), letter, scale, 0, 0)
+    for d in mark['dots']:
+        r = d['r'] * scale
+        cx, cy = d['cx'] * scale, d['cy'] * scale
+        pen.ellipse((cx - r, cy - r, cx + r, cy + r), fill=dot)
+    return image
+
+
 def raster_icon(tile, size, ink, sx=ICON_STAMP_X, sy=ICON_STAMP_Y):
     image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     pen = ImageDraw.Draw(image)
@@ -621,7 +640,7 @@ def write_splash(ink):
     end = text.find('</div></div><script')
     if start < 0 or end < 0:
         raise SystemExit('splash introuvable')
-    html.write_text(text[:start] + f'<div class="splash">{icon}<b>mise !</b>' + text[end:])
+    html.write_text(text[:start] + f'<div class="splash">{icon}<b>mises !</b>' + text[end:])
 
 
 def main():
@@ -630,12 +649,12 @@ def main():
     mark = layout()
     bang = layout_m_bang()
     letter = '#161513'
-    write(ROOT / 'public' / 'brand' / 'logo.svg', svg_wordmark(mark, letter, ink, 'mise !'))
-    write(ROOT / 'public' / 'brand' / 'logo-mono.svg', svg_wordmark(mark, '#000', '#000', 'mise !'))
-    write(ROOT / 'public' / 'brand' / 'logo-mono-light.svg', svg_wordmark(mark, '#fff', '#fff', 'mise !'))
+    write(ROOT / 'public' / 'brand' / 'logo.svg', svg_wordmark(mark, letter, ink, 'mises !'))
+    write(ROOT / 'public' / 'brand' / 'logo-mono.svg', svg_wordmark(mark, '#000', '#000', 'mises !'))
+    write(ROOT / 'public' / 'brand' / 'logo-mono-light.svg', svg_wordmark(mark, '#fff', '#fff', 'mises !'))
     width, height = stamped_size(mark, STAMP_X, STAMP_Y)
     inline = (
-        f'<svg class="miseWordmark" viewBox="0 0 {width} {height}" role="img" aria-label="mise !">'
+        f'<svg class="miseWordmark" viewBox="0 0 {width} {height}" role="img" aria-label="mises !">'
         f'{stamp_body(mark, STAMP_X, STAMP_Y, classed=True)}</svg>'
     )
     write(ROOT / 'src' / 'brand' / 'wordmark.svg', inline)
@@ -681,6 +700,8 @@ def main():
         'export const WORDMARK_BITMAP = ' + json.dumps({'width': w, 'height': h, 'rows': packed}) + '\n'
     )
     write(ROOT / 'src' / 'wordmark-bitmap.js', js)
+    stamped = raster_stamped(mark, 96, (22, 21, 19, 255), ink_rgb + (255,), STAMP_X, STAMP_Y)
+    stamped.save(ROOT / 'public' / 'brand' / 'logo.png')
 
     # Ink comparison sheet: same letters, three dot colors.
     def tile(dot_hex, title, note, x):
@@ -698,7 +719,7 @@ def main():
     # The nested svg y for text must sit below the wordmark. Wordmark height in the 200-wide box:
     shown_h = 200 * mark['height'] / mark['width']
     sheet = (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 150" role="img" aria-label="Trois encres pour les points de mise !">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 150" role="img" aria-label="Trois encres pour les points de mises !">'
         f'<rect width="720" height="150" fill="#f4f1ea"/>'
     )
     # Simpler horizontal wordmarks.
@@ -712,7 +733,7 @@ def main():
             f'</g>'
         )
     sheet = (
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 120" role="img" aria-label="Trois roses pour les points de mise !">'
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 120" role="img" aria-label="Trois roses pour les points de mises !">'
         '<rect width="640" height="120" fill="#f4f1ea"/>'
         + row(ink, f'{ink} · retenue', 16)
         + row('#E4458C', '#E4458C · clair', 220)
