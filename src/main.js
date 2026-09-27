@@ -169,6 +169,7 @@ function renderProjectContext(){
   const el=$('#projectContext');if(!el)return
   el.hidden=true
   el.innerHTML=''
+  if(projectSyncFailed)toast('Mise enregistrée ici · synchronisation locale à vérifier')
 }
 
 const caseBy=id=>cases.find(c=>c.id===id)
@@ -186,12 +187,6 @@ const dataBruitageCorpus=[
 ].filter(safeExternal)
 const external=dataBruitageCorpus
 const intents=seed.intent_packs||[]
-const corpusSummary=[
-  `${(seed.sources||[]).length} sources structurées`,
-  `${(seed.resource_index||[]).length} documents indexés`,
-  `${(seed.objects||[]).length} objets`,
-  `${(seed.sounds||[]).length} sons`
-].join(' · ')
 
 function expandQuery(q){
   const nq=norm(q), extra=[]
@@ -897,7 +892,7 @@ function render(){
     <span>${(m.objectIds||[]).length} objets · ${(m.checked||[]).length} contrôlés</span>
     <div class="checklist">${(m.objectIds||[]).map(id=>objects.find(o=>o.id===id)).filter(Boolean).map(o=>`<label class="check"><input type="checkbox" data-mise="${m.id}" value="${o.id}" ${(m.checked||[]).includes(o.id)?'checked':''}><span>${esc(o.name)} <small>· ${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></span></label>`).join('')}</div>
     <div class="row"><button data-control="${m.id}">📷 Contrôle photo · bêta</button><button data-editmise="${m.id}" class="ghost">Modifier</button></div>
-  </article>`).join(''):'<div class="empty">Crée une mise ou ouvre un kit puis « Préparer demain ».</div>'
+  </article>`).join(''):'<div class="empty"><b>Aucune mise pour le moment.</b><span>Crée une mise ou ouvre un kit pour préparer le spectacle.</span></div>'
   $$('[data-active]').forEach(b=>b.onclick=()=>{activeMise=b.dataset.active;render()})
   $$('#miseCards .check input').forEach(x=>x.onchange=()=>toggleCheck(miseBy(x.dataset.mise),x.value,x.checked))
   $$('[data-editmise]').forEach(b=>b.onclick=()=>openMise(miseBy(b.dataset.editmise)))

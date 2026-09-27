@@ -8,22 +8,15 @@ Voir `docs/COMMENCER.md`, `docs/MESURES.md`, `docs/PLATEFORMES.md` et `docs/DEMA
 
 Les tests `npm test` (19) et `npm run test:browser` (4) ont été exécutés sur le build de cette branche.
 
-## Dossiers Mac non encore reçus
+## Inventaire Mac
 
-À intégrer seulement après inventaire, sans commit de données réelles :
+Reçu et classé le 27 septembre 2026. Détail : `docs/MIGRATION-BASE.md`.
 
-- `MISE`
-- `MISE-clean-20260925`
-- `MISE-CODEX-084120` et ses sauvegardes WIP
-- `MISE-codex-modern-20260925`
+Déjà couvert par `fb8ffd4` / `main` : logo carton, préférences, stash « Contrôle photo · bêta ». Repris en plus sur cette branche : toast de synchro locale, état vide des mises. Non repris : wordmark à lettre i de police, manifeste raccourci, dossier « import à venir », retour à `0.2.1-beta.1`.
 
-Méthode prévue :
+`MISE-CODEX-084120` et ses WIP sont contenus dans `ba8db5d`, déjà dans `main`. Le modèle `public/models/` se régénère avec `scripts/prepare-vision.mjs`. Les autres copies n’ont rien en attente.
 
-1. Comparer chaque dossier à `grok/mise-finalisation-20260927` (diff de fichiers, pas un remplacement aveugle).
-2. Cherry-pick ou copie des correctifs de code uniquement.
-3. Laisser les Data Bruitage réelles dans `private-data/` (déjà gitignoré) ou hors dépôt.
-4. Ajouter une ligne au tableau de `docs/MIGRATION-BASE.md` : dossier, contenu, intégré ou non, pourquoi.
-5. Rejouer `npm test` et `npm run test:browser`. Ne pas retirer une assertion pour faire passer un test.
+Les 29 documents privés ne sont pas dans le dépôt. Format du classeur à construire à part : `docs/FORMAT-IMPORT.md`.
 
 ## Limites assumées
 
