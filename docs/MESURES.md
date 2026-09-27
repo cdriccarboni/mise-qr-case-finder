@@ -32,4 +32,4 @@ Le précache du service worker annonce 28 entrées, 22 966 Kio.
 
 ## APK
 
-Non mesuré dans cet environnement : le SDK Android n’y est pas installé. La taille sera celle de l’artefact GitHub Actions `MISE-Android-build` une fois le workflow vert. L’APK embarque ce `dist/`, donc il dépasse la taille web (packaging + modèle).
+Non mesuré dans cet environnement : le SDK Android n’y est pas installé. Les runs `36313309109` et `36313466568` échouent avant l’assemblage (`android.useAndroidX=false` avec `androidx.webkit`). La taille sera celle de l’artefact `MISE-Android-build` une fois le workflow vert. L’APK embarque `dist/`, donc il dépasse la taille web (packaging + modèle).

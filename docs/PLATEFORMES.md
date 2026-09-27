@@ -6,7 +6,7 @@ Le site GitHub Pages du dépôt sert la PWA. Le workflow `.github/workflows/page
 
 URL du projet : `https://cdriccarboni.github.io/mise-qr-case-finder/`
 
-Tant que cette branche est la dernière publiée, cette URL montre la prévisualisation `0.2.2-beta.1`, pas l’ancienne page de `main`. C’est voulu pour pouvoir l’ouvrir. Après merge, `main` reprend la publication.
+L’environnement `github-pages` n’autorise que `main` (politique de branche personnalisée, id `60999136`). Les déploiements de cette branche (runs `36313309131` et `36313466539`) sont refusés : « Branch is not allowed to deploy to github-pages due to environment protection rules ». Le site servi le 27 septembre 2026 à 10:45 UTC était encore celui de `main` (en-tête `Last-Modified: Sun, 27 Sep 2026 09:24:22 GMT`, run `36309232785`, version 0.2.1-beta.1). Ajouter `grok/mise-finalisation-20260927` à cette politique a renvoyé HTTP 403 depuis cet agent. La prévisualisation `0.2.2-beta.1` sur cette URL attend donc soit l’ajout manuel de la branche dans Settings → Environments → github-pages, soit le merge dans `main`. Le job `build` du workflow Pages a tout de même produit l’artefact `github-pages` (run `36313466539`, 18 257 566 octets).
 
 Hors ligne : le service worker met en cache le shell et le modèle de vision après une visite en ligne. Les données restent dans IndexedDB.
 
@@ -20,6 +20,8 @@ L’application `fr.acousmatictheatre.mise` embarque la PWA dans l’APK (`andro
 - APK debug et APK/AAB release du workflow sont signés avec le **keystore de debug** Android. Ce n’est pas une clé d’upload Play.
 
 Le workflow `.github/workflows/android.yml` produit les artefacts `MISE-Android-build` (APK debug, APK release de test, AAB de test).
+
+Le premier build de cette branche (runs `36313309109` et `36313466568`) s’arrêtait à `:app:checkDebugAarMetadata` : `androidx.webkit` était déclaré alors que `android.useAndroidX` valait `false`. La propriété est maintenant `true`. Aucune bibliothèque `com.android.support` n’est utilisée, donc pas de Jetifier.
 
 ### Échecs CI anciens
 

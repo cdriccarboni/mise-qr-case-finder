@@ -24,7 +24,8 @@ Les 29 documents privés ne sont pas dans le dépôt. Format du classeur à cons
 - Détection photo = COCO-SSD généraliste. Les accessoires de bruitage spécialisés sont souvent « aucun objet » ou une classe trop large. La correction humaine est une mémoire d’association, pas un réentraînement.
 - CSV = index. La restauration complète des tables passe par le classeur XLSX ou le JSON.
 - Doublons signalés, pas fusionnés.
-- APK de test signé en debug. Clé Play absente.
+- APK de test signé en debug. Clé Play absente. Le premier workflow Android de cette branche échoue tant que `android.useAndroidX` n’est pas `true` (corrigé dans le commit qui suit `d28c558`).
+- Pages : l’URL publique sert encore `main` (0.2.1-beta.1). Cette branche n’est pas autorisée sur l’environnement `github-pages`, et l’agent ne peut pas modifier cette politique (HTTP 403).
 - Pas de binaire macOS/iOS.
 - Google OAuth non retesté de bout en bout (popup, domaine autorisé).
 - Imprimante thermique non retestée sur appareil.
