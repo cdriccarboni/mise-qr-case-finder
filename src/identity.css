@@ -133,5 +133,11 @@ html[data-theme=regie] .miseLogo4 .dot{fill:#000;stroke:none}
 html[data-theme=regie] .link{color:#fff}
 .splash{min-height:100dvh;display:grid;place-items:center;gap:.6rem;background:var(--ink);color:#fff}
 .splash b{font-family:Fredoka,ui-rounded,sans-serif;font-size:2.6rem;font-weight:650;letter-spacing:-.04em}
+.homeCredit{margin:.15rem 0 .35rem}
+.homeCredit button{width:auto;background:transparent;color:var(--muted);border:0;min-height:40px;padding:0;font-size:.75rem;font-weight:650;text-decoration:underline;text-underline-offset:.18em;border-radius:0}
+.aboutCredit{margin:.2rem 0 .8rem;font-weight:750;line-height:1.35}
+.aboutLinks{display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;margin:0}
+.aboutSheet a.aboutLink{min-height:48px;font-weight:750;text-decoration:underline;text-underline-offset:.2em}
+.aboutVersion{margin:.6rem 0 0}
 html[data-theme=light] .playful,html[data-theme=system] .playful{background-color:var(--ink);color:#fff;border:0;background-image:radial-gradient(rgba(255,255,255,.28) 1.1px,transparent 1.2px);background-size:9px 9px}
 html[data-theme=light] .terrainQuick button,html[data-theme=system] .terrainQuick button{background:var(--ink);color:#fff;border:0}

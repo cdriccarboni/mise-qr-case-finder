@@ -12,6 +12,7 @@ import { DATA_STORES, readData, enrichObjects, assignSoundFields, soundFields, P
 import { openDataBruitage } from './data-ui.js'
 import { openLocalPhoto } from './vision-ui.js'
 import { APP_VERSION } from './version.js'
+import { ACOUSMATIC_THEATRE_URL, AUTHOR_WEBSITE_URL, externalAnchor } from './about.js'
 import wordmarkSvg from './brand/wordmark.svg?raw'
 import { FAMILIES } from './constants.js'
 import { entityUrl, shortId, readEntityUrl } from './qr-link.js'
@@ -411,11 +412,12 @@ $('#app').innerHTML=`
     <button data-action="hands">Crée ton bruitage</button>
     <button data-action="exercise">Exercice</button>
   </div>
+  <p class="homeCredit"><button id="aboutHome" type="button">À propos</button></p>
 </section>
 <div class="goalNav" aria-label="Navigation MISE">
  <details open><summary>Trouver & créer</summary><div><button data-tab="search" class="active">Recherche</button><button data-tab="creator">Créateur d’ambiance</button><button data-tab="vibe">Vibe bruitage</button><button id="goalHands" type="button">Crée ton bruitage</button><button id="goalExercise" type="button">Exercice</button><button id="goalGroupPhoto" type="button">Photo de groupe</button><button id="goalUniverse" type="button">Univers d’une photo</button><button id="goalChallenge" type="button">Défi bruitage</button></div></details>
  <details><summary>Ranger & préparer</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR</button><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
- <details><summary>Partager & outils</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Imprimer série QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Data Bruitage · importer / exporter</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
+ <details><summary>Partager & outils</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Imprimer série QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalAbout" type="button">À propos</button><button id="goalDataBruitage" type="button">Data Bruitage · importer / exporter</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="search" class="tab active"><div id="searchResults"></div></section>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
@@ -447,6 +449,12 @@ $('#app').innerHTML=`
   <button id="preferencesGoogle" type="button">Raccorder Google Drive</button>
   <div id="folderDropZone" class="folderDropZone" tabindex="0"><b>Dossier de travail</b><span id="folderLinkState">Choisis un dossier local pour préparer un lot d’import. Aucun fichier source ne sera modifié.</span><input id="folderDropInput" type="file" webkitdirectory multiple hidden><button id="chooseFolder" type="button" class="ghost">Choisir un dossier</button></div>
   <div class="row"><button id="preferencesBackup" type="button" class="ghost">Sauvegarder</button><button id="preferencesRestore" type="button" class="ghost">Importer une sauvegarde</button></div>
+  <button id="preferencesAbout" type="button" class="ghost">À propos</button>
+</div></dialog>
+<dialog id="aboutDlg"><div class="form aboutSheet"><div class="dialoghead"><div><b>À propos</b></div><button id="closeAbout" class="ghost" type="button">×</button></div>
+<p class="aboutCredit">MISE ! — Une création de Cédric Carboni pour Acousmatic Theatre</p>
+<p class="aboutLinks">${externalAnchor(ACOUSMATIC_THEATRE_URL, 'Acousmatic Theatre')}${externalAnchor(AUTHOR_WEBSITE_URL, 'Site de Cédric Carboni', 'data-author')}</p>
+<p class="aboutVersion muted">Version <span id="aboutVersion">${APP_VERSION}</span></p>
 </div></dialog>
 <dialog id="manualDlg"><div class="manual"><div class="dialoghead"><div><b>MISE ! · Mini-manuel</b><small>QR Case Finder · prise en main rapide</small></div><button id="closeManual" class="ghost" type="button">×</button></div>
 <div class="manualSteps">
@@ -994,6 +1002,20 @@ $('#goalPrinter').onclick=pairPrinter
 $('#manualBtn').onclick=()=>$('#manualDlg').showModal()
 $('#goalManual').onclick=()=>$('#manualDlg').showModal()
 $('#closeManual').onclick=()=>$('#manualDlg').close()
+function openAbout(){
+  if($('#preferencesDlg')?.open)$('#preferencesDlg').close()
+  $('#aboutDlg').showModal()
+}
+$('#aboutHome').onclick=openAbout
+$('#goalAbout').onclick=openAbout
+$('#preferencesAbout').onclick=openAbout
+$('#closeAbout').onclick=()=>$('#aboutDlg').close()
+document.addEventListener('click',event=>{
+  const link=event.target.closest?.('a[data-external]')
+  if(!link||!window.MiseAndroid)return
+  event.preventDefault()
+  window.location.assign(link.href)
+})
 $('#goalBackup').onclick=()=>$('#backupBtn').click()
 $('#goalRestore').onclick=()=>$('#restoreInput').click()
 $('#goalGroupPhoto').onclick=()=>$('#groupPhotoInput').click()
