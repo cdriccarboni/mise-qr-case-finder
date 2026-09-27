@@ -10,15 +10,32 @@ android {
         applicationId = "fr.acousmatictheatre.mise"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "0.3.0-beta.2"
+        versionCode = 8
+        versionName = "0.3.0-beta.3"
+    }
+
+    signingConfigs {
+        val uploadStore = System.getenv("MISE_UPLOAD_STORE_FILE")
+        if (!uploadStore.isNullOrBlank()) {
+            create("upload") {
+                storeFile = file(uploadStore)
+                storePassword = System.getenv("MISE_UPLOAD_STORE_PASSWORD")
+                keyAlias = System.getenv("MISE_UPLOAD_KEY_ALIAS")
+                keyPassword = System.getenv("MISE_UPLOAD_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Signature de test (keystore debug). Ce n’est pas la clé d’upload Play.
-            signingConfig = signingConfigs.getByName("debug")
+            // Clé d’upload Play seulement si MISE_UPLOAD_STORE_FILE est défini.
+            // Sinon signature debug : ce n’est pas une mise à jour Play.
+            signingConfig = if (signingConfigs.findByName("upload") != null) {
+                signingConfigs.getByName("upload")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 

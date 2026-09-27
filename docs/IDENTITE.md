@@ -1,4 +1,4 @@
-# Identité visuelle — MISE ! 0.3.0-beta.2
+# Identité visuelle — MISE ! 0.3.0-beta.3
 
 ## D’où vient l’esprit
 

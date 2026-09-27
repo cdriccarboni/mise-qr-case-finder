@@ -43,12 +43,20 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        // Pas de coque Capacitor : la barre d’état, l’encoche, la navigation et le clavier
+        // passent par WindowInsets, une seule fois, en padding de la WebView.
+        // La PWA utilise env(safe-area-inset-*) ; data-native-safe évite de les ajouter encore.
+        // Bord à bord Android 15 (targetSdk 36). androidx.core 1.15 n’a pas enableEdgeToEdge.
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.TRANSPARENT);
         if (Build.VERSION.SDK_INT >= 29) {
             getWindow().setStatusBarContrastEnforced(false);
             getWindow().setNavigationBarContrastEnforced(false);
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            getWindow().getAttributes().layoutInDisplayCutoutMode =
+                    android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
         }
 
         webView = new WebView(this);
@@ -66,27 +74,29 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " MISE-Android/0.3.0-beta.2");
+        settings.setUserAgentString(settings.getUserAgentString() + " MISE-Android/0.3.0-beta.3");
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
 
         ViewCompat.setOnApplyWindowInsetsListener(webView, (view, windowInsets) -> {
-            Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            int barsAndCutout = WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout();
+            Insets bars = windowInsets.getInsets(barsAndCutout);
             Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
             safeTop = bars.top;
             safeRight = bars.right;
             safeBottom = Math.max(bars.bottom, ime.bottom);
             safeLeft = bars.left;
-            publishSafeArea();
+            view.setPadding(safeLeft, safeTop, safeRight, safeBottom);
+            publishNativeSafe();
             return WindowInsetsCompat.CONSUMED;
         });
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                publishSafeArea();
+                publishNativeSafe();
             }
 
             @Override
@@ -142,14 +152,14 @@ public final class MainActivity extends Activity {
         ViewCompat.requestApplyInsets(webView);
     }
 
-    private void publishSafeArea() {
+    private void publishNativeSafe() {
         if (webView == null) return;
         webView.evaluateJavascript(
-                "(function(){var r=document.documentElement.style;"
-                        + "r.setProperty('--android-safe-top','" + safeTop + "px');"
-                        + "r.setProperty('--android-safe-right','" + safeRight + "px');"
-                        + "r.setProperty('--android-safe-bottom','" + safeBottom + "px');"
-                        + "r.setProperty('--android-safe-left','" + safeLeft + "px');})()",
+                "(function(){var d=document.documentElement;d.dataset.nativeSafe='1';var r=d.style;"
+                        + "r.setProperty('--android-safe-top','0px');"
+                        + "r.setProperty('--android-safe-right','0px');"
+                        + "r.setProperty('--android-safe-bottom','0px');"
+                        + "r.setProperty('--android-safe-left','0px');})()",
                 null);
     }
 

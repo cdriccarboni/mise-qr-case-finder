@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-beta.3 — 2026-09-27
+
+- Le haut de l’écran ne passe plus sous la barre d’état ni la caméra. Android 15 (targetSdk 36, déjà au-dessus de 35) applique une seule fois les vrais insets : barres système, encoche, clavier, en padding de la WebView. La page ne les ajoute pas une seconde fois (`data-native-safe`). La PWA garde `viewport-fit=cover` et `env(safe-area-inset-*)`. Pas de projet Capacitor : il n’y a pas de plugin StatusBar à configurer.
+- Le grand padding fixe du bas (8 rem) est retiré. La marge basse est l’inset réel, pas une marge en plus.
+- Version `0.3.0-beta.3`, Android `versionCode` 8. La clé d’upload Play est toujours absente. L’APK de test et l’AAB sont signés avec la clé debug si `MISE_UPLOAD_STORE_FILE` n’est pas défini.
+
 ## 0.3.0-beta.2 — 2026-09-27
 
 - Le bas de l’écran n’est plus coupé par la barre Android. L’application passe en bord à bord, lit les marges système (`WindowInsets`) et les transmet à la page. Le défilement garde le dernier cartouche entier, avec une marge basse (`dvh`, `env(safe-area-inset-bottom)`).

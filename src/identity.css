@@ -133,7 +133,7 @@ html[data-theme=regie] .miseLogo4 .dot{fill:#000;stroke:none}
 html[data-theme=regie] .link{color:#fff}
 html[data-theme=regie] .wordmark{background:#fff;padding:.16rem .28rem .1rem;line-height:0}
 html[data-theme=regie] .miseWordmark .stampGhost,html[data-theme=regie] .miseWordmark .stampGhost circle,html[data-theme=regie] .miseWordmark .letters,html[data-theme=regie] .miseWordmark .markDot{fill:#000}
-.splash{min-height:100dvh;display:grid;place-items:center;gap:.6rem;background:var(--ink);color:#fff}
+.splash{min-height:calc(100dvh - var(--safe-top) - var(--safe-bottom));display:grid;place-items:center;gap:.6rem;background:var(--ink);color:#fff}
 .splash b{font-family:Fredoka,ui-rounded,sans-serif;font-size:2.6rem;font-weight:650;letter-spacing:-.04em}
 .homeCredit{margin:.15rem 0 .35rem}
 .homeCredit button{width:auto;background:transparent;color:var(--muted);border:0;min-height:40px;padding:0;font-size:.75rem;font-weight:650;text-decoration:underline;text-underline-offset:.18em;border-radius:0}
