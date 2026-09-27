@@ -14,9 +14,11 @@ import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import androidx.webkit.WebViewAssetLoader;
 
 public final class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 2101;
@@ -46,14 +48,22 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " MISE-Android/0.1");
+        settings.setUserAgentString(settings.getUserAgentString() + " MISE-Android/0.2.2");
+
+        final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+
+            @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                String host = uri.getHost() == null ? "" : uri.getHost();
-                if ("cdriccarboni.github.io".equalsIgnoreCase(host) || "art.acousmatic-theatre.fr".equalsIgnoreCase(host)) return false;
+                if (staysInApp(uri)) return false;
                 openExternal(uri);
                 return true;
             }
@@ -92,6 +102,17 @@ public final class MainActivity extends Activity {
         } else {
             webView.restoreState(state);
         }
+    }
+
+    private boolean staysInApp(Uri uri) {
+        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+        return "appassets.androidplatform.net".equals(host)
+                || host.equals("google.com")
+                || host.endsWith(".google.com")
+                || host.equals("googleapis.com")
+                || host.endsWith(".googleapis.com")
+                || host.equals("gstatic.com")
+                || host.endsWith(".gstatic.com");
     }
 
     private void openExternal(Uri uri) {

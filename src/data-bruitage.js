@@ -4,6 +4,26 @@ export const TABLES = {
   aliases: 'Alias', mises: 'Mises', cases: 'Contenants', sources: 'Sources',
   review: 'A verifier', corrections: 'Apprentissage'
 }
+// Four explicit origins. A generated proposal is never stored as a user document.
+export const PROVENANCE = {
+  'user-document': 'Document de l’utilisateur',
+  external: 'Source externe',
+  generated: 'Proposition générée',
+  review: 'À vérifier'
+}
+export const provenanceLabel = value => PROVENANCE[value] || PROVENANCE.review
+// Hear and imagine stay independent. This helper never concatenates them.
+export function soundFields(row) {
+  return {
+    hear: typeof row?.hear === 'string' ? row.hear : '',
+    imagine: typeof row?.imagine === 'string' ? row.imagine : ''
+  }
+}
+export function assignSoundFields(row, hear, imagine) {
+  row.hear = String(hear ?? '')
+  row.imagine = String(imagine ?? '')
+  return row
+}
 export const DATA_STORES = Object.keys(TABLES)
 export const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 export const newId = prefix => `${prefix}-${crypto.randomUUID()}`
@@ -88,6 +108,53 @@ export async function saveReviewedRow(db, table, row, reviewId) {
     }
     await tx.done
   } catch (error) { tx.abort(); await tx.done.catch(() => {}); throw error }
+}
+export function buildIndex(data) {
+  const sourceName = id => (data.sources || []).find(source => source.id === id)?.name || ''
+  return (data.objects || []).map(object => {
+    const fields = soundFields(object)
+    const links = (data.objectSounds || []).filter(link => link.objectId === object.id)
+    return {
+      id: object.id,
+      nom: object.name || '',
+      'son à entendre': fields.hear,
+      'son à imaginer': fields.imagine,
+      'objet ou dispositif nécessaire': object.device || object.name || '',
+      famille: object.family || '',
+      source: sourceName(object.sourceId) || (typeof object.source === 'string' ? object.source : ''),
+      statut: object.status || '',
+      notes: object.notes || '',
+      provenance: object.provenance || '',
+      relations: links.map(link => link.id).join('|'),
+      sons: links.map(link => link.soundId).join('|')
+    }
+  })
+}
+export function findDuplicates(data) {
+  const groups = []
+  for (const table of ['objects', 'sounds', 'cases', 'sources']) {
+    const buckets = new Map()
+    for (const row of data[table] || []) {
+      const key = normalize(row.name || row.label || '')
+      if (!key) continue
+      const ids = buckets.get(key) || []
+      ids.push(row.id)
+      buckets.set(key, ids)
+    }
+    for (const [key, ids] of buckets) {
+      if (ids.length < 2) continue
+      const stableIds = [...ids].sort()
+      groups.push({
+        id: `dup-${table}-${stableIds.join('+')}`,
+        table,
+        cle: key,
+        ids: stableIds.join('|'),
+        statut: 'à vérifier',
+        provenance: 'generated'
+      })
+    }
+  }
+  return groups.sort((a, b) => a.id.localeCompare(b.id))
 }
 export function enrichObjects(data) {
   return data.objects.map(object => ({ ...object,

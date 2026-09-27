@@ -8,7 +8,7 @@ import { registerSW } from 'virtual:pwa-register'
 import { readProjectContext, makeControlSummary, makeProjectSummary } from './project-control.js'
 import { artGoogleSession, requestGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState, createSharePackage, loadSharePackage } from './google-sync.js'
 
-import { DATA_STORES, readData, enrichObjects } from './data-bruitage.js'
+import { DATA_STORES, readData, enrichObjects, assignSoundFields, soundFields, PROVENANCE, provenanceLabel } from './data-bruitage.js'
 import { openDataBruitage } from './data-ui.js'
 import { openLocalPhoto } from './vision-ui.js'
 
@@ -169,6 +169,7 @@ function renderProjectContext(){
   const el=$('#projectContext');if(!el)return
   el.hidden=true
   el.innerHTML=''
+  if(projectSyncFailed)toast('Mise enregistrée ici · synchronisation locale à vérifier')
 }
 
 const caseBy=id=>cases.find(c=>c.id===id)
@@ -186,12 +187,6 @@ const dataBruitageCorpus=[
 ].filter(safeExternal)
 const external=dataBruitageCorpus
 const intents=seed.intent_packs||[]
-const corpusSummary=[
-  `${(seed.sources||[]).length} sources structurées`,
-  `${(seed.resource_index||[]).length} documents indexés`,
-  `${(seed.objects||[]).length} objets`,
-  `${(seed.sounds||[]).length} sons`
-].join(' · ')
 
 function expandQuery(q){
   const nq=norm(q), extra=[]
@@ -210,12 +205,13 @@ function searchOwned(q){
   const enriched=objects.map(o=>({
     ...o,
     caseLabel:caseName(caseBy(o.caseId||o.container_id)),
-    searchText:[o.name,o.detectedName,...(o.sounds||[]),...(o.tags||[]),...(o.contexts||[]),o.family,caseName(caseBy(o.caseId||o.container_id))].join(' ')
+    ...soundFields(o),
+    searchText:[o.name,o.detectedName,o.hear,o.imagine,o.device,o.notes,...(o.sounds||[]),...(o.tags||[]),...(o.contexts||[]),o.family,caseName(caseBy(o.caseId||o.container_id))].join(' ')
   }))
   const fuse=new Fuse(enriched,{
     keys:[
-      {name:'name',weight:.35},{name:'sounds',weight:.28},{name:'tags',weight:.12},
-      {name:'searchText',weight:.18},{name:'caseLabel',weight:.07}
+      {name:'name',weight:.28},{name:'hear',weight:.2},{name:'imagine',weight:.16},{name:'sounds',weight:.14},{name:'tags',weight:.08},
+      {name:'searchText',weight:.1},{name:'caseLabel',weight:.04}
     ],
     threshold:.44,ignoreLocation:true,includeScore:true
   })
@@ -227,6 +223,14 @@ function searchExternal(q){
     .search(expandQuery(q)).slice(0,8).map(x=>x.item)
 }
 function chip(s){return `<span class="chip">${esc(s)}</span>`}
+function soundSummary(o){
+  const fields=soundFields(o)
+  const parts=[]
+  if(fields.hear) parts.push(`Entendre : ${fields.hear}`)
+  if(fields.imagine) parts.push(`Imaginer : ${fields.imagine}`)
+  if((o.sounds||[]).length) parts.push((o.sounds||[]).slice(0,3).join(' · '))
+  return parts.join(' · ')
+}
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
 
 function companyMemberEmails(){
@@ -258,17 +262,30 @@ function openAlternatives(id){
 }
 function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob)})}
 async function captureAudioMemo(o,button){
-  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast('Enregistrement audio non disponible ici');return}
+  const note=$('#audioNote')
+  const showNote=text=>{if(note){note.hidden=false;note.textContent=text}}
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){showNote('Enregistrement audio non disponible sur cet appareil.');toast('Enregistrement audio non disponible ici');return}
   let stream
   try{
     stream=await navigator.mediaDevices.getUserMedia({audio:true});const chunks=[],rec=new MediaRecorder(stream)
     button.disabled=true;button.textContent='● Enregistrement… toucher pour arrêter'
     const done=new Promise(resolve=>{rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};rec.onstop=resolve})
-    rec.start();let stopped=false;const stop=()=>{if(stopped)return;stopped=true;rec.stop()};button.onclick=stop;const timer=setTimeout(stop,10000)
-    await done;clearTimeout(timer);stream.getTracks().forEach(t=>t.stop())
+    rec.start();let stopped=false;const stop=reason=>{if(stopped)return;stopped=true;if(reason)showNote(reason);try{rec.stop()}catch{}}
+    button.onclick=()=>stop();const timer=setTimeout(()=>stop(),10000)
+    const onHide=()=>{if(document.hidden)stop('Enregistrement interrompu.')}
+    document.addEventListener('visibilitychange',onHide)
+    stream.getTracks().forEach(track=>{track.onended=()=>stop('Le micro s’est arrêté. Enregistrement interrompu.')})
+    await done;clearTimeout(timer);document.removeEventListener('visibilitychange',onHide);stream.getTracks().forEach(t=>t.stop())
+    if(!chunks.length){button.disabled=false;button.textContent='Enregistrer un mémo sonore';showNote('Aucun son capté.');return}
     const blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});o.audioMemo=await blobToDataUrl(blob);o.audioMemoAt=new Date().toISOString()
     button.disabled=false;button.textContent='Mémo sonore enregistré';toast('Mémo sonore ajouté · pense à enregistrer la fiche')
-  }catch{stream?.getTracks().forEach(t=>t.stop());button.disabled=false;button.textContent='Enregistrer un mémo sonore';toast('Microphone indisponible')}
+    const player=$('#audioMemoPlayer');if(player){player.hidden=false;player.src=o.audioMemo}
+  }catch(error){
+    stream?.getTracks().forEach(t=>t.stop());button.disabled=false;button.textContent='Enregistrer un mémo sonore'
+    const denied=error?.name==='NotAllowedError'||error?.name==='SecurityError'
+    const message=denied?'Permission micro refusée. La fiche reste utilisable sans mémo.':'Microphone indisponible.'
+    showNote(message);toast(message)
+  }
 }
 async function showObjectQr(o){
   const url=location.href.split('?')[0]+'?object='+encodeURIComponent(o.id),qr=await QRCode.toDataURL(url,{width:520,margin:2,errorCorrectionLevel:'M'}),d=$('#printDlg')
@@ -287,7 +304,7 @@ function openCaseCreator(c){
 }
 function openChallenge(){
   const pools=['mer','forêt','pluie','orage','pas','maison','vent','mécanique','nuit','feu'],pick=pools[Math.floor(Math.random()*pools.length)],count=Math.min(3,Math.max(1,objects.length)),d=$('#modal')
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Défi bruitage</b><small>Mallette pédagogique</small></div><button id="closeChallenge" class="ghost">×</button></div><div class="challenge"><strong>Crée « ${esc(pick)} » avec ${count} objet${count>1?'s':''} maximum.</strong><p>Essaie plusieurs gestes, écoute, puis compare les solutions.</p></div><div class="row"><button id="tryChallenge">Voir mes pistes</button><button id="newChallenge" class="ghost">Autre défi</button></div></div>`
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Défi bruitage</b><small>Mallette pédagogique</small></div><button id="closeChallenge" class="ghost">×</button></div><div class="challenge"><strong>Crée « ${esc(pick)} » avec ${count} objet${count>1?'s':''} maximum.</strong><p>Proposition générée pour s’exercer. Ce n’est pas un document de ta base.</p></div><div class="row"><button id="tryChallenge">Voir mes pistes</button><button id="newChallenge" class="ghost">Autre défi</button></div></div>`
   d.showModal();$('#closeChallenge').onclick=()=>d.close();$('#newChallenge').onclick=()=>{d.close();openChallenge()};$('#tryChallenge').onclick=()=>{d.close();$('#q').value=pick;setTab('creator');renderCreator()}
 }
 function sharePayload({miseIds=[],kitIds=[],caseIds=[],objectIds=[],includeMedia=false}={}){
@@ -307,7 +324,7 @@ function openShareDialog(){
   <label class="check"><input type="checkbox" id="shareMedia"><span>Inclure photos et mémos sonores</span></label>
   <label>Destinataires Google<textarea id="shareRecipients" rows="3" placeholder="prenom.nom@example.com, autre@example.com">${esc(members.join(', '))}</textarea></label>
   <button id="createShare">Créer le partage privé + QR</button><div id="shareResult"></div></div>`
-  d.showModal();$('#closeShare').onclick=()=>d.close();$('#createShare').onclick=async()=>{const btn=$('#createShare');btn.disabled=true;try{const recipients=$('#shareRecipients').value.split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);if(!recipients.length)throw new Error('Ajoute au moins une adresse destinataire');const payload=sharePayload({miseIds:$$('[data-share-mise]:checked',d).map(x=>x.value),kitIds:$$('[data-share-kit]:checked',d).map(x=>x.value),caseIds:$$('[data-share-case]:checked',d).map(x=>x.value),objectIds:$$('[data-share-object]:checked',d).map(x=>x.value),includeMedia:$('#shareMedia').checked});if(!payload.objects.length&&!payload.mises.length&&!payload.kits.length&&!payload.cases.length)throw new Error('Sélectionne au moins un élément');const out=await createSharePackage(payload,recipients);const url=`https://art.acousmatic-theatre.fr/mise-app/?shareFile=${encodeURIComponent(out.file.id)}`,qr=await QRCode.toDataURL(url,{width:420,margin:2,errorCorrectionLevel:'M'});$('#shareResult').innerHTML=`<div class="shareDone"><img class="qr" src="${qr}"><b>${out.recipients.length} destinataire${out.recipients.length>1?'s':''}</b><small>Le QR ouvre uniquement ce paquet MISE !.</small><button id="shareNative">Partager le lien</button></div>`;$('#shareNative').onclick=async()=>{try{if(navigator.share)await navigator.share({title:'MISE !',text:'Partage MISE !',url});else{await navigator.clipboard.writeText(url);toast('Lien copié')}}catch{}};toast('Partage créé')}catch(error){toast(error instanceof Error?error.message:'Partage impossible')}finally{btn.disabled=false}}
+  d.showModal();$('#closeShare').onclick=()=>d.close();$('#createShare').onclick=async()=>{const btn=$('#createShare');btn.disabled=true;try{const recipients=$('#shareRecipients').value.split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);if(!recipients.length)throw new Error('Ajoute au moins une adresse destinataire');const payload=sharePayload({miseIds:$$('[data-share-mise]:checked',d).map(x=>x.value),kitIds:$$('[data-share-kit]:checked',d).map(x=>x.value),caseIds:$$('[data-share-case]:checked',d).map(x=>x.value),objectIds:$$('[data-share-object]:checked',d).map(x=>x.value),includeMedia:$('#shareMedia').checked});if(!payload.objects.length&&!payload.mises.length&&!payload.kits.length&&!payload.cases.length)throw new Error('Sélectionne au moins un élément');const out=await createSharePackage(payload,recipients);const shareTarget=new URL(location.href);shareTarget.search='';shareTarget.hash='';shareTarget.searchParams.set('shareFile',out.file.id);const url=shareTarget.href,qr=await QRCode.toDataURL(url,{width:420,margin:2,errorCorrectionLevel:'M'});$('#shareResult').innerHTML=`<div class="shareDone"><img class="qr" src="${qr}"><b>${out.recipients.length} destinataire${out.recipients.length>1?'s':''}</b><small>Le QR ouvre uniquement ce paquet MISE !.</small><button id="shareNative">Partager le lien</button></div>`;$('#shareNative').onclick=async()=>{try{if(navigator.share)await navigator.share({title:'MISE !',text:'Partage MISE !',url});else{await navigator.clipboard.writeText(url);toast('Lien copié')}}catch{}};toast('Partage créé')}catch(error){toast(error instanceof Error?error.message:'Partage impossible')}finally{btn.disabled=false}}
 }
 async function openSharedPackage(fileId){
   const d=$('#modal')
@@ -318,7 +335,7 @@ $('#app').innerHTML=`
 <header>
   <div class="brand miseBrand">
     <span class="miseLogo4" aria-hidden="true"><svg viewBox="0 0 64 64"><path class="box" d="M12 22 32 11l20 11v27L32 59 12 49V22Z"/><path d="M12 22l20 12 20-12M32 34v25"/><path class="flap" d="m12 22 11-11h9l-9 17M52 22 41 11h-9l9 17"/><path class="wave" d="M20 38v7m5-11v15m5-9v5m8-7v7m5-11v15"/></svg></span>
-    <div class="miseBrandCopy"><div class="wordmark">MISE <span class="bang"><b></b><i></i></span></div><div class="sub">QR CASE FINDER</div><div class="tag">Cherche ta mise</div></div>
+    <div class="miseBrandCopy"><div class="wordmark"><svg class="miseWordmark" viewBox="0 0 200 72" role="img" aria-label="MISE !"><g fill="currentColor" font-family="ui-sans-serif, system-ui, sans-serif" font-weight="900" font-size="56"><text x="0" y="62" textLength="50" lengthAdjust="spacingAndGlyphs">M</text><text x="78" y="62" textLength="84" lengthAdjust="spacingAndGlyphs">SE</text></g><rect x="56" y="26" width="8" height="36" rx="2" fill="currentColor"/><rect x="170" y="26" width="8" height="36" rx="2" fill="currentColor"/><circle cx="60" cy="14" r="6" fill="#ff3b30"/><circle cx="174" cy="14" r="6" fill="#ff3b30"/></svg></div><div class="sub">QR CASE FINDER</div><div class="tag">Cherche ta mise</div></div>
   </div>
   <div class="headerTools">
     <span id="networkStatus" class="status" role="status"></span>
@@ -410,13 +427,14 @@ function renderSearch(target='#searchResults'){
   let h=`<div class="resultHead"><b>${own.length} résultat${own.length>1?'s':''} dans ton parc</b><span>Les idées externes restent séparées.</span></div>`
   h+=own.map(o=>`<article class="result">
     <div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div>
-    <div><h3>${esc(o.name)}</h3><p>${(o.sounds||[]).slice(0,5).map(chip).join(' ')||'<span class="muted">Son à préciser</span>'}</p>
-    <small>${esc(caseName(caseBy(o.caseId||o.container_id)))} · ${esc(o.family||'À classer')}</small></div>
-    <div class="resultActions"><button data-fav="${o.id}" class="miniAction" title="Favori">${o.favorite?'★':'☆'}</button><button data-alt="${o.id}" class="miniAction" title="Alternatives">≈</button><button data-add="${o.id}" class="plus">+</button></div></article>`).join('')
+    <div><h3>${esc(o.name)}</h3><p>${soundSummary(o)?esc(soundSummary(o)):'<span class="muted">Son à préciser</span>'}</p>
+    <small>${esc(caseName(caseBy(o.caseId||o.container_id)))} · ${esc(o.family||'À classer')} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></div>
+    <div class="resultActions"><button data-open="${o.id}" class="miniAction" title="Ouvrir la fiche">↗</button><button data-fav="${o.id}" class="miniAction" title="Favori">${o.favorite?'★':'☆'}</button><button data-alt="${o.id}" class="miniAction" title="Alternatives">≈</button><button data-add="${o.id}" class="plus">+</button></div></article>`).join('')
   if(ideas.length) h+=`<h3 class="ideaTitle">Idées à ajouter à ton parc</h3>`+ideas.map(i=>`<article class="result idea">
     <div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p>
-    <small>Référence externe · ${esc(i.source||'base de référence')}</small></div><button class="plus" data-idea="${esc(i.name)}">+</button></article>`).join('')
+    <small>Source externe · ${esc(i.source||'base de référence')} · pas un document de l’utilisateur</small></div><button class="plus" data-idea="${esc(i.name)}">+</button></article>`).join('')
   $(target).innerHTML=h
+  $$('[data-open]',$(target)).forEach(b=>b.onclick=()=>openObject(objectBy(b.dataset.open)||{id:b.dataset.open}))
   $$('[data-add]',$(target)).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.add))
   $$('[data-fav]',$(target)).forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.fav))
   $$('[data-alt]',$(target)).forEach(b=>b.onclick=()=>openAlternatives(b.dataset.alt))
@@ -460,16 +478,24 @@ function pickPhoto(inputId,miseId=null){
 
 function openObject(p={}){
   const current=p.id?objects.find(o=>o.id===p.id):null
-  const o=current||{id:uid('obj'),name:p.name||'',detectedName:'',sounds:p.sounds||[],tags:[],contexts:[],photo:p.photo||'',caseId:'',family:'À classer',source:p.source||'manuel',owned:p.owned??true,status:'available'}
+  const o=current||{id:uid('obj'),name:p.name||'',detectedName:'',sounds:p.sounds||[],hear:p.hear||'',imagine:p.imagine||'',device:p.device||'',notes:p.notes||'',tags:[],contexts:[],photo:p.photo||'',caseId:'',family:p.family||'À classer',source:p.source||'manuel',owned:p.owned??true,status:p.status||'available',provenance:p.provenance||(p.owned===false?'external':'user-document')}
+  const shown=soundFields(current||o)
   const m=$('#modal')
-  m.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>${current?'Modifier':'Ajouter'} un objet</b><small>Nom libre et personnel</small></div><button value="cancel" class="ghost">×</button></div>
+  m.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>${current?'Modifier':'Ajouter'} un objet</b><small>${esc(provenanceLabel(o.provenance||'user-document'))}</small></div><button value="cancel" class="ghost">×</button></div>
   ${o.photo?`<img class="photoPreview" src="${o.photo}">`:''}
   <div class="objectQuick"><button type="button" id="favObject" class="ghost">${o.favorite?'★ Favori':'☆ Favori'}</button>${current?'<button type="button" id="qrObject" class="ghost">QR objet</button>':''}<button type="button" id="audioMemo" class="ghost">${o.audioMemo?'Réenregistrer mémo sonore':'Enregistrer un mémo sonore'}</button></div>
-  ${o.audioMemo?`<audio controls src="${o.audioMemo}"></audio>`:''}
-  <label>Nom<input id="fName" value="${esc(o.name)}" placeholder="Bouteille frangée"></label>
+  <p id="audioNote" class="hint" role="status" ${o.audioMemo?'hidden':''}>${o.audioMemo?'':'Aucun mémo sonore pour cette fiche.'}</p>
+  <audio id="audioMemoPlayer" controls data-memo ${o.audioMemo?'':'hidden'}></audio>
+  <label>Nom<input id="fName" value="${esc(o.name)}" placeholder="Bouteille fictive"></label>
+  <label>Son à entendre<input id="fHear" value="${esc(shown.hear)}" placeholder="glouglou fictif"></label>
+  <label>Son à imaginer<input id="fImagine" value="${esc(shown.imagine)}" placeholder="océan imaginé fictif"></label>
+  <label>Objet ou dispositif nécessaire<input id="fDevice" value="${esc(o.device||'')}" placeholder="bouteille en verre fictive"></label>
   <div class="grid2"><label>Famille<select id="fFamily">${['Vie quotidienne','Musique & percussions','Nature & matières','Pas & surfaces','Eau & liquides','Vent & air','Feu & textures','Animaux & voix','Technique audio','Technique scène','À classer'].map(x=>`<option ${o.family===x?'selected':''}>${x}</option>`)}</select></label>
   <label>Contenant<select id="fCase"><option value="">Sans contenant</option>${cases.map(c=>`<option value="${c.id}" ${(o.caseId||o.container_id)===c.id?'selected':''}>${esc(caseName(c))}</option>`)}</select></label></div>
-  <label>Sons / usages<input id="fSounds" value="${esc((o.sounds||[]).join(', '))}" placeholder="mer, pluie, vent…"></label>
+  <label>Usages déjà saisis, distincts des deux sons<input id="fSounds" value="${esc((o.sounds||[]).join(', '))}" placeholder="liste libre, non fusionnée"></label>
+  <label>Notes<textarea id="fNotes" rows="3">${esc(o.notes||'')}</textarea></label>
+  <div class="grid2"><label>Origine<select id="fProvenance">${Object.entries(PROVENANCE).map(([key,label])=>`<option value="${key}" ${(o.provenance||'user-document')===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+  <label>Statut<select id="fStatus">${[['available','Disponible'],['review','À vérifier'],['missing','Manquant'],...(o.status&&!['available','review','missing'].includes(o.status)?[[o.status,o.status]]: [])].map(([key,label])=>`<option value="${key}" ${(o.status||'available')===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label></div>
   <label>Tags / contexte<input id="fTags" value="${esc(unique([...(o.tags||[]),...(o.contexts||[])]).join(', '))}" placeholder="atelier, kit perso, #spectacle…"></label>
   ${(o.locationHistory||[]).length?`<details><summary>Historique de rangement</summary><div class="historyList">${(o.locationHistory||[]).slice().reverse().slice(0,12).map(h=>`<small>${esc(new Date(h.at).toLocaleString('fr-FR'))} · ${esc(caseName(caseBy(h.from)))} → ${esc(caseName(caseBy(h.to)))}</small>`).join('')}</div></details>`:''}
   <div class="row"><button type="button" id="pickGallery" class="ghost">Importer photo</button><button type="button" id="pickCamera" class="ghost">Appareil photo</button><button id="saveObject">Enregistrer</button></div></form>`
@@ -479,18 +505,30 @@ function openObject(p={}){
   $('#favObject').onclick=()=>{o.favorite=!o.favorite;$('#favObject').textContent=o.favorite?'★ Favori':'☆ Favori'}
   if($('#qrObject'))$('#qrObject').onclick=()=>showObjectQr(o)
   $('#audioMemo').onclick=e=>captureAudioMemo(o,e.currentTarget)
+  const player=$('#audioMemoPlayer')
+  if(player){
+    player.onerror=()=>{player.hidden=true;const note=$('#audioNote');if(note){note.hidden=false;note.textContent='Fichier sonore absent ou illisible.'}}
+    if(o.audioMemo) player.src=o.audioMemo
+  }
   $('#saveObject').onclick=async e=>{
     e.preventDefault()
     const tags=$('#fTags').value.split(',').map(x=>x.trim()).filter(Boolean)
     const previousCase=current?(current.caseId||current.container_id||''):(o.caseId||o.container_id||''),nextCase=$('#fCase').value
     if(previousCase!==nextCase)o.locationHistory=[...(o.locationHistory||[]),{at:new Date().toISOString(),from:previousCase,to:nextCase,method:'fiche'}]
+    const previousSounds=o.sounds
+    assignSoundFields(o,$('#fHear').value.trim(),$('#fImagine').value.trim())
     Object.assign(o,{
       name:$('#fName').value.trim()||'Objet sans nom',
       family:$('#fFamily').value,
+      device:$('#fDevice').value.trim(),
+      notes:$('#fNotes').value.trim(),
+      provenance:$('#fProvenance').value,
+      status:$('#fStatus').value,
       caseId:nextCase,container_id:nextCase,
-      sounds:$('#fSounds').value.split(',').map(x=>x.trim()).filter(Boolean),
+      sounds:previousSounds,
       tags,contexts:tags,updatedAt:new Date().toISOString()
     })
+    o.sounds=$('#fSounds').value.split(',').map(x=>x.trim()).filter(Boolean)
     await db.put('objects',o);scheduleDriveSync();m.close();await refresh();render();toast('Objet enregistré')
   }
 }
@@ -631,7 +669,7 @@ async function makeThermalLabel({title='MISE !',qrDataUrl='',subtitle='',logoOnl
   return canvas.toDataURL('image/png')
 }
 async function makePrinterTestImages(){
-  const target='https://art.acousmatic-theatre.fr/mise-app/'
+  const target=location.href.split('?')[0].split('#')[0]
   const qr=await QRCode.toDataURL(target,{width:280,margin:1,errorCorrectionLevel:'M'})
   return [await makeThermalLabel({logoOnly:true}),await makeThermalLabel({title:'MISE !',qrDataUrl:qr,subtitle:'Scanne pour ouvrir MISE !'})]
 }
@@ -832,20 +870,20 @@ function renderCreator(){
   $('#creatorResults').innerHTML='<div class="panel"><b>Ton parc</b></div><div id="creatorOwned"></div><div class="panel"><b>Autres pistes</b><p class="hint">Suggestions, jamais confondues avec ton inventaire.</p></div><div id="creatorIdeas"></div>'
   renderSearch('#creatorOwned')
   const ideas=searchExternal(q)
-  $('#creatorIdeas').innerHTML=ideas.length?ideas.map(i=>`<article class="result idea"><div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p><small>${esc(i.source||'référence')}</small></div></article>`).join(''):'<div class="empty">Pas encore d’autre piste indexée pour cette recherche.</div>'
+  $('#creatorIdeas').innerHTML=ideas.length?ideas.map(i=>`<article class="result idea"><div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p><small>Source externe · ${esc(i.source||'référence')}</small></div></article>`).join(''):'<div class="empty">Pas encore d’autre piste indexée pour cette recherche. Les élargissements de recherche ne sont pas des documents.</div>'
 }
 
 function render(){
   renderSearch()
-  $('#objectCards').innerHTML=objects.slice().sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'fr')).map(o=>`<button class="card objectCard" data-object="${o.id}">
-    <b>${o.favorite?'★ ':''}${esc(o.name)}</b><span>${(o.sounds||[]).slice(0,4).join(' · ')||'Son à préciser'}</span><small>${esc(caseName(caseBy(o.caseId||o.container_id)))}${o.audioMemo?' · mémo sonore':''}</small></button>`).join('')
+  $('#objectCards').innerHTML=objects.length?objects.slice().sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'fr')).map(o=>`<button class="card objectCard" data-object="${o.id}">
+    <b>${o.favorite?'★ ':''}${esc(o.name)}</b><span>${esc(soundSummary(o)||'Son à préciser')}</span><small>${esc(caseName(caseBy(o.caseId||o.container_id)))}${o.audioMemo?' · mémo sonore':''} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></button>`).join(''):'<div class="empty"><b>Aucun objet pour l’instant.</b><span>Importe tes Data Bruitage ou ajoute une fiche. Rien n’est inventé à ta place.</span></div>'
   $$('[data-object]').forEach(b=>b.onclick=()=>openObject(objects.find(o=>o.id===b.dataset.object)))
 
-  $('#caseCards').innerHTML=cases.map(c=>`<button class="card caseCard" data-case="${c.id}"><b>${esc(caseName(c))}</b><span>${objects.filter(o=>(o.caseId||o.container_id)===c.id).length} objets</span><small>QR prêt</small></button>`).join('')
+  $('#caseCards').innerHTML=cases.length?cases.map(c=>`<button class="card caseCard" data-case="${c.id}"><b>${esc(caseName(c))}</b><span>${objects.filter(o=>(o.caseId||o.container_id)===c.id).length} objets</span><small>QR prêt</small></button>`).join(''):'<div class="empty"><b>Aucun contenant.</b><span>Crée une valise ou une caisse, puis imprime son QR.</span></div>'
   $$('[data-case]').forEach(b=>b.onclick=()=>showCase(b.dataset.case))
 
-  $('#kitCards').innerHTML=kits.map(k=>`<article class="card"><b>${esc(k.name)}</b><span>${(k.objectIds||[]).length} objets · ${esc((k.contexts||[]).join(' · ')||'indépendant')}</span><small>${esc(k.source||'manuel')}</small>
-    <div class="row"><button data-prep="${k.id}">Préparer demain</button><button data-editkit="${k.id}" class="ghost">Modifier</button></div></article>`).join('')
+  $('#kitCards').innerHTML=kits.length?kits.map(k=>`<article class="card"><b>${esc(k.name)}</b><span>${(k.objectIds||[]).length} objets · ${esc((k.contexts||[]).join(' · ')||'indépendant')}</span><small>${esc(k.source||'manuel')} · un kit n’est qu’une vue</small>
+    <div class="row"><button data-prep="${k.id}">Préparer demain</button><button data-editkit="${k.id}" class="ghost">Modifier</button></div></article>`).join(''):'<div class="empty"><b>Aucun kit.</b><span>Un kit est une vue sur le parc, pas la base Data Bruitage.</span></div>'
   $$('[data-prep]').forEach(b=>b.onclick=()=>createMiseFromKit(kitBy(b.dataset.prep)))
   $$('[data-editkit]').forEach(b=>b.onclick=()=>openKit(kitBy(b.dataset.editkit)))
 
@@ -854,7 +892,7 @@ function render(){
     <span>${(m.objectIds||[]).length} objets · ${(m.checked||[]).length} contrôlés</span>
     <div class="checklist">${(m.objectIds||[]).map(id=>objects.find(o=>o.id===id)).filter(Boolean).map(o=>`<label class="check"><input type="checkbox" data-mise="${m.id}" value="${o.id}" ${(m.checked||[]).includes(o.id)?'checked':''}><span>${esc(o.name)} <small>· ${esc(caseName(caseBy(o.caseId||o.container_id)))}</small></span></label>`).join('')}</div>
     <div class="row"><button data-control="${m.id}">📷 Contrôle photo · bêta</button><button data-editmise="${m.id}" class="ghost">Modifier</button></div>
-  </article>`).join(''):'<div class="empty">Crée une mise ou ouvre un kit puis « Préparer demain ».</div>'
+  </article>`).join(''):'<div class="empty"><b>Aucune mise pour le moment.</b><span>Crée une mise ou ouvre un kit pour préparer le spectacle.</span></div>'
   $$('[data-active]').forEach(b=>b.onclick=()=>{activeMise=b.dataset.active;render()})
   $$('#miseCards .check input').forEach(x=>x.onchange=()=>toggleCheck(miseBy(x.dataset.mise),x.value,x.checked))
   $$('[data-editmise]').forEach(b=>b.onclick=()=>openMise(miseBy(b.dataset.editmise)))

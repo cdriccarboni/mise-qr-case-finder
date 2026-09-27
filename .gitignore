@@ -32,3 +32,4 @@ MISE-Data-Bruitage*.xlsx
 android/.gradle/
 android/build/
 android/app/build/
+android/app/src/main/assets/www/

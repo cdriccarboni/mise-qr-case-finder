@@ -2,8 +2,10 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import 'fake-indexeddb/auto'
 import { openDB } from 'idb'
-import { emptyData, DATA_STORES, planImport, mergeData, readData, saveReviewedRow, enrichObjects } from '../src/data-bruitage.js'
-import { exportWorkbook, workbookToData, parseImportFile, textToReview } from '../src/data-import.js'
+import { emptyData, DATA_STORES, planImport, mergeData, readData, saveReviewedRow, enrichObjects, buildIndex, findDuplicates, assignSoundFields } from '../src/data-bruitage.js'
+import { exportWorkbook, workbookToData, parseImportFile, textToReview, exportBinder, exportIndexCsv } from '../src/data-import.js'
+import { fictionalData } from '../scripts/fictional-data.mjs'
+import Fuse from 'fuse.js'
 import { matchDetections, analyseMise, correctionKey } from '../src/vision-matching.js'
 import * as XLSX from 'xlsx'
 
@@ -101,4 +103,56 @@ test('mise analysis separates present, missing, extra, unknown and review withou
   const result = analyseMise(mise, proposals)
   assert.deepEqual(result.present, ['a']); assert.deepEqual(result.missing, ['b']); assert.equal(result.extra.length, 1); assert.equal(result.unknown.length, 1); assert.equal(result.review.length, 2)
   assert.deepEqual(analyseMise(mise, [{ objectId: 'b', validated: true }], []).present, ['b'])
+})
+test('son à entendre and son à imaginer are never merged, and the fictional binder round-trips sources and links', async () => {
+  const row = { sounds: ['usage distinct'], hear: 'ancien entendre', imagine: 'ancien imaginer' }
+  assignSoundFields(row, 'glouglou fictif', '')
+  assert.equal(row.hear, 'glouglou fictif')
+  assert.equal(row.imagine, '')
+  assert.deepEqual(row.sounds, ['usage distinct'])
+  const data = fictionalData()
+  const index = buildIndex(data).find(item => item.id === 'obj-fictif-bouteille')
+  assert.equal(index['son à entendre'], 'glouglou fictif')
+  assert.equal(index['son à imaginer'], 'océan imaginé fictif')
+  assert.equal(index['son à entendre'].includes(index['son à imaginer']), false)
+  const bytes = exportBinder(data)
+  const book = XLSX.read(bytes, { type: 'array' })
+  for (const name of ['Index', 'Objets', 'Sons', 'Sources', 'Doublons']) assert.ok(book.SheetNames.includes(name), name)
+  const back = await parseImportFile(new File([bytes], 'classeur-fictif.xlsx'))
+  const bottle = back.objects.find(item => item.id === 'obj-fictif-bouteille')
+  assert.equal(bottle.hear, 'glouglou fictif')
+  assert.equal(bottle.imagine, 'océan imaginé fictif')
+  assert.deepEqual(bottle.sounds, ['usage fictif distinct'])
+  assert.deepEqual(back.sources.map(item => item.id), data.sources.map(item => item.id))
+  assert.deepEqual(back.objectSounds, data.objectSounds)
+  const duplicates = findDuplicates(data)
+  assert.equal(duplicates.length, 1)
+  assert.match(duplicates[0].ids, /obj-fictif-bouteille/)
+  assert.equal(duplicates[0].provenance, 'generated')
+  const csv = await parseImportFile(new File([exportIndexCsv(data)], 'index-fictif.csv'))
+  const fromCsv = csv.objects.find(item => item.id === 'obj-fictif-bouteille')
+  assert.equal(fromCsv.hear, 'glouglou fictif')
+  assert.equal(fromCsv.imagine, 'océan imaginé fictif')
+  assert.equal(fromCsv.name, 'Bouteille fictive')
+  assert.notEqual(fromCsv.hear, fromCsv.imagine)
+})
+test('five thousand fictional records import and search stay within a usable budget', () => {
+  const incoming = emptyData()
+  for (let i = 0; i < 5000; i++) {
+    incoming.objects.push({
+      id: `fic-${i}`, name: `Objet fictif ${i}`, hear: i % 2 ? 'pluie fictive' : 'vent fictif',
+      imagine: 'océan imaginé fictif', family: 'Fictif', provenance: 'user-document', status: 'available', sounds: [], tags: [], contexts: []
+    })
+  }
+  const started = performance.now()
+  const plan = planImport(emptyData(), incoming)
+  const importMs = performance.now() - started
+  assert.equal(plan.counts.added, 5000)
+  const searchStarted = performance.now()
+  const hits = new Fuse(incoming.objects, { keys: ['hear', 'imagine', 'name'], threshold: .3, ignoreLocation: true }).search('pluie fictive')
+  const searchMs = performance.now() - searchStarted
+  console.log(JSON.stringify({ fictionalRecords: 5000, importMs: Math.round(importMs), searchMs: Math.round(searchMs), hits: hits.length }))
+  assert.ok(importMs < 15000, `import ${importMs}`)
+  assert.ok(searchMs < 2000, `search ${searchMs}`)
+  assert.ok(hits.length > 1000)
 })

@@ -1,7 +1,9 @@
 name: Deploy GitHub Pages
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - grok/mise-finalisation-20260927
   workflow_dispatch:
 permissions:
   contents: read
