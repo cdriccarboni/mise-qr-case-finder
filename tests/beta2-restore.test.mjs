@@ -33,7 +33,7 @@ test('beta.2 data is copied into the MISES keys, kept, and still there after a r
   assert.match(main, /migrateDatabase\(\)/)
   assert.match(main, /openDB\(DB_NAME,DB_VERSION/)
   assert.match(main, /download='MISES-backup\.json'/)
-  assert.match(gradle, /val playApplicationId = "fr\.acousmatictheatre\.mise"/)
+  assert.match(gradle, /val playApplicationId = "fr\.acousmatictheatre\.mises"/)
   assert.match(gradle, /applicationId = playApplicationId/)
   assert.equal(DRIVE_FOLDER_NAME, 'MISES !')
   assert.equal(LEGACY_DRIVE_FOLDER_NAME, 'MISE !')

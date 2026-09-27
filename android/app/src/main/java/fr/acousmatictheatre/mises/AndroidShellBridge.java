@@ -1,4 +1,4 @@
-package fr.acousmatictheatre.mise;
+package fr.acousmatictheatre.mises;
 
 import android.webkit.JavascriptInterface;
 

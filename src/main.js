@@ -8,7 +8,7 @@ import { registerSW } from 'virtual:pwa-register'
 import { readProjectContext, makeControlSummary, makeProjectSummary } from './project-control.js'
 import { artGoogleSession, requestGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState, createSharePackage, loadSharePackage, androidGoogleSignInBlocked, googleSignInUnavailableMessage } from './google-sync.js'
 
-import { DATA_STORES, readData, enrichObjects, assignSoundFields, soundFields, PROVENANCE, provenanceLabel } from './data-bruitage.js'
+import { readData, enrichObjects, assignSoundFields, soundFields, PROVENANCE, provenanceLabel } from './data-bruitage.js'
 import { openDataBruitage } from './data-ui.js'
 import { openLocalPhoto } from './vision-ui.js'
 import { APP_VERSION } from './version.js'
@@ -25,6 +25,7 @@ import { answerBlock, vibeBlock, exerciseBlock } from './terrain-ui.js'
 import './identity.css'
 import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSetting, parseInk } from './ink.js'
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
+import { applyBackup } from './backup.js'
 migrateLocalKeys()
 migrateSessionKeys()
 applyInk(localStorage.getItem(LOCAL_KEYS.ink))
@@ -117,19 +118,8 @@ async function privateStatePayload(){
   return {version:3,exportedAt:new Date().toISOString(),...await readData(db),kits:await db.getAll('kits'),learnings:await db.getAll('learnings'),settings:await db.getAll('settings')}
 }
 async function applyPrivateState(payload){
-  if(!payload||typeof payload!=='object')throw new Error('Sauvegarde MISES ! invalide')
-  for(const store of [...DATA_STORES,'kits']){
-    if(!Array.isArray(payload[store]))continue
-    await db.clear(store)
-    for(const item of Array.isArray(payload[store])?payload[store]:[]) if(item?.id) await db.put(store,item)
-  }
-  if(Array.isArray(payload.learnings)){
-    await db.clear('learnings')
-    for(const item of payload.learnings) if(item?.id) await db.put('learnings',item)
-  }
-  if(Array.isArray(payload.settings)){
-    await db.clear('settings')
-    for(const item of payload.settings) if(item?.id) await db.put('settings',item)
+  await applyBackup(db, payload)
+  if(Array.isArray(payload?.settings)){
     const savedInk = inkFromSettings(payload.settings)
     if(savedInk) localStorage.setItem(LOCAL_KEYS.ink, savedInk)
     else localStorage.removeItem(LOCAL_KEYS.ink)

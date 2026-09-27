@@ -2,7 +2,7 @@
 
 Première enveloppe Android de MISES !, construite à partir de la page Web publiée.
 
-- Application ID : `fr.acousmatictheatre.mise` (constante `playApplicationId` dans `app/build.gradle.kts`)
+- Application ID : `fr.acousmatictheatre.mises` (constante `playApplicationId` dans `app/build.gradle.kts`)
 - minSdk : 26
 - targetSdk / compileSdk : 36
 - Version : `0.3.0-beta.3` (`versionCode` 8)
@@ -10,14 +10,13 @@ Première enveloppe Android de MISES !, construite à partir de la page Web publ
 - Signature des artefacts CI : keystore debug, pour test. La clé d’upload Play n’est pas dans le dépôt.
 - Le workflow produit un APK debug, un APK release et un AAB, tous signés avec la clé de debug pour installation de test. L’impression passe par le service d’impression Android. L’essai WalkPrint/YHK par Bluetooth Classic/RFCOMM reste disponible à part.
 
-## Changer l’applicationId plus tard
+## Nouvelle appli, à côté de l’ancienne
 
-On ne le change pas tant qu’on ne sait pas si une version est déjà sur le Play Store. Un nouvel identifiant est une autre application pour Play.
+`fr.acousmatictheatre.mises` n’est pas une mise à jour de `fr.acousmatictheatre.mise`. Android installe une seconde appli. Le stockage de l’ancienne n’est pas visible dans la nouvelle. Il n’y a pas de projet Capacitor, pas de FileProvider, pas de lien profond autre que l’icône du lanceur.
 
-1. Modifier uniquement `playApplicationId` dans `android/app/build.gradle.kts`. Le `namespace` et l’`applicationId` en dépendent.
-2. Déplacer `android/app/src/main/java/fr/acousmatictheatre/mise` vers le dossier du nouveau package.
-3. Mettre à jour la ligne `package` de chaque fichier Java de ce dossier.
-4. Reconstruire l’APK et l’AAB. Ne pas réutiliser cette constante pour un simple changement de nom visible.
+1. Dans l’ancienne appli : Partager et outils, puis Sauvegarde. Garde le fichier.
+2. Installe la nouvelle appli, ouvre-la, puis Importer une sauvegarde et choisis ce fichier.
+3. Vérifie que tes objets, photos et mises sont là, puis désinstalle l’ancienne.
 
 ## Avant Google Play
 

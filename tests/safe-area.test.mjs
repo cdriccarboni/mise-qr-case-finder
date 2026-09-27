@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8')
 
 test('Android applies the status bar, cutout and keyboard once, without a second CSS margin', () => {
-  const java = read('../android/app/src/main/java/fr/acousmatictheatre/mise/MainActivity.java')
+  const java = read('../android/app/src/main/java/fr/acousmatictheatre/mises/MainActivity.java')
   const css = read('../src/style.css')
   const html = read('../index.html')
   assert.match(java, /setDecorFitsSystemWindows\(getWindow\(\), false\)/)

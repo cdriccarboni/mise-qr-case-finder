@@ -1,0 +1,30 @@
+{
+  "version": 3,
+  "exportedAt": "2026-09-27T12:00:00.000Z",
+  "objects": [
+    {
+      "id": "obj-beta2",
+      "name": "Gourde froissable",
+      "hear": "glouglou",
+      "imagine": "cascade fictive",
+      "aliases": ["gourde"],
+      "tags": ["eau"],
+      "sounds": ["glouglou"],
+      "contexts": ["atelier"],
+      "caseId": "case-beta2",
+      "owned": true,
+      "photo": "data:image/png;base64,iVBORw0KGgo=",
+      "audioMemo": "data:audio/webm;base64,AAAA"
+    }
+  ],
+  "sounds": [{ "id": "sound-beta2", "name": "Glouglou enregistré" }],
+  "objectSounds": [{ "id": "link-beta2", "objectId": "obj-beta2", "soundId": "sound-beta2" }],
+  "aliases": [{ "id": "alias-beta2", "label": "gourde", "targetType": "objects", "targetId": "obj-beta2" }],
+  "mises": [{ "id": "mise-beta2", "name": "Mise du soir", "objectIds": ["obj-beta2"], "checked": ["obj-beta2"] }],
+  "cases": [{ "id": "case-beta2", "name": "Caisse grise n°23" }],
+  "sources": [{ "id": "source-beta2", "name": "Carnet beta.2" }],
+  "review": [{ "id": "review-beta2", "reason": "À vérifier", "proposed": { "name": "Objet en attente" }, "status": "pending" }],
+  "corrections": [{ "id": "corr-beta2", "label": "bottle", "context": "atelier", "action": "match", "objectId": "obj-beta2", "humanValidated": true }],
+  "kits": [{ "id": "kit-beta2", "name": "Kit tournée", "objectIds": ["obj-beta2"] }],
+  "learnings": [{ "id": "learn-beta2", "kind": "label-preference", "label": "bottle", "objectId": "obj-beta2", "active": true, "createdAt": "2026-09-27T12:00:00.000Z" }]
+}

@@ -6,6 +6,8 @@ Mis à jour le 27/09/2026 sur la branche `grok/mise-playconsole-20260927`, à pa
 
 Ce document prépare une fiche. Il n’annonce pas une publication Play, n’envoie rien à la Play Console et ne contacte aucun testeur.
 
+Fiche à créer avec le package **`fr.acousmatictheatre.mises`** (0.3.0-beta.3, `versionCode` 8). Aucune application MISE n’est dans la Play Console. Ce n’est pas une mise à jour du package `fr.acousmatictheatre.mise` mesuré en 0.2.3 dans le tableau ci-dessous.
+
 ## 0. Identité technique
 
 | Champ | Valeur | Statut |

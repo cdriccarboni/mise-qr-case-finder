@@ -20,7 +20,7 @@ Hors ligne : le service worker met en cache le shell et le modèle de vision apr
 
 ## Android
 
-L’application `fr.acousmatictheatre.mise` embarque la PWA dans l’APK (`android/app/src/main/assets/www`, produit par `npm run build` dans le workflow). Elle ne charge plus `https://art.acousmatic-theatre.fr/mise-app/`.
+L’application `fr.acousmatictheatre.mises` embarque la PWA dans l’APK (`android/app/src/main/assets/www`, produit par `npm run build` dans le workflow). Elle ne charge plus `https://art.acousmatic-theatre.fr/mise-app/`.
 
 - `versionCode` 4
 - `versionName` `0.2.2-beta.1`
