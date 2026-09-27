@@ -40,7 +40,7 @@ Vert affiche `#0F6E45`. Blanc dessus : contraste 6,3. Sur le papier : 5,6. Lisib
 
 ## Le logo est le mot
 
-Le mot **mise !** est le logo. Minuscules, sans capitale, dans une sans arrondie. La police est Fredoka (SIL Open Font License), embarquée dans `src/fonts/` avec sa licence `OFL.txt`. Le dessin du logo est vectorisé : il ne dépend pas du chargement de la police, et il reste net hors ligne.
+Le mot **mise !** est le logo, dans la variante **Tampon** : une seconde passe du même dessin, décalée vers le bas et la droite, comme un tirage sérigraphié mal calé. Minuscules, sans capitale, dans une sans arrondie. La police est Fredoka (SIL Open Font License), embarquée dans `src/fonts/` avec sa licence `OFL.txt`. Le dessin du logo est vectorisé : il ne dépend pas du chargement de la police, et il reste net hors ligne.
 
 ![mise !](../public/brand/logo.svg)
 
@@ -48,7 +48,7 @@ Les lettres prennent la couleur de lecture : noir doux sur le papier, crème sur
 
 L’impression une couleur est `logo-mono.svg` : le même dessin, tout en noir, y compris les deux points. L’étiquette thermique l’imprime ainsi, pour que le QR se lise. `logo-mono-light.svg` est le même trait en blanc.
 
-L’icône de l’application est le mot réduit à **m!**, en blanc sur le carré d’encre, pour rester lisible tout petit.
+L’icône de l’application est **m!**, en blanc sur le carré d’encre, avec le décalage du tampon. Le mot entier ne tient pas à cette taille. L’étiquette thermique reprend le mot en une encre, sans ce décalage, pour laisser le QR net. En régie, le tampon est noir sur un blanc, sans encre de couleur.
 
 Les pistes dessinées avant ce choix (caisse dans un jeton, objet qui devient une onde, point d’exclamation sur une ligne) ne sont plus le logo.
 

@@ -185,16 +185,58 @@ def layout():
     }
 
 
-def svg_wordmark(mark, letter, dot, label):
-    circles = ''.join(
-        f'<circle class="markDot" cx="{d["cx"]}" cy="{d["cy"]}" r="{d["r"]}"/>'
-        for d in mark['dots']
+# Tampon: a second pull, down and to the right, in SVG space (y grows downward).
+# Same shift as the study in docs/design/variante-tampon.svg.
+STAMP_X = 40
+STAMP_Y = 26
+# The full word does not hold on an icon. m! keeps the effect with a stronger shift.
+ICON_STAMP_X = 86
+ICON_STAMP_Y = 58
+
+
+def dots_of(mark):
+    if 'dots' in mark:
+        return mark['dots']
+    return [mark['dot']]
+
+
+def circle_tags(dots, fill=None, cls=''):
+    attrs = []
+    if cls:
+        attrs.append(f'class="{cls}"')
+    if fill:
+        attrs.append(f'fill="{fill}"')
+    extra = (' ' + ' '.join(attrs)) if attrs else ''
+    return ''.join(
+        f'<circle{extra} cx="{d["cx"]}" cy="{d["cy"]}" r="{d["r"]}"/>' for d in dots
     )
+
+
+def stamp_body(mark, sx, sy, letter=None, dot=None, ghost=None, classed=False):
+    dots = dots_of(mark)
+    if classed:
+        return (
+            f'<g class="stampGhost" transform="translate({sx} {sy})">'
+            f'<path d="{mark["letters"]}"/>{circle_tags(dots)}</g>'
+            f'<path class="letters" d="{mark["letters"]}"/>{circle_tags(dots, cls="markDot")}'
+        )
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {mark["width"]} {mark["height"]}" '
+        f'<g transform="translate({sx} {sy})" fill="{ghost}">'
+        f'<path d="{mark["letters"]}"/>{circle_tags(dots)}</g>'
+        f'<path fill="{letter}" d="{mark["letters"]}"/>{circle_tags(dots, fill=dot)}'
+    )
+
+
+def stamped_size(mark, sx, sy):
+    return round(mark['width'] + sx, 2), round(mark['height'] + sy, 2)
+
+
+def svg_wordmark(mark, letter, dot, label, sx=STAMP_X, sy=STAMP_Y):
+    width, height = stamped_size(mark, sx, sy)
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
         f'role="img" aria-label="{label}">'
-        f'<path class="letters" fill="{letter}" d="{mark["letters"]}"/>'
-        f'<g fill="{dot}">{circles}</g></svg>'
+        f'{stamp_body(mark, sx, sy, letter, dot, letter)}</svg>'
     )
 
 
@@ -456,23 +498,32 @@ def raster_wordmark(mark, size_h, letter, dot):
     return image
 
 
-def raster_icon(tile, size, ink):
+def raster_icon(tile, size, ink, sx=ICON_STAMP_X, sy=ICON_STAMP_Y):
     image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     pen = ImageDraw.Draw(image)
     radius = int(size * 0.22)
     pen.rounded_rectangle((0, 0, size - 1, size - 1), radius=radius, fill=ink + (255,))
-    # Fit m! inside the safe area.
-    pad = size * 0.2
-    avail_w, avail_h = size - pad * 2, size - pad * 2
-    scale = min(avail_w / tile['width'], avail_h / tile['height'])
-    dw, dh = tile['width'] * scale, tile['height'] * scale
+    pad = size * 0.18
+    avail = size - pad * 2
+    scale = min(avail / (tile['width'] + sx), avail / (tile['height'] + sy))
+    dw = (tile['width'] + sx) * scale
+    dh = (tile['height'] + sy) * scale
     ox, oy = (size - dw) / 2, (size - dh) / 2
-    paint_polygons(image, path_polygons(tile['letters']), (255, 255, 255, 255), scale, ox, oy)
+    white = (255, 255, 255, 255)
+    dots = dots_of(tile)
+    paint_polygons(image, path_polygons(tile['letters']), white, scale, ox + sx * scale, oy + sy * scale)
     pen2 = ImageDraw.Draw(image)
-    d = tile['dot']
-    r = d['r'] * scale
-    cx, cy = ox + d['cx'] * scale, oy + d['cy'] * scale
-    pen2.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(255, 255, 255, 255))
+    for d in dots:
+        r = d['r'] * scale
+        cx = ox + (d['cx'] + sx) * scale
+        cy = oy + (d['cy'] + sy) * scale
+        pen2.ellipse((cx - r, cy - r, cx + r, cy + r), fill=white)
+    paint_polygons(image, path_polygons(tile['letters']), white, scale, ox, oy)
+    for d in dots:
+        r = d['r'] * scale
+        cx = ox + d['cx'] * scale
+        cy = oy + d['cy'] * scale
+        pen2.ellipse((cx - r, cy - r, cx + r, cy + r), fill=white)
     return image
 
 
@@ -494,19 +545,24 @@ def write(path, text):
     path.write_text(text)
 
 
-def write_android(tile, ink):
+def write_android(tile, ink, sx=ICON_STAMP_X, sy=ICON_STAMP_Y):
     box = 72
-    scale = min(box / tile['width'], box / tile['height'])
-    ox = (108 - tile['width'] * scale) / 2
-    oy = (108 - tile['height'] * scale) / 2
+    scale = min(box / (tile['width'] + sx), box / (tile['height'] + sy))
+    ox = (108 - (tile['width'] + sx) * scale) / 2
+    oy = (108 - (tile['height'] + sy) * scale) / 2
+    dot = tile['dot']
     circle = (
-        f'M{tile["dot"]["cx"] - tile["dot"]["r"]},{tile["dot"]["cy"]} '
-        f'a{tile["dot"]["r"]},{tile["dot"]["r"]} 0 1,1 {tile["dot"]["r"] * 2},0 '
-        f'a{tile["dot"]["r"]},{tile["dot"]["r"]} 0 1,1 {-tile["dot"]["r"] * 2},0'
+        f'M{dot["cx"] - dot["r"]},{dot["cy"]} '
+        f'a{dot["r"]},{dot["r"]} 0 1,1 {dot["r"] * 2},0 '
+        f'a{dot["r"]},{dot["r"]} 0 1,1 {-dot["r"] * 2},0'
     )
     group = (
         f'<group android:translateX="{ox:.2f}" android:translateY="{oy:.2f}" '
         f'android:scaleX="{scale:.5f}" android:scaleY="{scale:.5f}">'
+        f'<group android:translateX="{sx}" android:translateY="{sy}">'
+        f'<path android:fillColor="#FFFFFF" android:pathData="{tile["letters"]}"/>'
+        f'<path android:fillColor="#FFFFFF" android:pathData="{circle}"/>'
+        f'</group>'
         f'<path android:fillColor="#FFFFFF" android:pathData="{tile["letters"]}"/>'
         f'<path android:fillColor="#FFFFFF" android:pathData="{circle}"/>'
         f'</group>'
@@ -558,54 +614,34 @@ def main():
     write(ROOT / 'public' / 'brand' / 'logo.svg', svg_wordmark(mark, letter, ink, 'mise !'))
     write(ROOT / 'public' / 'brand' / 'logo-mono.svg', svg_wordmark(mark, '#000', '#000', 'mise !'))
     write(ROOT / 'public' / 'brand' / 'logo-mono-light.svg', svg_wordmark(mark, '#fff', '#fff', 'mise !'))
-    write(ROOT / 'src' / 'brand' / 'wordmark.svg', svg_wordmark(mark, 'currentColor', 'currentColor', 'mise !')
-          .replace('fill="currentColor"', 'class="letters" fill="currentColor"', 1)
-          .replace('<g fill="currentColor">', '<g class="markDots">'))
-    # The replacement above is brittle if both fills are currentColor. Rebuild explicitly.
-    circles = ''.join(
-        f'<circle class="markDot" cx="{d["cx"]}" cy="{d["cy"]}" r="{d["r"]}"/>' for d in mark['dots']
-    )
+    width, height = stamped_size(mark, STAMP_X, STAMP_Y)
     inline = (
-        f'<svg class="miseWordmark" viewBox="0 0 {mark["width"]} {mark["height"]}" role="img" aria-label="mise !">'
-        f'<path class="letters" d="{mark["letters"]}"/>{circles}</svg>'
+        f'<svg class="miseWordmark" viewBox="0 0 {width} {height}" role="img" aria-label="mise !">'
+        f'{stamp_body(mark, STAMP_X, STAMP_Y, classed=True)}</svg>'
     )
     write(ROOT / 'src' / 'brand' / 'wordmark.svg', inline)
 
-    # App icons: m! in white on the ink.
-    icon_svg = (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="mise !">'
-        f'<rect width="64" height="64" rx="14" fill="{ink}"/>'
-        f'<g transform="translate(8,10) scale(0.046)">'
-        f'<path fill="#fff" d="{bang["letters"]}"/>'
-        f'<circle fill="#fff" cx="{bang["dot"]["cx"]}" cy="{bang["dot"]["cy"]}" r="{bang["dot"]["r"]}"/>'
-        f'</g></svg>'
-    )
-    # scale chosen later by fitting; rewrite with a measured scale below.
-    tile_w, tile_h = bang['width'], bang['height']
-    # Fit into 48x44 box at (8, 10).
+    # App icon: m! with the stamp. The full word does not stay readable this small.
+    tile_w = bang['width'] + ICON_STAMP_X
+    tile_h = bang['height'] + ICON_STAMP_Y
     scale = min(48 / tile_w, 44 / tile_h)
     ox = 8 + (48 - tile_w * scale) / 2
     oy = 10 + (44 - tile_h * scale) / 2
+    icon_inner = stamp_body(bang, ICON_STAMP_X, ICON_STAMP_Y, '#fff', '#fff', '#fff')
     icon_svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="mise !">'
         f'<rect width="64" height="64" rx="14" fill="{ink}"/>'
-        f'<g transform="translate({ox:.2f},{oy:.2f}) scale({scale:.5f})">'
-        f'<path fill="#fff" d="{bang["letters"]}"/>'
-        f'<circle fill="#fff" cx="{bang["dot"]["cx"]}" cy="{bang["dot"]["cy"]}" r="{bang["dot"]["r"]}"/>'
-        f'</g></svg>'
+        f'<g transform="translate({ox:.2f},{oy:.2f}) scale({scale:.5f})">{icon_inner}</g></svg>'
     )
     write(ROOT / 'public' / 'icon.svg', icon_svg)
     write(ROOT / 'public' / 'favicon.svg', icon_svg)
-    mask_scale = min(36 / tile_w, 36 / tile_h)
+    mask_scale = min(40 / tile_w, 40 / tile_h)
     mx = (64 - tile_w * mask_scale) / 2
     my = (64 - tile_h * mask_scale) / 2
     mask = (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="mise !">'
         f'<rect width="64" height="64" fill="{ink}"/>'
-        f'<g transform="translate({mx:.2f},{my:.2f}) scale({mask_scale:.5f})">'
-        f'<path fill="#fff" d="{bang["letters"]}"/>'
-        f'<circle fill="#fff" cx="{bang["dot"]["cx"]}" cy="{bang["dot"]["cy"]}" r="{bang["dot"]["r"]}"/>'
-        f'</g></svg>'
+        f'<g transform="translate({mx:.2f},{my:.2f}) scale({mask_scale:.5f})">{icon_inner}</g></svg>'
     )
     write(ROOT / 'public' / 'icon-maskable.svg', mask)
 
@@ -614,7 +650,7 @@ def main():
         image = raster_icon(bang, size, ink_rgb)
         image.save(ROOT / 'public' / name)
 
-    # Label bitmap, black on transparent, height 52.
+    # Thermal label: one ink, no second pull. The offset muddies the word at this size.
     label = raster_wordmark(mark, 52, (0, 0, 0, 255), (0, 0, 0, 255))
     w, h, rows = bits_from(label)
     packed = []
@@ -648,13 +684,12 @@ def main():
     )
     # Simpler horizontal wordmarks.
     def row(dot_hex, caption, x):
+        shown = 150
+        scale = shown / (mark['width'] + STAMP_X)
         return (
-            f'<g transform="translate({x},28)">'
-            f'<g transform="scale({160 / mark["width"]:.5f})">'
-            f'<path fill="#161513" d="{mark["letters"]}"/>'
-            + ''.join(f'<circle fill="{dot_hex}" cx="{d["cx"]}" cy="{d["cy"]}" r="{d["r"]}"/>' for d in mark['dots'])
-            + '</g>'
-            f'<text x="0" y="{160 * mark["height"] / mark["width"] + 22:.1f}" fill="#161513" font-family="ui-sans-serif,system-ui,sans-serif" font-size="13" font-weight="700">{caption}</text>'
+            f'<g transform="translate({x},18)">'
+            f'<g transform="scale({scale:.5f})">{stamp_body(mark, STAMP_X, STAMP_Y, "#161513", dot_hex, "#161513")}</g>'
+            f'<text x="0" y="{scale * (mark["height"] + STAMP_Y) + 18:.1f}" fill="#161513" font-family="ui-sans-serif,system-ui,sans-serif" font-size="13" font-weight="700">{caption}</text>'
             f'</g>'
         )
     sheet = (
@@ -677,7 +712,7 @@ def main():
     write_splash(ink)
     meta = {
         'ink': ink,
-        'viewBox': [mark['width'], mark['height']],
+        'viewBox': [width, height],
         'dots': mark['dots'],
         'labelBitmap': [w, h],
     }

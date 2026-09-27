@@ -452,6 +452,7 @@ $('#app').innerHTML=`
   <button id="preferencesAbout" type="button" class="ghost">À propos</button>
 </div></dialog>
 <dialog id="aboutDlg"><div class="form aboutSheet"><div class="dialoghead"><div><b>À propos</b></div><button id="closeAbout" class="ghost" type="button">×</button></div>
+<div class="wordmark aboutMark">${wordmarkSvg}</div>
 <p class="aboutCredit">MISE ! — Une création de Cédric Carboni pour Acousmatic Theatre</p>
 <p class="aboutLinks">${externalAnchor(ACOUSMATIC_THEATRE_URL, 'Acousmatic Theatre')}${externalAnchor(AUTHOR_WEBSITE_URL, 'Site de Cédric Carboni', 'data-author')}</p>
 <p class="aboutVersion muted">Version <span id="aboutVersion">${APP_VERSION}</span></p>

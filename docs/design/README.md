@@ -1,8 +1,10 @@
 # Études de logo
 
-Le logo dans l’application ne change pas. C’est le mot **mise !**, en minuscules arrondies, avec le point du i et le point du ! dans l’encre.
+La piste retenue est **Tampon**. C’est le logo dans l’application : le mot **mise !**, avec une seconde passe décalée, comme un tirage mal calé. Les points du i et du ! portent l’encre.
 
-Les cinq dessins ci-dessous sont des pistes, pour choisir. Ils ne remplacent rien tant qu’un choix n’est pas fait.
+L’icône (PWA, Android, favicon) est **m!**, avec le même effet. Le mot entier ne reste pas lisible à cette taille. L’étiquette thermique est le mot en une encre, sans le décalage, pour que le QR se lise. En régie, le tampon est noir sur blanc.
+
+Les autres dessins restent des études. Ils ne sont pas dans l’application.
 
 La police est Fredoka, licence SIL OFL, la même que le logo en place. Les lettres sont vectorisées. Ce ne sont pas des visuels de Musiques en jeu(x) – LE KIT, ni d’Odia.
 
@@ -12,9 +14,9 @@ La planche réunit la piste principale et les cinq variantes, en couleur, en une
 
 ![Planche des études](planche.png)
 
-## Piste principale — déjà dans l’appli
+## Piste principale — étude
 
-Minuscules arrondies. Le point du i et le point du ! sont la seule touche d’encre.
+Minuscules arrondies, sans seconde passe. Remplacée par Tampon.
 
 ## Mailloche
 
@@ -34,9 +36,9 @@ Le point du i est une onde courte, du même poids qu’un point, pour rester lis
 
 ![Onde](variante-onde.png)
 
-## Tampon
+## Tampon — retenue
 
-Une seconde passe, décalée, dans la même encre : le mot a l’air tiré au tampon.
+Une seconde passe, décalée, dans la même encre : le mot a l’air tiré au tampon. C’est le logo en place.
 
 ![Tampon](variante-tampon.png)
 

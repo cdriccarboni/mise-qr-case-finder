@@ -6,7 +6,7 @@ import { fictionalData } from '../../scripts/fictional-data.mjs'
 const shots = '/opt/cursor/artifacts/screenshots'
 
 async function dotCenters(page) {
-  return page.evaluate(() => [...document.querySelectorAll('.miseWordmark circle')].map(el => {
+  return page.evaluate(() => [...document.querySelectorAll('header .miseWordmark .markDot')].map(el => {
     const box = el.getBoundingClientRect()
     return { x: box.x + box.width / 2, y: box.y + box.height / 2, w: box.width, h: box.height }
   }))

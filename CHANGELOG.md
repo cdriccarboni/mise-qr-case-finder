@@ -8,7 +8,7 @@
 - Étiquettes : logo, nom, QR, identifiant court. Impression par le service Android. L’essai WalkPrint/YHK reste à part. Le QR de l’étiquette se relit.
 - Nouvelle identité : une seule encre (bleu d’imprimerie `#0B3D91`) sur papier. Le logo est le mot « mise ! », en minuscules arrondies (Fredoka, licence SIL OFL, vectorisé). Les points du i et du ! portent l’encre. L’icône est « m! ». L’esprit sérigraphié vient de Musiques en jeu(x) – LE KIT, sans reprendre son logo, ses photos ni ses dessins. Régie reste en noir et blanc.
 - Écran « À propos » : création de Cédric Carboni pour Acousmatic Theatre, lien vers acousmatic-theatre.fr, lien vers le site personnel https://carboni-cedric.pages-perso.free.fr/, numéro de version. Accessible depuis l’accueil, le menu et les préférences. Les liens s’ouvrent dans le navigateur.
-- Études de logo dans `docs/design/` (mailloche, jeton, onde, tampon, pile), pour choisir. Le logo de l’application reste le mot « mise ! ».
+- Études de logo dans `docs/design/`. La piste retenue est Tampon : le mot « mise ! » avec une seconde passe décalée. L’icône est « m! » avec cet effet. L’étiquette thermique reste en une encre, sans décalage. Régie affiche le tampon en noir sur blanc.
 - Version `0.3.0-beta.1`, Android `versionCode` 6. IndexedDB passe en version 5 : les fiches déjà là sont conservées, un espace « apprentissages » est ajouté.
 - La clé d’envoi Play n’est toujours pas disponible. Les binaires de test sont signés avec la clé debug.
 
