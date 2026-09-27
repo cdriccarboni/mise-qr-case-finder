@@ -1,3 +1,11 @@
+## 0.3.0-beta.5 — 2026-09-27
+
+- Fenêtres : un clic sur le fond autour de n’importe quel dialogue ferme de nouveau la fenêtre et revient au niveau précédent.
+- Préférences → À propos : fermer le popup À propos, au clic extérieur comme avec × ou Échap, rouvre les Préférences.
+- Scanner : clic extérieur et Échap utilisent la vraie fermeture du scanner afin de libérer la caméra et d’annuler proprement un déplacement en cours.
+- Recette navigateur ajoutée pour verrouiller la fermeture par backdrop et le retour au menu précédent.
+- Version 0.3.0-beta.5, Android `versionCode` 10.
+
 ## 0.3.0-beta.4 — 2026-09-27
 
 - Interface : les trois cartouches « Trouver & créer », « Ranger & préparer » et « Partager & outils » gardent désormais leur hauteur propre et s’alignent en haut. Les champs, listes et boutons des blocs Vibe / Exercice restent dans leur cartouche en desktop comme en mobile. Les cartes de jeu reprennent le même arrondi que les autres cartouches.

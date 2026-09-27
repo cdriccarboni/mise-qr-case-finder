@@ -14,8 +14,8 @@ android {
         applicationId = playApplicationId
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.3.0-beta.4"
+        versionCode = 10
+        versionName = "0.3.0-beta.5"
     }
 
     signingConfigs {

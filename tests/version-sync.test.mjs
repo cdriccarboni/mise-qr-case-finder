@@ -5,16 +5,16 @@ import { APP_VERSION, APP_VERSION_CODE } from '../src/version.js'
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8')
 
-test('0.3.0-beta.4 is the same version in the app, the package, Android and the service worker', () => {
-  assert.equal(APP_VERSION, '0.3.0-beta.4')
-  assert.equal(APP_VERSION_CODE, 9)
+test('0.3.0-beta.5 is the same version in the app, the package, Android and the service worker', () => {
+  assert.equal(APP_VERSION, '0.3.0-beta.5')
+  assert.equal(APP_VERSION_CODE, 10)
   assert.equal(JSON.parse(read('../package.json')).version, APP_VERSION)
   assert.equal(JSON.parse(read('../public/version.json')).version, APP_VERSION)
   assert.match(read('../android/app/build.gradle.kts'), new RegExp(`versionCode = ${APP_VERSION_CODE}`))
   assert.match(read('../android/app/build.gradle.kts'), new RegExp(`versionName = "${APP_VERSION}"`))
   assert.match(read('../android/app/src/main/java/fr/acousmatictheatre/mises/MainActivity.java'), /package fr\.acousmatictheatre\.mises/)
-  assert.match(read('../android/app/src/main/java/fr/acousmatictheatre/mises/MainActivity.java'), /MISES-Android\/0\.3\.0-beta\.4/)
-  assert.match(read('../vite.config.js'), /cacheId:'mises-0\.3\.0-beta\.4'/)
+  assert.match(read('../android/app/src/main/java/fr/acousmatictheatre/mises/MainActivity.java'), /MISES-Android\/0\.3\.0-beta\.5/)
+  assert.match(read('../vite.config.js'), /cacheId:'mises-0\.3\.0-beta\.5'/)
   assert.match(read('../android/app/build.gradle.kts'), /val playApplicationId = "fr\.acousmatictheatre\.mises"/)
   assert.match(read('../android/app/build.gradle.kts'), /namespace = playApplicationId/)
   assert.match(read('../android/app/build.gradle.kts'), /applicationId = playApplicationId/)

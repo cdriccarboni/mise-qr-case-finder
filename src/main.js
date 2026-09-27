@@ -1103,12 +1103,51 @@ $('#goalPrinter').onclick=pairPrinter
 $('#manualBtn').onclick=()=>$('#manualDlg').showModal()
 $('#goalManual').onclick=()=>$('#manualDlg').showModal()
 $('#closeManual').onclick=()=>$('#manualDlg').close()
+
+let aboutReturnsToPreferences=false
+function closeAbout(){
+  const about=$('#aboutDlg')
+  if(about?.open)about.close()
+  if(aboutReturnsToPreferences){
+    aboutReturnsToPreferences=false
+    applyUiPreferences()
+    const prefs=$('#preferencesDlg')
+    if(prefs&&!prefs.open)prefs.showModal()
+  }
+}
 function openAbout(){
-  if($('#preferencesDlg')?.open)$('#preferencesDlg').close()
+  const prefs=$('#preferencesDlg')
+  aboutReturnsToPreferences=Boolean(prefs?.open)
+  if(aboutReturnsToPreferences)prefs.close()
   $('#aboutDlg').showModal()
 }
 $('#preferencesAbout').onclick=openAbout
-$('#closeAbout').onclick=()=>$('#aboutDlg').close()
+$('#closeAbout').onclick=closeAbout
+$('#aboutDlg').addEventListener('cancel',event=>{event.preventDefault();closeAbout()})
+
+function isDialogBackdropClick(dialog,event){
+  if(event.target!==dialog)return false
+  const rect=dialog.getBoundingClientRect()
+  return event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom
+}
+function closeDialogFromBackdrop(dialog){
+  if(dialog.id==='scanDlg'){
+    $('#stopScan')?.click()
+    return
+  }
+  if(dialog.id==='aboutDlg'){
+    closeAbout()
+    return
+  }
+  if(dialog.open)dialog.close()
+}
+$$('dialog').forEach(dialog=>{
+  dialog.addEventListener('click',event=>{
+    if(isDialogBackdropClick(dialog,event))closeDialogFromBackdrop(dialog)
+  })
+})
+$('#scanDlg').addEventListener('cancel',event=>{event.preventDefault();$('#stopScan')?.click()})
+
 document.addEventListener('click',event=>{
   const link=event.target.closest?.('a[data-external]')
   if(!link||!window.MisesAndroid)return
