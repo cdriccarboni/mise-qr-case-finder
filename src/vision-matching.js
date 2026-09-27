@@ -63,12 +63,35 @@ const hasTerm = (names, terms) => (terms || []).some(term => {
   if (!needle) return false
   return names.some(name => name === needle || name.split(' ').includes(needle) || (needle.includes(' ') && name.includes(needle)))
 })
-export const translateLabel = label => FRENCH[label] || label
+const CATEGORY = { bottle: "bouteille d'eau" }
+export function genericCategory(label) {
+  const raw = String(label || '')
+  return CATEGORY[raw] || FRENCH[raw] || raw
+}
+export const translateLabel = label => genericCategory(label)
+export function searchFiches(objects, rawLabel, query = '') {
+  const needle = normalize(query)
+  const terms = [normalize(rawLabel), normalize(genericCategory(rawLabel)), normalize(FRENCH[rawLabel] || '')].filter(Boolean)
+  return (objects || []).map(object => {
+    const names = [object.name, ...(object.aliases || []), ...(object.tags || []), object.family || ''].map(normalize).filter(Boolean)
+    const exact = names.some(name => terms.includes(name))
+    const synonym = !exact && hasTerm(names, VISUAL_TERMS[rawLabel])
+    const partial = !exact && !synonym && names.some(name => terms.some(term => term && name.split(' ').includes(term)))
+    const nearby = !exact && !synonym && !partial && hasTerm(names, NEARBY[rawLabel])
+    const lexical = exact ? 1 : synonym ? .86 : partial ? .7 : nearby ? .58 : 0
+    const queried = !needle || names.some(name => name.includes(needle))
+    return { objectId: object.id, name: object.name, lexical, queried }
+  }).filter(item => item.queried && (needle ? item.lexical || item.queried : item.lexical))
+    .sort((a, b) => b.lexical - a.lexical || a.name.localeCompare(b.name, 'fr'))
+}
+export function closestFiches(candidates, limit = 3) {
+  return (candidates || []).filter(item => item.lexical >= 0.7).slice(0, limit)
+}
 export function correctionKey(label, context = '') { return JSON.stringify([normalize(label), normalize(context)]) }
 export function matchDetections(detections, data, context = '', learnings = []) {
   const objects = enrichObjects(data), contextual = normalize(context).split(' ').filter(w => w.length > 2)
   return detections.filter(d => normalize(d.class || d.label) !== 'person').map((d, index) => {
-    const rawLabel = d.class || d.label, label = translateLabel(rawLabel)
+    const rawLabel = d.class || d.label, label = genericCategory(rawLabel)
     const visionScore = Math.max(0, Math.min(1, Number(d.score ?? d.confidence) || 0))
     const learned = data.corrections.find(c => c.id === correctionKey(rawLabel, context))
     const terms = [normalize(rawLabel), normalize(label)]
@@ -82,11 +105,13 @@ export function matchDetections(detections, data, context = '', learnings = []) 
       const kind = exact ? 'nom' : synonym ? 'synonyme' : partial ? 'mot' : nearby ? 'objet proche' : ''
       const contextText = normalize([...(object.contexts || []), ...(object.sounds || []), object.family].join(' '))
       const contextualScore = contextual.length ? contextual.filter(w => contextText.split(' ').includes(w)).length / contextual.length : 0
+      const categoryWords = normalize(label).split(' ').filter(word => word.length > 2)
+      const categoryHit = lexical >= 0.7 && lexical < 1 && categoryWords.some(word => names.some(name => name.split(' ').includes(word)))
+      const closeness = lexical + (categoryHit ? 0.04 : 0)
       // Context only ranks visually plausible candidates; it cannot invent detections.
-      return { objectId: object.id, name: object.name, lexical, kind, contextual: contextualScore, score: lexical ? Math.min(.99, visionScore * .55 + lexical * .35 + contextualScore * .1) : 0 }
+      return { objectId: object.id, name: object.name, lexical, kind, contextual: contextualScore, score: lexical ? Math.min(.99, visionScore * .55 + closeness * .35 + contextualScore * .1) : 0 }
     }).filter(c => c.lexical).sort((a, b) => b.score - a.score)
-    const strongMatch = list => list.find(item => item.lexical >= 0.7)
-    let best = strongMatch(candidates), learnedApplied = false
+    let best, learnedApplied = false
     if (learned?.action === 'match') {
       const object = objects.find(o => o.id === learned.objectId)
       if (object) { best = { objectId: object.id, name: object.name, score: 1 }; learnedApplied = true }
@@ -108,15 +133,24 @@ export function matchDetections(detections, data, context = '', learnings = []) 
         candidate.score = Math.min(.99, candidate.score + Math.min(.08, boost * .02))
       }
       candidates.sort((a, b) => b.score - a.score)
-      best = strongMatch(candidates)
+    }
+    if (!learnedApplied) {
+      const exact = candidates.filter(item => item.lexical === 1)
+      if (exact.length === 1) best = exact[0]
+    }
+    if (learnedApplied && best) {
+      const known = candidates.findIndex(item => item.objectId === best.objectId)
+      const preferred = known >= 0 ? candidates.splice(known, 1)[0] : { ...best, lexical: 1, kind: 'fiche mémorisée' }
+      preferred.score = Math.max(preferred.score || 0, best.score || 0)
+      candidates.unshift(preferred)
     }
     const strong = candidates.filter(item => item.lexical >= 0.7)
-    const ambiguous = !learnedApplied && strong.length > 1 && strong[0].score - strong[1].score < .12
+    const ambiguous = !learnedApplied && !best && strong.length > 1 && strong[0].score - strong[1].score < .12
     const hinted = !best && candidates[0]?.kind === 'objet proche'
     return { id: `detection-${index}`, rawLabel, label: best?.name || label, objectId: best?.objectId || '', bbox: d.bbox,
       confidence: best?.score || visionScore, visionScore, candidates: candidates.slice(0, 5), ambiguous,
       learned: learnedApplied, rejected: learned?.action === 'reject', validated: false, quantity: d.quantity || 1,
-      needsReview: true, evidence: fromPreference ? 'Apprentissage local · association validée, sans réentraînement' : learnedApplied ? 'Correction humaine mémorisée pour ce contexte' : best ? `Vision + ${best.kind || 'nom'} dans la base` : hinted ? `Vision + objet proche dans la base : ${candidates[0].name}` : 'Vision seule · aucune correspondance métier' }
+      needsReview: true, category: label, evidence: fromPreference ? 'Apprentissage local · association validée, sans réentraînement' : learnedApplied ? 'Correction humaine mémorisée pour ce contexte' : best ? `Vision + ${best.kind || 'nom'} dans la base` : strong.length ? `Catégorie ${label} · fiches proches dans la base` : hinted ? `Vision + objet proche dans la base : ${candidates[0].name}` : 'Vision seule · aucune correspondance métier' }
   })
 }
 export function analyseMise(mise, proposals, confirmedIds = mise.checked || []) {

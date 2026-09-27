@@ -48,12 +48,16 @@ test('a detected label proposes the closest fiche, not the raw English word', ()
     { id: 'obj-verre', name: 'Verre à pied', aliases: [], tags: [], sounds: [], contexts: [] }
   )
   const bottle = matchDetections([{ class: 'bottle', score: 0.8, bbox: [0, 0, 8, 8] }], data, '')[0]
-  assert.equal(bottle.objectId, 'obj-gourde')
-  assert.equal(bottle.label, 'Gourde froissable fictive')
+  assert.equal(bottle.objectId, '')
+  assert.equal(bottle.category, "bouteille d'eau")
+  assert.equal(bottle.label, "bouteille d'eau")
+  assert.equal(bottle.candidates[0].objectId, 'obj-gourde')
   assert.equal(bottle.validated, false)
-  assert.match(bottle.evidence, /synonyme/)
+  assert.match(bottle.evidence, /fiches proches/)
   const glass = matchDetections([{ class: 'wine glass', score: 0.7 }], data, '')[0]
-  assert.equal(glass.objectId, 'obj-verre')
+  assert.equal(glass.objectId, '')
+  assert.equal(glass.category, 'verre')
+  assert.equal(glass.candidates[0].objectId, 'obj-verre')
   const lonely = emptyData()
   lonely.objects.push({ id: 'obj-verre', name: 'Verre à pied', aliases: [], tags: [], sounds: [] })
   const near = matchDetections([{ class: 'cup', score: 0.66 }], lonely, '')[0]

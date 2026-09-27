@@ -23,6 +23,8 @@ import { parseIntent, answerIntent } from './conversation.js'
 import { newLearning } from './learning.js'
 import { answerBlock, vibeBlock, exerciseBlock } from './terrain-ui.js'
 import './identity.css'
+import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSetting, parseInk } from './ink.js'
+applyInk(localStorage.getItem('mise-ink'))
 
 registerSW({ immediate:true })
 
@@ -110,7 +112,7 @@ await refresh()
 
 let driveSyncTimer=0,driveSyncBusy=false
 async function privateStatePayload(){
-  return {version:3,exportedAt:new Date().toISOString(),...await readData(db),kits:await db.getAll('kits'),learnings:await db.getAll('learnings')}
+  return {version:3,exportedAt:new Date().toISOString(),...await readData(db),kits:await db.getAll('kits'),learnings:await db.getAll('learnings'),settings:await db.getAll('settings')}
 }
 async function applyPrivateState(payload){
   if(!payload||typeof payload!=='object')throw new Error('Sauvegarde MISE ! invalide')
@@ -122,6 +124,15 @@ async function applyPrivateState(payload){
   if(Array.isArray(payload.learnings)){
     await db.clear('learnings')
     for(const item of payload.learnings) if(item?.id) await db.put('learnings',item)
+  }
+  if(Array.isArray(payload.settings)){
+    await db.clear('settings')
+    for(const item of payload.settings) if(item?.id) await db.put('settings',item)
+    const savedInk = inkFromSettings(payload.settings)
+    if(savedInk) localStorage.setItem(INK_KEY, savedInk)
+    else localStorage.removeItem(INK_KEY)
+    applyInk(savedInk)
+    paintInkSwatches(savedInk || DEFAULT_INK)
   }
   activeMise=null;await refresh();render()
 }
@@ -445,6 +456,7 @@ $('#app').innerHTML=`
 <dialog id="printDlg"></dialog>
 <dialog id="preferencesDlg"><div class="form"><div class="dialoghead"><div><b>Préférences</b><small>Affichage · connexions · données</small></div><button id="closePreferences" class="ghost" type="button">×</button></div>
   <div class="grid2"><label><span>Affichage</span><select id="displayMode"><option value="auto">Auto</option><option value="desktop">Ordinateur</option><option value="mobile">Mobile</option></select></label><label><span>Thème</span><select id="themeMode"><option value="system">Système</option><option value="dark">Sombre</option><option value="light">Clair</option><option value="regie">Mode régie</option></select></label></div>
+  <fieldset class="inkPicker"><legend>Encre</legend><div id="inkSwatches" class="inkSwatches"></div><label>Couleur libre<input id="inkCustom" type="color" value="${DEFAULT_INK}"></label><button id="inkDefault" type="button" class="ghost">Couleur par défaut</button></fieldset>
   <div id="preferencesGoogleState" class="preferenceState"><b>Google Drive</b><span>Non connecté</span></div>
   <button id="preferencesGoogle" type="button">Raccorder Google Drive</button>
   <div id="folderDropZone" class="folderDropZone" tabindex="0"><b>Dossier de travail</b><span id="folderLinkState">Choisis un dossier local pour préparer un lot d’import. Aucun fichier source ne sera modifié.</span><input id="folderDropInput" type="file" webkitdirectory multiple hidden><button id="chooseFolder" type="button" class="ghost">Choisir un dossier</button></div>
@@ -952,8 +964,33 @@ function startVoice(){
   r.start()
 }
 $('#mic').onclick=startVoice
-const DISPLAY_KEY='mise-display-mode',THEME_KEY='mise-theme-mode'
+const DISPLAY_KEY='mise-display-mode',THEME_KEY='mise-theme-mode',INK_KEY='mise-ink'
+applyInk(localStorage.getItem(INK_KEY))
+const savedInk = inkFromSettings([await db.get('settings', 'ink')].filter(Boolean))
+if(savedInk){
+  localStorage.setItem(INK_KEY, savedInk)
+  applyInk(savedInk)
+}
+async function rememberInk(hex){
+  const ink = parseInk(hex) || DEFAULT_INK
+  const custom = ink !== DEFAULT_INK
+  if(custom) localStorage.setItem(INK_KEY, ink)
+  else localStorage.removeItem(INK_KEY)
+  applyInk(ink)
+  if(custom) await db.put('settings', inkSetting(ink))
+  else await db.delete('settings', 'ink')
+  paintInkSwatches(ink)
+}
+function paintInkSwatches(current = parseInk(localStorage.getItem(INK_KEY)) || DEFAULT_INK){
+  const box = $('#inkSwatches')
+  if(!box) return
+  box.innerHTML = INK_PALETTE.map(item => `<button type="button" data-ink="${item.hex}" style="background:${item.hex};color:${contrastOn(item.hex)}" aria-label="${item.name}" aria-pressed="${item.hex === current ? 'true' : 'false'}"></button>`).join('')
+  box.querySelectorAll('[data-ink]').forEach(button => { button.onclick = () => rememberInk(button.dataset.ink) })
+  const custom = $('#inkCustom')
+  if(custom) custom.value = current.toLowerCase()
+}
 function applyUiPreferences(){
+  paintInkSwatches(parseInk(localStorage.getItem(INK_KEY)) || DEFAULT_INK)
   const display=localStorage.getItem(DISPLAY_KEY)||'auto',theme=localStorage.getItem(THEME_KEY)||'system'
   document.documentElement.dataset.display=display
   document.documentElement.dataset.theme=theme
@@ -978,6 +1015,8 @@ function applyUiPreferences(){
   }).catch(()=>{})
 }
 applyUiPreferences()
+$('#inkCustom').addEventListener('input', event => { void rememberInk(event.target.value) })
+$('#inkDefault').onclick = () => { void rememberInk(DEFAULT_INK) }
 $('#preferencesBtn').onclick=()=>{applyUiPreferences();$('#preferencesDlg').showModal()}
 $('#displayMode').onchange=e=>{localStorage.setItem(DISPLAY_KEY,e.target.value);applyUiPreferences()}
 $('#themeMode').onchange=e=>{localStorage.setItem(THEME_KEY,e.target.value);applyUiPreferences()}

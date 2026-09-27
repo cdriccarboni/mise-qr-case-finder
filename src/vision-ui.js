@@ -1,5 +1,5 @@
 import { readData, newId, enrichObjects } from './data-bruitage.js'
-import { matchDetections, analyseMise, correctionKey, translateLabel } from './vision-matching.js'
+import { matchDetections, analyseMise, correctionKey, translateLabel, searchFiches, closestFiches } from './vision-matching.js'
 import { detectLocal } from './local-vision.js'
 import { escapeHtml as esc } from './data-ui.js'
 import { FAMILIES } from './constants.js'
@@ -28,7 +28,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
   const creative = mode === 'hands' || mode === 'universe' || mode === 'group'
   dialog.innerHTML = `<div class="form ${creative ? 'playful' : ''}"><div class="dialoghead"><div><b>${mise && mode === 'control' ? 'Contrôle photo de mise' : esc(heading[0])}</b><small>${esc(mise?.name || heading[1])}</small></div><button data-close class="ghost">Fermer</button></div>
     <div class="visionFrame"><img data-photo class="photoPreview" alt="Photo à analyser"><div data-boxes></div></div>
-    <p class="hint">Analyse sur cet appareil, en plusieurs passages (photo entière, détails, échelles). Le pourcentage est un indice, pas une certitude. Les noms proposés viennent de ta base quand un synonyme ou un objet proche correspond. Rien n’est enregistré sans toi. Une correction mémorisée est une association locale : le modèle n’est pas réentraîné. Les personnes sont ignorées. Un objet sans indice visuel n’est pas inventé.</p>
+    <p class="hint">Analyse sur cet appareil, hors ligne. La catégorie est un nom générique (une bouteille d’eau, une tasse…). Les boutons proposent les fiches les plus proches de ta base, et la recherche trouve le nom exact. Un geste remplace la catégorie par ta fiche et mémorise la correction : la prochaine photo de la même catégorie propose d’abord ton objet. Le modèle n’est pas réentraîné. Les personnes sont ignorées.</p>
     <p data-status role="status">Chargement du modèle local… Vous pouvez déjà saisir un objet.</p>
     <div data-creative hidden></div>
     <div class="batchBar"><label>Tout est dans<select data-batch-case><option value="">Choisir un contenant</option>${(data.cases || []).map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></label>
@@ -73,7 +73,10 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
     const unknown = !p.objectId && !p.rejected
     const row = document.createElement('fieldset'); row.dataset.row = index; row.className = 'visionProposal'
     row.innerHTML = `<legend>Objet ${index + 1}${p.confidence === undefined ? '' : ` · indice visuel ${Math.round(p.confidence * 100)} %`}</legend>
-      <p class="hint">${esc(p.rawLabel ? `${translateLabel(p.rawLabel)} · ${p.evidence}` : 'Saisie humaine')}${p.ambiguous ? ' · Correspondance ambiguë' : ''}${unknown ? ' · Inconnu, à nommer' : ''}${p.objectId ? ' · Déjà dans la base' : ''}</p>
+      <p class="hint">${esc(p.rawLabel ? `Catégorie : ${p.category || translateLabel(p.rawLabel)} · ${p.evidence}` : 'Saisie humaine')}${p.ambiguous ? ' · Correspondance ambiguë' : ''}${unknown ? ' · Inconnu, à nommer' : ''}${p.objectId ? ' · Déjà dans la base' : ''}</p>
+      <div class="fichePicks" data-picks></div>
+      <label>Chercher dans ta base<input data-fiche-search type="search" placeholder="Le nom de ta fiche" ${p.rawLabel ? '' : 'hidden'}></label>
+      <div class="fichePicks" data-fiche-results></div>
       <label>Correspondance<select data-match><option value="">Nouvel objet / inconnu</option><option value="__reject" ${p.rejected ? 'selected' : ''}>Fausse détection · écarter</option>${catalogue.map(o => `<option value="${esc(o.id)}" ${p.objectId === o.id ? 'selected' : ''}>${esc(o.name)}</option>`).join('')}</select></label>
       <label>Nom corrigé<input data-name value="${esc(p.label || '')}"></label>
       <div class="grid2"><label>Son à entendre<input data-hear value="${esc(object?.hear || '')}"></label><label>Son à imaginer<input data-imagine value="${esc(object?.imagine || '')}"></label></div>
@@ -84,6 +87,29 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
       <label class="check"><input data-confirm type="checkbox"><span>${mise ? 'Confirmer et ajouter à la checklist' : 'Confirmer cet objet'}</span></label>
       <label class="check"><input data-learn type="checkbox" ${p.rawLabel ? '' : 'disabled'} ${mode === 'inventory' && p.rawLabel ? 'checked' : ''}><span>Mémoriser cette correction pour la prochaine photo</span></label>`
     $('[data-proposals]').append(row)
+    const choose = async objectId => {
+      const object = catalogue.find(item => item.id === objectId)
+      if (!object) return
+      row.querySelector('[data-match]').value = object.id
+      fillFromObject(row, object)
+      row.querySelector('[data-name]').value = object.name
+      const learn = row.querySelector('[data-learn]')
+      if (learn && !learn.disabled) learn.checked = true
+      if (p.rawLabel) {
+        await db.put('learnings', newLearning({ kind: 'label-preference', label: p.rawLabel, objectId: object.id, context, note: 'Association photo → fiche, sans réentraînement du modèle' }))
+        await db.put('corrections', { id: correctionKey(p.rawLabel, context), label: p.rawLabel, context, action: 'match', objectId: object.id, humanValidated: true, updatedAt: new Date().toISOString() })
+      }
+      summarize()
+    }
+    const paintPicks = (box, items) => {
+      box.innerHTML = items.map(item => `<button type="button" class="ghost" data-pick="${esc(item.objectId || item.id)}">${esc(item.name)}</button>`).join('')
+      box.querySelectorAll('[data-pick]').forEach(button => { button.onclick = () => choose(button.dataset.pick) })
+    }
+    if (p.rawLabel) {
+      paintPicks(row.querySelector('[data-picks]'), closestFiches(p.candidates))
+      const search = row.querySelector('[data-fiche-search]')
+      search.oninput = () => paintPicks(row.querySelector('[data-fiche-results]'), search.value.trim() ? searchFiches(catalogue, p.rawLabel, search.value).slice(0, 6) : [])
+    }
     row.querySelector('[data-match]').onchange = event => { fillFromObject(row, catalogue.find(o => o.id === event.target.value)); summarize() }
     row.oninput = summarize
     summarize()

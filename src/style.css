@@ -136,3 +136,7 @@ html[data-display=mobile] main{padding-left:.75rem;padding-right:.75rem}html[dat
 html[data-display=mobile] .miseBrand .wordmark{font-size:2.05rem}
 html[data-theme=light] .form textarea{color:#151519;background:#fff;border-color:#d1d1d5}
 @media(prefers-color-scheme:light){html[data-theme=system] .form textarea{color:#151519;background:#fff;border-color:#d1d1d5}}
+.fichePicks{display:flex;flex-wrap:wrap;gap:.4rem;margin:.35rem 0}
+.inkSwatches{display:flex;flex-wrap:wrap;gap:.45rem}
+.inkSwatches button{width:2.6rem;height:2.6rem;min-height:2.6rem;padding:0;border:2px solid #fff;border-radius:999px}
+.inkSwatches button[aria-pressed=true]{outline:3px solid var(--text)}
