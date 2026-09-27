@@ -13,13 +13,13 @@ test('le scope Drive reste le scope complet, pas drive.file', () => {
 })
 
 test('sans pont Android, la connexion Google n’est pas bloquée', () => {
-  delete globalThis.MiseAndroid
+  delete globalThis.MisesAndroid
   assert.equal(androidGoogleSignInBlocked(), false)
   assert.equal(googleSignInUnavailableMessage(), ANDROID_GOOGLE_SIGNIN_MESSAGE)
 })
 
 test('le pont Android bloque la session et le chargement Google', async () => {
-  globalThis.MiseAndroid = {
+  globalThis.MisesAndroid = {
     googleSignInAvailable: () => false,
     googleSignInMessage: () => 'refus webview de test'
   }
@@ -27,7 +27,7 @@ test('le pont Android bloque la session et le chargement Google', async () => {
   assert.equal(artGoogleSession(), null)
   assert.equal(googleSignInUnavailableMessage(), 'refus webview de test')
   await assert.rejects(requestGoogleSession(), /refus webview de test/)
-  delete globalThis.MiseAndroid
+  delete globalThis.MisesAndroid
 })
 
 test('la politique publique cite Drive, le contact et les données réellement stockées', () => {
@@ -36,6 +36,7 @@ test('la politique publique cite Drive, le contact et les données réellement s
   assert.match(html, /cdric\.carboni@gmail\.com/)
   assert.match(html, /IndexedDB/)
   assert.match(html, /mémos sonores/)
+  assert.match(html, /mises-data\.json/)
   assert.match(html, /mise-data\.json/)
   assert.match(html, /application Android/)
   assert.match(html, /Cédric Carboni/)

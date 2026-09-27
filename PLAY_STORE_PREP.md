@@ -1,12 +1,12 @@
-# MISE ! — préparation Google Play
+# MISES! — préparation Google Play
 
 ## Identité
 
-- Nom : **MISE !**
+- Nom : **MISES!**
 - Sous-titre produit : **QR Case Finder**
-- Package Android : `fr.acousmatictheatre.mise`
+- Package Android : `fr.acousmatictheatre.mises`
 - Catégorie envisagée : Outils
-- Version de test actuelle : `0.2.3-beta.1` (`versionCode` 5, package `fr.acousmatictheatre.mise`)
+- Version de test actuelle : `0.3.0-beta.3` (`versionCode` 8, package `fr.acousmatictheatre.mises`). La clé d’envoi Play n’est pas dans le dépôt : ne pas la recréer. Si elle est fournie, Gradle la prend via `MISE_UPLOAD_STORE_FILE`, `MISE_UPLOAD_STORE_PASSWORD`, `MISE_UPLOAD_KEY_ALIAS`, `MISE_UPLOAD_KEY_PASSWORD`.
 - L’APK/AAB du workflow est signé avec la clé de debug. La clé d’upload Play existante n’est pas disponible ici : elle n’a pas été recréée. Ne pas envoyer cet AAB comme mise à jour d’une fiche déjà signée avec cette clé.
 - Cible Android : API 36
 
@@ -18,13 +18,13 @@ Inventaire, QR et préparation de mises pour le bruitage et le plateau.
 
 ### Description longue
 
-MISE ! aide à retrouver, préparer et contrôler les objets, valises, kits et mises utiles au bruitage et au travail de plateau.
+MISES! aide à retrouver, préparer et contrôler les objets, valises, kits et mises utiles au bruitage et au travail de plateau.
 
 L’application permet notamment de rechercher dans une base de travail, organiser des objets et des contenants, créer des QR, préparer des mises, scanner des codes, ajouter des photos et rattacher une préparation à un projet.
 
 La base personnelle n’est pas publiée avec l’application. Elle reste locale par défaut et peut être synchronisée volontairement avec un espace privé lorsque la connexion correspondante est activée.
 
-MISE ! est pensée pour une utilisation mobile, y compris sur le terrain et en répétition.
+MISES! est pensée pour une utilisation mobile, y compris sur le terrain et en répétition.
 
 ## Éléments visuels déjà prêts
 
@@ -49,7 +49,7 @@ MISE ! est pensée pour une utilisation mobile, y compris sur le terrain et en r
 ## Avant publication
 
 1. Build Android vert.
-2. Domaine stable pour MISE !.
+2. Domaine stable pour MISES!.
 3. Connexion Google autonome.
 4. Clé d’upload Play durable.
 5. Signature AAB release.
@@ -60,11 +60,11 @@ MISE ! est pensée pour une utilisation mobile, y compris sur le terrain et en r
 
 ## Google OAuth autonome
 
-MISE ! possède maintenant son propre flux Google Identity Services et conserve la compatibilité avec une session ART lorsqu’elle est disponible.
+MISES! possède maintenant son propre flux Google Identity Services et conserve la compatibilité avec une session ART lorsqu’elle est disponible.
 
 Avant le premier test public de la connexion Google, ajouter dans le client OAuth Web utilisé par ART/MISE les origines JavaScript autorisées correspondant aux surfaces réellement publiées :
 
-- l’origine GitHub Pages actuelle de MISE ! pendant la bêta ;
-- le futur domaine stable MISE ! lorsqu’il est activé.
+- l’origine GitHub Pages actuelle de MISES! pendant la bêta ;
+- le futur domaine stable MISES! lorsqu’il est activé.
 
 Ne pas créer de Client Secret dans le navigateur. Le Client ID Web peut être public ; les jetons restent des jetons utilisateur de courte durée en session.

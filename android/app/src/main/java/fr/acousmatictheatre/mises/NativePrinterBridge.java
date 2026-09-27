@@ -1,4 +1,4 @@
-package fr.acousmatictheatre.mise;
+package fr.acousmatictheatre.mises;
 
 import android.Manifest;
 import android.app.Activity;
@@ -7,11 +7,23 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.pdf.PdfDocument;
+import android.os.Bundle;
+import android.os.CancellationSignal;
+import android.os.ParcelFileDescriptor;
+import android.print.PageRange;
+import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintDocumentInfo;
+import android.print.PrintManager;
+import android.print.pdf.PrintedPdfDocument;
 import android.os.Build;
 import android.provider.Settings;
 import android.util.Base64;
@@ -22,6 +34,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -83,6 +96,32 @@ public final class NativePrinterBridge {
     }
 
     @JavascriptInterface
+    public void printWithSystem(String jobName, String dataUrl) {
+        final String safeName = jobName == null || jobName.trim().isEmpty() ? "MISES !" : jobName.trim();
+        final Bitmap bitmap = decodeDataUrl(dataUrl);
+        if (bitmap == null) {
+            emit("Étiquette illisible pour l’impression Android.");
+            return;
+        }
+        activity.runOnUiThread(() -> {
+            PrintManager printManager = (PrintManager) activity.getSystemService(Context.PRINT_SERVICE);
+            if (printManager == null) {
+                emit("Service d’impression Android indisponible.");
+                bitmap.recycle();
+                return;
+            }
+            String job = safeName.length() > 80 ? safeName.substring(0, 80) : safeName;
+            PrintAttributes attributes = new PrintAttributes.Builder()
+                    .setMediaSize(PrintAttributes.MediaSize.ISO_A6)
+                    .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+                    .setColorMode(PrintAttributes.COLOR_MODE_MONOCHROME)
+                    .build();
+            printManager.print(job, new LabelPrintAdapter(activity, job, bitmap), attributes);
+            emit("Impression Android lancée : " + job);
+        });
+    }
+
+    @JavascriptInterface
     public void printImages(String address, String jsonDataUrls) {
         if (!ensureConnectPermission()) return;
         new Thread(() -> {
@@ -112,7 +151,7 @@ public final class NativePrinterBridge {
             } finally {
                 if (socket != null) try { socket.close(); } catch (Exception ignored) {}
             }
-        }, "MISE-YHK-Printer").start();
+        }, "MISES-YHK-Printer").start();
     }
 
     private BluetoothSocket connect(BluetoothDevice device) throws Exception {
@@ -191,12 +230,70 @@ public final class NativePrinterBridge {
     }
 
     private void emit(String message) {
-        final String script = "window.dispatchEvent(new CustomEvent('mise-native-printer-status',{detail:" + JSONObject.quote(message) + "}))";
+        final String script = "window.dispatchEvent(new CustomEvent('mises-native-printer-status',{detail:" + JSONObject.quote(message) + "}))";
         webView.post(() -> webView.evaluateJavascript(script, null));
     }
 
     private static String safeMessage(Throwable error) {
         String message = error.getMessage();
         return message == null || message.trim().isEmpty() ? error.getClass().getSimpleName() : message;
+    }
+
+    private static final class LabelPrintAdapter extends PrintDocumentAdapter {
+        private final Context context;
+        private final String name;
+        private final Bitmap bitmap;
+        private PrintAttributes attributes;
+
+        LabelPrintAdapter(Context context, String name, Bitmap bitmap) {
+            this.context = context;
+            this.name = name;
+            this.bitmap = bitmap;
+        }
+
+        @Override
+        public void onLayout(PrintAttributes oldAttributes, PrintAttributes newAttributes, CancellationSignal cancellationSignal, LayoutResultCallback callback, Bundle extras) {
+            if (cancellationSignal.isCanceled()) {
+                callback.onLayoutCancelled();
+                return;
+            }
+            attributes = newAttributes;
+            callback.onLayoutFinished(new PrintDocumentInfo.Builder(name + ".pdf")
+                    .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                    .setPageCount(1)
+                    .build(), true);
+        }
+
+        @Override
+        public void onWrite(PageRange[] pages, ParcelFileDescriptor destination, CancellationSignal cancellationSignal, WriteResultCallback callback) {
+            PrintedPdfDocument document = new PrintedPdfDocument(context, attributes);
+            try {
+                if (cancellationSignal.isCanceled()) {
+                    callback.onWriteCancelled();
+                    return;
+                }
+                PdfDocument.Page page = document.startPage(0);
+                Canvas canvas = page.getCanvas();
+                canvas.drawColor(Color.WHITE);
+                float scale = Math.min(canvas.getWidth() / (float) bitmap.getWidth(), canvas.getHeight() / (float) bitmap.getHeight());
+                float width = bitmap.getWidth() * scale;
+                float height = bitmap.getHeight() * scale;
+                float left = (canvas.getWidth() - width) / 2f;
+                float top = (canvas.getHeight() - height) / 2f;
+                canvas.drawBitmap(bitmap, null, new RectF(left, top, left + width, top + height), null);
+                document.finishPage(page);
+                document.writeTo(new FileOutputStream(destination.getFileDescriptor()));
+                callback.onWriteFinished(new PageRange[]{PageRange.ALL_PAGES});
+            } catch (Exception error) {
+                callback.onWriteFailed(error.getMessage() == null ? "Impression impossible" : error.getMessage());
+            } finally {
+                document.close();
+            }
+        }
+
+        @Override
+        public void onFinish() {
+            if (!bitmap.isRecycled()) bitmap.recycle();
+        }
     }
 }

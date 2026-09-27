@@ -1,4 +1,4 @@
-name: Validate MISE Web
+name: Validate MISES Web
 
 on:
   push:

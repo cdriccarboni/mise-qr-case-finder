@@ -11,17 +11,25 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher_mise"
-        android:label="MISE !"
+        android:icon="@mipmap/ic_launcher"
+        android:label="MISES!"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="unspecified">
+            android:launchMode="singleTask"
+            android:screenOrientation="unspecified"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="cdriccarboni.github.io" android:pathPrefix="/mise-qr-case-finder" />
             </intent-filter>
         </activity>
     </application>

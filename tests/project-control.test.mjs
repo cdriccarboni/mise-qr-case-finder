@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { readProjectContext, normalizeDetectedObjects, makeControlSummary, makeProjectSummary } from '../src/project-control.js'
+import { readProjectContext, normalizeDetectedObjects, makeControlSummary, makeProjectSummary, planProjectOpen, makeArtLinkExport } from '../src/project-control.js'
 
 test('project context accepts same-origin return and keeps old project id unchanged',()=>{
   const context=readProjectContext('?projectId=show-2019&projectName=Ancien%20spectacle&projectType=show&return=%2Fcompany%2Fprojects','https://art.acousmatic-theatre.fr/mise/')
@@ -10,9 +10,37 @@ test('project context accepts same-origin return and keeps old project id unchan
   assert.equal(context.returnUrl,'https://art.acousmatic-theatre.fr/company/projects')
 })
 
-test('project context rejects cross-origin return',()=>{
-  const context=readProjectContext('?projectId=eac-old&return=https%3A%2F%2Fevil.example%2F','https://art.acousmatic-theatre.fr/mise/')
-  assert.equal(context.returnUrl,'')
+test('project context accepts a cross-origin https returnUrl and ignores unsafe addresses',()=>{
+  const pages='https://cdriccarboni.github.io/mise-qr-case-finder/'
+  const ok=readProjectContext('?projectId=eac-atelier&projectName=Atelier%20EAC&source=art&returnUrl=https%3A%2F%2Fart.example%2Fprojets%2Feac-atelier',pages)
+  assert.equal(ok.projectId,'eac-atelier')
+  assert.equal(ok.projectName,'Atelier EAC')
+  assert.equal(ok.source,'art')
+  assert.equal(ok.returnUrl,'https://art.example/projets/eac-atelier')
+  assert.equal(readProjectContext('?projectId=eac-old&returnUrl=javascript:alert(1)',pages).returnUrl,'')
+  assert.equal(readProjectContext('?projectId=eac-old&returnUrl=https://user:secret@art.example/x',pages).returnUrl,'')
+  assert.equal(readProjectContext('?projectId=eac-old&returnUrl=data:text/html,hi',pages).returnUrl,'')
+  assert.equal(readProjectContext('?projectId=../etc&projectName=Nope',pages).projectId,'')
+  assert.equal(readProjectContext(`?projectId=${'a'.repeat(81)}`,pages).projectId,'')
+  assert.equal(readProjectContext('?projectId=show-1&projectName=%0A%0A<script>',pages).projectName,'<script>')
+})
+
+test('an unknown project is created, a linked one is opened, an old mise is offered for attachment',()=>{
+  const project={projectId:'show-2019',projectName:'Ancien spectacle'}
+  assert.equal(planProjectOpen([],project).action,'create')
+  assert.equal(planProjectOpen([],project).name,'Ancien spectacle')
+  const old={id:'mise-old',name:'Mise d’avant',createdAt:'2020-01-01T00:00:00.000Z'}
+  assert.equal(planProjectOpen([old],project).action,'attach')
+  const linked={id:'mise-linked',name:'Déjà liée',projectId:'show-2019',updatedAt:'2026-09-01T00:00:00.000Z'}
+  assert.deepEqual(planProjectOpen([old,linked],project),{action:'open',mise:linked})
+  assert.equal(planProjectOpen([linked],{projectId:''}).action,'none')
+})
+
+test('the ART summary is a local count and is not a copy of the catalogue',()=>{
+  assert.deepEqual(makeArtLinkExport({projectId:'show-2019',projectName:'Ancien spectacle',objectCount:12,caseCount:3,updatedAt:'2026-09-27T12:00:00.000Z'}),{
+    version:1,kind:'mises-art-summary',projectId:'show-2019',projectName:'Ancien spectacle',objectCount:12,caseCount:3,updatedAt:'2026-09-27T12:00:00.000Z'
+  })
+  assert.equal('objects' in makeArtLinkExport({objectCount:1,caseCount:0}),false)
 })
 
 test('photo analysis preserves structured proposals and defaults safely',()=>{

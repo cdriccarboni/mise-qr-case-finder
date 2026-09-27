@@ -1,5 +1,7 @@
 # Plateformes
 
+> **Code de cette branche : 0.3.0-beta.3, `versionCode` 8.** Le récit historique ci-dessous décrit les pré-versions 0.2.x. Le site Pages public ne change qu’au merge dans `main`. La clé d’envoi Play n’est toujours pas dans le dépôt.
+
 ## Web / PWA
 
 Le site GitHub Pages du dépôt sert la PWA. Le workflow `.github/workflows/pages.yml` publie `main` et la branche `grok/mise-finalisation-20260927`.
@@ -18,7 +20,7 @@ Hors ligne : le service worker met en cache le shell et le modèle de vision apr
 
 ## Android
 
-L’application `fr.acousmatictheatre.mise` embarque la PWA dans l’APK (`android/app/src/main/assets/www`, produit par `npm run build` dans le workflow). Elle ne charge plus `https://art.acousmatic-theatre.fr/mise-app/`.
+L’application `fr.acousmatictheatre.mises` embarque la PWA dans l’APK (`android/app/src/main/assets/www`, produit par `npm run build` dans le workflow). Elle ne charge plus `https://art.acousmatic-theatre.fr/mise-app/`.
 
 - `versionCode` 4
 - `versionName` `0.2.2-beta.1`

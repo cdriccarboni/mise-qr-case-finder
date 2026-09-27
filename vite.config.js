@@ -3,20 +3,28 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   base:'./',
   plugins:[VitePWA({
-    registerType:'autoUpdate',
-    includeAssets:['icon.svg','apple-touch-icon.png'],
+    registerType:'prompt',
+    includeAssets:['favicon.svg','icon.svg','icon-maskable.svg','apple-touch-icon.png','icon-192.png','icon-512.png'],
     manifest:{
-      name:'MISE ! — QR Case Finder', short_name:'MISE !',
-      description:'Cherche ta mise — inventaire de bruitage, matériel, QR et préparation.',
-      theme_color:'#0b0b0d', background_color:'#0b0b0d',
+      name:'MISES! — QR Case Finder', short_name:'MISES!',
+      description:'Cherche tes mises — inventaire de bruitage, matériel, QR et préparation.',
+      theme_color:'#D12A74', background_color:'#141311',
       display:'standalone', start_url:'./', scope:'./', lang:'fr',
-      icons:[{src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any'},{src:'apple-touch-icon.png',sizes:'180x180',type:'image/png',purpose:'any'}]
+      icons:[
+        {src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any'},
+        {src:'icon-maskable.svg',sizes:'any',type:'image/svg+xml',purpose:'maskable'},
+        {src:'icon-192.png',sizes:'192x192',type:'image/png',purpose:'any'},
+        {src:'icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'},
+        {src:'apple-touch-icon.png',sizes:'180x180',type:'image/png',purpose:'any'}
+      ]
     },
     workbox:{
+      cacheId:'mises-0.3.0-beta.3',
       navigateFallback:'index.html',
-      globPatterns:['**/*.{js,mjs,css,html,svg,json,bin,png}','models/coco-ssd/*'],
+      globPatterns:['**/*.{js,mjs,css,html,svg,json,bin,png,ttf}','models/coco-ssd/*'],
       maximumFileSizeToCacheInBytes:8*1024*1024,
-      cleanupOutdatedCaches:true
+      cleanupOutdatedCaches:true,
+      clientsClaim:true
     }
   })]
 })

@@ -1,18 +1,64 @@
 // Project context never scopes or copies the global Data Bruitage catalogue.
+// ART only passes a link. No company record is hardcoded here.
+const ID_RE = /^[A-Za-z0-9_-]+$/
+const CONTROL_RE = /[\u0000-\u001F\u007F]/g
+
+export function cleanToken(raw, max) {
+  const value = String(raw || '').trim()
+  if (!value || value.length > max || !ID_RE.test(value)) return ''
+  return value
+}
+
+export function cleanProjectName(raw) {
+  return String(raw || '').replace(CONTROL_RE, '').trim().slice(0, 120)
+}
+
+export function sanitizeReturnUrl(raw, href) {
+  const value = String(raw || '').trim()
+  if (!value || value.length > 2048) return ''
+  try {
+    const url = new URL(value, href)
+    if (!['http:', 'https:'].includes(url.protocol)) return ''
+    if (url.username || url.password) return ''
+    return url.href
+  } catch {
+    return ''
+  }
+}
+
 export function readProjectContext(search, href) {
   const params = new URLSearchParams(search)
-  let returnUrl = ''
-  try {
-    const url = new URL(params.get('return') || '', href)
-    const current = new URL(href)
-    if (params.get('return') && ['http:', 'https:'].includes(url.protocol) && url.origin === current.origin && !url.username && !url.password) returnUrl = url.href
-  } catch { /* An invalid return address must not block field work. */ }
+  const returnRaw = params.get('returnUrl') || params.get('return') || ''
   return {
-    projectId: (params.get('projectId') || '').trim(),
-    projectName: (params.get('projectName') || '').trim(),
-    projectType: (params.get('projectType') || '').trim(),
-    companyId: (params.get('companyId') || '').trim(),
-    returnUrl
+    projectId: cleanToken(params.get('projectId'), 80),
+    projectName: cleanProjectName(params.get('projectName')),
+    projectType: cleanToken(params.get('projectType'), 40),
+    companyId: cleanToken(params.get('companyId'), 80),
+    source: cleanToken(params.get('source'), 40),
+    returnUrl: sanitizeReturnUrl(returnRaw, href)
+  }
+}
+
+export function planProjectOpen(mises, project) {
+  if (!project?.projectId) return { action: 'none' }
+  const list = Array.isArray(mises) ? mises : []
+  const byRecent = (a, b) => (b.updatedAt || b.createdAt || '').localeCompare(a.updatedAt || a.createdAt || '')
+  const linked = list.filter(m => m?.projectId === project.projectId).sort(byRecent)
+  if (linked.length) return { action: 'open', mise: linked[0] }
+  const unlinked = list.filter(m => m && !m.projectId).sort(byRecent)
+  if (unlinked.length) return { action: 'attach', candidates: unlinked }
+  return { action: 'create', name: project.projectName || 'Mise' }
+}
+
+export function makeArtLinkExport({ projectId, projectName, objectCount, caseCount, updatedAt } = {}) {
+  return {
+    version: 1,
+    kind: 'mises-art-summary',
+    projectId: projectId || null,
+    projectName: projectName || '',
+    objectCount: Number.isFinite(objectCount) && objectCount >= 0 ? objectCount : 0,
+    caseCount: Number.isFinite(caseCount) && caseCount >= 0 ? caseCount : 0,
+    updatedAt: updatedAt || null
   }
 }
 

@@ -1,8 +1,12 @@
-# MISE ! — Dossier Google Play Console (test fermé)
+# MISES! — Dossier Google Play Console (test fermé)
+
+> **Code actuel : 0.3.0-beta.3 (`versionCode` 8).** Les statuts « vérifié » de ce dossier portent sur les binaires `0.2.3-beta.1` déjà mesurés. Ils ne sont pas réécrits. La clé d’envoi Play est toujours absente du dépôt : elle n’a pas été recréée, ni devinée. Les APK de test 0.3.0 restent signés avec la clé debug.
 
 Mis à jour le 27/09/2026 sur la branche `grok/mise-playconsole-20260927`, à partir du code de `0.2.3-beta.1` (`versionCode` 5) et des binaires construits dans cette session. Statuts : **vérifié** / **partiel** / **bloqué** / **non testé**. Les inconnues restent marquées **à confirmer par Cédric**.
 
 Ce document prépare une fiche. Il n’annonce pas une publication Play, n’envoie rien à la Play Console et ne contacte aucun testeur.
+
+Fiche à créer avec le package **`fr.acousmatictheatre.mises`** (0.3.0-beta.3, `versionCode` 8). Aucune application MISE n’est dans la Play Console. Ce n’est pas une mise à jour du package `fr.acousmatictheatre.mise` mesuré en 0.2.3 dans le tableau ci-dessous.
 
 ## 0. Identité technique
 
@@ -33,7 +37,7 @@ Un build local antérieur, sur une autre machine, a produit les mêmes versionCo
 **Nom de l'application** (6/30) :
 
 ```
-MISE !
+MISES!
 ```
 
 **Description courte** (70/80) :
@@ -45,7 +49,7 @@ Inventaire, QR et préparation de mises pour le bruitage et le plateau.
 **Description longue** :
 
 ```
-MISE ! aide à retrouver, préparer et contrôler les objets, valises, kits et mises utiles au bruitage et au travail de plateau.
+MISES! aide à retrouver, préparer et contrôler les objets, valises, kits et mises utiles au bruitage et au travail de plateau.
 
 • Rechercher dans votre base de travail (objets, contenants, kits, sons)
 • Organiser objets et contenants, créer et imprimer des QR
@@ -58,7 +62,7 @@ MISE ! aide à retrouver, préparer et contrôler les objets, valises, kits et m
 
 Vos données restent sur l'appareil. Dans cette version Android, la synchronisation Google Drive n'est pas disponible : Google bloque l'identification dans la fenêtre intégrée. L'application fonctionne sans compte. Pas de publicité, pas de mesure d'audience.
 
-MISE ! est pensée pour le terrain et la répétition : utilisable hors ligne.
+MISES! est pensée pour le terrain et la répétition : utilisable hors ligne.
 ```
 
 **Type** : Application · **Catégorie** : Outils (alternative : Productivité) · **Tags** : jusqu’à 5 tags proposés par la Console, proches de inventaire, QR, organisation (**à confirmer par Cédric**).
@@ -137,8 +141,8 @@ Conséquence, inchangée pour le web : scope restreint. En mode test OAuth, les 
 
 ## 8. Règles de confidentialité
 
-- Fichier : `public/privacy.html` (texte du 27/09/2026). Il cite Google Drive, `cdric.carboni@gmail.com`, IndexedDB, les photos, les mémos sonores, le fichier `mise-data.json`, et le fait que l’application Android 0.2.3 ne transmet pas ces données.
-- URL prévue : https://cdriccarboni.github.io/mise-qr-case-finder/privacy.html
+- Fichier : `public/privacy.html` (texte du 27/09/2026). Il cite Google Drive, `cdric.carboni@gmail.com`, IndexedDB, les photos, les mémos sonores, le fichier `mises-data.json` (l’ancien `mise-data.json` reste relu et n’est pas supprimé), et le fait que l’application Android ne transmet pas ces données.
+- URL prévue : https://cdriccarboni.github.io/mise-qr-case-finder/privacy.html (constante `PRIVACY_URL` dans `src/about.js`, le dépôt n’est pas renommé)
 - **Partiel** : le 27/09/2026, cette URL répond HTTP 200 avec l’ancien texte (pas de Google Drive, pas d’adresse). Le workflow Pages ne déploie que `main`. Le nouveau texte sera en ligne seulement après merge de cette branche dans `main`. Ne pas coller l’URL dans la Console tant que le texte en ligne n’est pas celui du dépôt.
 
 Correspondance avec le code (**vérifié** par lecture, test unitaire sur les phrases du HTML) :
@@ -147,11 +151,11 @@ Correspondance avec le code (**vérifié** par lecture, test unitaire sur les ph
 |---|---|
 | Base locale IndexedDB, pas envoyée au développeur | `src/data-bruitage.js` (`DATA_STORES`) + `kits` + `settings` dans IndexedDB (`src/main.js`) |
 | Photos JPEG réduites et mémos audio dans les fiches | `resizePhoto` (JPEG, côté appareil) ; `audioMemo` en data URL via `MediaRecorder` |
-| Synchro Drive facultative dans le navigateur : e-mail via userinfo, fichier `mise-data.json` sous `_ART` / `MISE !`, photos et mémos inclus | `connectedGoogleProfile`, `privateStatePayload` = `readData` + `kits` (les champs photo et audio sont dans les objets) |
+| Synchro Drive facultative dans le navigateur : e-mail via userinfo, fichier `mises-data.json` sous `_ART` / `MISES !`, photos et mémos inclus. L’ancien `mise-data.json` dans « MISE ! » est relu s’il n’y a pas encore de copie, et il n’est pas supprimé. | `connectedGoogleProfile`, `privateStatePayload` = `readData` + `kits` (les champs photo et audio sont dans les objets) |
 | Partage : fichier séparé, médias seulement si la case est cochée, adresses envoyées à l’API Permissions | `sharePayload`, `createSharePackage`, `grantFileReader` (`sendNotificationEmail=true`) |
 | Android 0.2.3 : pas de connexion, pas d’envoi | `AndroidShellBridge`, blocage des hôtes Google dans `MainActivity` |
 | Reconnaissance sur l’appareil, image non envoyée | `src/local-vision.js` charge `models/coco-ssd`. `requestPhotoAnalysis` (`/api/staging-analyse`) n’est appelé par aucun écran. Playwright hors ligne vérifie qu’aucune requête vers cette route ne part |
-| Jeton en session navigateur | `sessionStorage`, clé `mise-google-oauth-session-v1` |
+| Jeton en session navigateur | `sessionStorage`, clé `mises-google-oauth-session-v1` (copie de `mise-google-oauth-session-v1` si la nouvelle est absente) |
 
 ## 9. Sécurité des données
 
@@ -168,7 +172,7 @@ Dans cet APK, la connexion Google ne démarre pas et les hôtes Google sont bloq
 | Type Play | Collecté par l’APK 0.2.3 | Partagé | Pourquoi |
 |---|---|---|---|
 | Adresse e-mail | Non | Non | userinfo n’est appelé que dans le navigateur, après connexion. L’APK ne lance pas cette connexion. |
-| Photos | Non | Non | stockées dans IndexedDB. Incluses dans `mise-data.json` seulement si l’utilisateur synchronise depuis un navigateur. |
+| Photos | Non | Non | stockées dans IndexedDB. Incluses dans `mises-data.json` seulement si l’utilisateur synchronise depuis un navigateur. |
 | Enregistrements vocaux | Non | Non | même règle que les photos (`audioMemo`). |
 | Fichiers et documents | Non | Non | import et base restent locaux. L’export JSON est un fichier que l’utilisateur enregistre lui-même. |
 

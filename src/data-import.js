@@ -61,12 +61,16 @@ export function textToReview(text, sourceId, kind) {
   if (!paragraphs.length) data.review.push({ id: `${sourceId}-empty`, sourceId, reason: 'Aucun texte extrait. Document scanné ou vide : saisie manuelle nécessaire (OCR non inclus).', status: 'pending', provenance: 'review' })
   return data
 }
+const DATA_MARKERS = ['MISES-Data-Bruitage-v1', 'MISE-Data-Bruitage-v1']
+const BINDER_MARKERS = ['MISES-Classeur-v1', 'MISE-Classeur-v1']
+const MARKER_SHEETS = ['_MISES', '_MISE']
 export function workbookToData(bytes, sourceId, csv = false) {
   const book = XLSX.read(bytes, { type: 'array', cellDates: false, raw: true, ...(csv ? { codepage: 65001 } : {}) })
-  const marker = book.Sheets._MISE?.A1?.v
-  const classeur = marker === 'MISE-Classeur-v1'
-  const canonical = marker === 'MISE-Data-Bruitage-v1' || classeur
-  const skip = new Set(['_MISE', ...(classeur ? ['Index', 'Doublons'] : [])])
+  const markerSheet = MARKER_SHEETS.find(name => book.Sheets[name])
+  const marker = markerSheet ? book.Sheets[markerSheet]?.A1?.v : undefined
+  const classeur = BINDER_MARKERS.includes(marker)
+  const canonical = DATA_MARKERS.includes(marker) || classeur
+  const skip = new Set([...MARKER_SHEETS, ...(classeur ? ['Index', 'Doublons'] : [])])
   const tables = {}
   for (const name of book.SheetNames.filter(n => !skip.has(n))) {
     const rows = XLSX.utils.sheet_to_json(book.Sheets[name], { defval: '' })
@@ -77,7 +81,7 @@ export function workbookToData(bytes, sourceId, csv = false) {
 }
 export function exportWorkbook(data) {
   const book = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([['MISE-Data-Bruitage-v1']]), '_MISE')
+  XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([['MISES-Data-Bruitage-v1']]), '_MISES')
   for (const [key, title] of Object.entries(TABLES)) {
     const rows = (data[key] || []).map(row => Object.fromEntries(Object.entries(row).filter(([, v]) => v !== undefined).map(([k, v]) => [k, v !== null && typeof v !== 'object' && v !== '' && !(typeof v === 'string' && v.startsWith('json:')) ? v : `json:${JSON.stringify(v)}`])))
     XLSX.utils.book_append_sheet(book, rows.length ? XLSX.utils.json_to_sheet(rows) : XLSX.utils.aoa_to_sheet([['id']]), title)
@@ -86,7 +90,7 @@ export function exportWorkbook(data) {
 }
 export function exportBinder(data) {
   const book = XLSX.read(exportWorkbook(data), { type: 'array' })
-  if (book.Sheets._MISE?.A1) book.Sheets._MISE.A1.v = 'MISE-Classeur-v1'
+  if (book.Sheets._MISES?.A1) book.Sheets._MISES.A1.v = 'MISES-Classeur-v1'
   const index = buildIndex(data)
   const duplicates = findDuplicates(data)
   XLSX.utils.book_append_sheet(book, index.length ? XLSX.utils.json_to_sheet(index) : XLSX.utils.aoa_to_sheet([['id']]), 'Index')
@@ -112,7 +116,7 @@ export async function parseImportFile(file) {
   if (['xlsx', 'xls', 'csv'].includes(extension)) ({ data, canonical } = workbookToData(bytes, sourceId, extension === 'csv'))
   else if (extension === 'json') {
     const payload = JSON.parse(new TextDecoder().decode(bytes))
-    canonical = payload.schema === 'MISE-Data-Bruitage-v1'
+    canonical = DATA_MARKERS.includes(payload.schema)
     data = importTables(Array.isArray(payload) ? { objects: payload } : payload.tables || Object.fromEntries(Object.entries(payload).filter(([, value]) => Array.isArray(value))), sourceId, { canonical })
   } else {
     let text
@@ -142,11 +146,11 @@ export async function parseImportFile(file) {
   return data
 }
 export function downloadWorkbook(data) {
-  downloadBytes(exportWorkbook(data), 'MISE-Data-Bruitage.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  downloadBytes(exportWorkbook(data), 'MISES-Data-Bruitage.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 }
 export function downloadBinder(data) {
-  downloadBytes(exportBinder(data), 'MISE-Classeur.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  downloadBytes(exportBinder(data), 'MISES-Classeur.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 }
 export function downloadIndexCsv(data) {
-  downloadBytes(new TextEncoder().encode(exportIndexCsv(data)), 'MISE-Index.csv', 'text/csv;charset=utf-8')
+  downloadBytes(new TextEncoder().encode(exportIndexCsv(data)), 'MISES-Index.csv', 'text/csv;charset=utf-8')
 }

@@ -6,7 +6,7 @@ import { fictionalData } from '../../scripts/fictional-data.mjs'
 const shots = '/opt/cursor/artifacts/screenshots'
 
 async function dotCenters(page) {
-  return page.evaluate(() => [...document.querySelectorAll('.miseWordmark circle')].map(el => {
+  return page.evaluate(() => [...document.querySelectorAll('header .miseWordmark .markDot')].map(el => {
     const box = el.getBoundingClientRect()
     return { x: box.x + box.width / 2, y: box.y + box.height / 2, w: box.width, h: box.height }
   }))
@@ -29,9 +29,9 @@ test('logo dots stay aligned and the fictional catalogue can be corrected offlin
     await page.setViewportSize({ width, height: 900 })
     const dots = await dotCenters(page)
     expect(dots, `largeur ${width}`).toHaveLength(2)
-    expect(Math.abs(dots[0].y - dots[1].y), `alignement vertical ${width}`).toBeLessThan(0.75)
+    expect(dots[1].y - dots[0].y, `le point du ! est sous le point du i ${width}`).toBeGreaterThan(8)
     expect(Math.abs(dots[0].h - dots[1].h), `taille ${width}`).toBeLessThan(0.75)
-    expect(Math.abs(dots[0].x - dots[1].x)).toBeGreaterThan(20)
+    expect(dots[1].x - dots[0].x).toBeGreaterThan(20)
     await page.locator('header').screenshot({ path: `${shots}/logo-${width}.png` })
   }
   await page.setViewportSize({ width: 1280, height: 900 })
@@ -99,7 +99,7 @@ test('bad audio, refused microphone, container QR and unconfirmed photo stay exp
   await expect(page.locator('#audioNote')).toContainText('Permission micro refusée')
   await page.locator('#saveObject').click()
   await page.evaluate(() => new Promise((resolve, reject) => {
-    const request = indexedDB.open('mise-db')
+    const request = indexedDB.open('mises-db')
     request.onerror = () => reject(request.error)
     request.onsuccess = () => {
       const db = request.result

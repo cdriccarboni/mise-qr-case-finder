@@ -1,12 +1,14 @@
-# Pour commencer — MISE ! 0.2.2-beta.1
+# Pour commencer — MISES! 0.3.0-beta.3
 
-MISE ! sert à retrouver et classer tes Data Bruitage : documents, listes, objets, sons, contenants. Le Kit Acoustique, les kits et les mises sont des vues sur cette base, pas la base elle-même.
+MISES! sert à retrouver et classer tes Data Bruitage : documents, listes, objets, sons, contenants. Le Kit Acoustique, les kits et les mises sont des vues sur cette base, pas la base elle-même.
+
+Cette version ajoute l’inventaire par photo, le rangement par QR, le Vibe bruitage, « Crée ton bruitage » et des exercices générés. Ce que tu possèdes (avec l’endroit) reste séparé de ce qui est seulement suggéré.
 
 Tout ce que tu importes reste sur l’appareil (IndexedDB), sauf si tu connectes toi-même Google Drive ou si tu partages une sélection.
 
 ## Ouvrir
 
-1. Ouvre la PWA. Le site public https://cdriccarboni.github.io/mise-qr-case-finder/ sert encore `0.2.1-beta.1`. La `0.2.2-beta.1` de test est la pré-version [v0.2.2-beta.1-test](https://github.com/cdriccarboni/mise-qr-case-finder/releases/tag/v0.2.2-beta.1-test) : APK debug signé debug, et zip web à servir avec `python3 -m http.server` après décompression.
+1. Ouvre la PWA. Le site public https://cdriccarboni.github.io/mise-qr-case-finder/ suit `main` seulement après un merge. L’URL du dépôt et celle de la confidentialité sont dans `src/about.js` (`REPOSITORY_URL`, `PRIVACY_URL`) : elles ne changent pas avec le nom MISES. Cette branche est `0.3.0-beta.3` (`versionCode` 8). L’APK de test est signé avec la clé debug tant que la clé d’upload Play n’est pas fournie.
 2. La première page est vide de tes données. L’application publique n’embarque pas ton inventaire.
 3. Un exemple fictif est fourni dans `public/exemples/` (`classeur-fictif.xlsx`, `index-fictif.csv`). Ce n’est pas ta base.
 
@@ -34,11 +36,15 @@ La recherche regarde le nom, le son à entendre, le son à imaginer, les usages 
 
 Les doublons de nom sont signalés. Rien n’est fusionné tout seul.
 
-## Photo et QR
+## Photo, inventaire et QR
 
-Ajouter une photo lance une détection d’objets sur l’appareil (modèle COCO-SSD déjà inclus). Le score est un indice. Rien n’est enregistré sans ta confirmation. Si tu mémorises une correction, c’est une association locale pour ce contexte : le modèle n’est pas réentraîné.
+Ajouter une photo lance une détection d’objets sur l’appareil (modèle COCO-SSD déjà inclus). Le pourcentage est un indice. Les personnes sont ignorées. Rien n’est enregistré sans ta confirmation. Une photo peut proposer plusieurs objets : tu peux les ranger d’un coup dans un contenant, par exemple « Caisse grise n°23 ».
 
-Scanner un QR ouvre une valise déjà créée sur cet appareil. L’appareil photo est demandé au moment du scan.
+L’inventaire rapide enchaîne photo, fiche, étiquette, objet suivant. « Crée ton bruitage » ne propose des défis qu’avec les objets vus. Vibe bruitage et la recherche en question restent sur l’appareil.
+
+Si tu mémorises une correction, c’est une association locale : le modèle n’est pas réentraîné. Tu peux annuler la dernière fiche créée, ou désactiver un apprentissage sans toucher à la fiche.
+
+Chaque objet, caisse, valise, kit ou mise peut avoir un QR. Scanner ouvre tout de suite la fiche. L’appareil photo est demandé au moment du scan, et le QR est lu sans bouton déclencheur. L’étiquette s’imprime par le service d’impression du téléphone. La mini-imprimante WalkPrint / YHK reste un essai à part.
 
 ## Son
 

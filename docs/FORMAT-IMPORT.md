@@ -1,4 +1,4 @@
-# Format d’import — MISE ! 0.2.2-beta.1
+# Format d’import — MISES! 0.2.2-beta.1
 
 Les fichiers restent sur l’appareil. Ne pas les committer dans ce dépôt public, même fictifs s’ils sont en réalité les 29 documents privés.
 
@@ -65,11 +65,11 @@ Feuille **`Contenants`** : `id`, `nom`. Feuille **`Mises`** : `id`, `nom`, et `o
 
 ## Onglets produits par l’app
 
-Le bouton **Classeur XLSX** écrit un classeur `MISE-Classeur.xlsx` :
+Le bouton **Classeur XLSX** écrit un classeur `MISES-Classeur.xlsx` :
 
 | Onglet | Rôle à la réimportation |
 | --- | --- |
-| `_MISE` | Cellule A1 = `MISE-Classeur-v1`. Marqueur. |
+| `_MISES` | Cellule A1 = `MISES-Classeur-v1`. Marqueur. Un ancien classeur `_MISE` / `MISE-Classeur-v1` ou `MISE-Data-Bruitage-v1` est encore accepté. |
 | `Index` | Vue. Colonnes : `id`, `nom`, `son à entendre`, `son à imaginer`, `objet ou dispositif nécessaire`, `famille`, `source`, `statut`, `notes`, `provenance`, `relations`, `sons`. **Ignoré** à la réimportation : les fiches sont dans `Objets`. |
 | `Objets` | Fiches complètes. Réimportées. |
 | `Sons` | Réimporté. |
@@ -84,7 +84,7 @@ Le bouton **Index CSV** est le même index, UTF-8 avec BOM. À l’import, **tou
 
 ## JSON de sauvegarde (restauration complète de l’appareil)
 
-Bouton **Sauvegarde** → `MISE-backup.json`. **Importer une sauvegarde** demande confirmation puis **remplace** les listes présentes.
+Bouton **Sauvegarde** → `MISES-backup.json`. **Importer une sauvegarde** demande confirmation puis **remplace** les listes présentes. Un fichier `MISE-backup.json` plus ancien a le même contenu et se réimporte.
 
 ```json
 {
@@ -111,7 +111,7 @@ Champs utiles d’un objet dans ce JSON : `id`, `name`, `hear`, `imagine`, `devi
 
 Fichier `.json` :
 
-- si `"schema": "MISE-Data-Bruitage-v1"`, les lignes sont prises **telles quelles** (noms de champs techniques : `hear`, `imagine`, pas les titres français) ;
+- si `"schema"` vaut `"MISES-Data-Bruitage-v1"` ou l’ancien `"MISE-Data-Bruitage-v1"`, les lignes sont prises **telles quelles** (noms de champs techniques : `hear`, `imagine`, pas les titres français) ;
 - sinon, les clés françaises du tableau sont traduites, comme pour le CSV.
 
 Les listes peuvent être à la racine (`objects`, `sounds`, …) ou sous `tables`.

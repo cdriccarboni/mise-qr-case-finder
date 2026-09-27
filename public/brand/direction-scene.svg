@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Direction : point d'exclamation scène">
+  <rect width="64" height="64" rx="14" fill="#141311"/>
+  <rect x="28" y="10" width="8" height="30" rx="4" fill="#f4f1ea"/>
+  <circle cx="32" cy="50" r="5" fill="#0B3D91"/>
+  <path fill="none" stroke="#0B3D91" stroke-width="2" stroke-linecap="round" d="M12 58h40"/>
+</svg>

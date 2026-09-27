@@ -1,5 +1,5 @@
 {
-  "schema": "mise-meta-db/v1",
+  "schema": "mises-meta-db/v1",
   "version": "1.1.0",
   "generated_on": "2026-09-25",
   "principles": [
@@ -240,7 +240,7 @@
         "id": "art_page",
         "role": "integration_surface",
         "status": "prepared_not_modified",
-        "notes": "Future ART page/tool points to or embeds MISE !; ART itself is not modified in this phase."
+        "notes": "Future ART page/tool points to or embeds MISES!; ART itself is not modified in this phase."
       }
     ],
     "rule": "No duplicated inventory/search logic between PWA, native app and ART integration."
