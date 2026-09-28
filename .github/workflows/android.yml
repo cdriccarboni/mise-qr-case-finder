@@ -71,14 +71,12 @@ jobs:
         with:
           gradle-version: "8.13"
 
-      - name: Build test APK and test-signed AAB
-        run: gradle -p android :app:assembleDebug :app:assembleRelease :app:bundleRelease --stacktrace
+      - name: Build test APK (debug)
+        run: gradle -p android :app:assembleDebug --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MISE-Android-build
+          name: MISES-Android-build
           path: |
             android/app/build/outputs/apk/debug/*.apk
-            android/app/build/outputs/apk/release/*.apk
-            android/app/build/outputs/bundle/release/*.aab
           if-no-files-found: error

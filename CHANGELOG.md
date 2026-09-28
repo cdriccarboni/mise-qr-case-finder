@@ -1,3 +1,12 @@
+## 0.3.0-beta.6 — 2026-09-28 (bêta fermée Play · UX anti-doublons)
+
+- Une seule recherche globale MISES! (champ + dictée) : index objets, sons, contenants, mises, kits et Data Bruitage.
+- Suppression des cartouches / boutons redondants « Recherche », « Rechercher » et « Dictée vocale ».
+- Raccourcis terrain distincts : scanner QR, photo, inventaire photo, dernière mise (plus de doublons Exercice / Vibe / Hands).
+- Grille 2 colonnes : dernier cartouche impair en pleine largeur.
+- Android `versionCode` 11 · package `fr.acousmatictheatre.mises`.
+- Build release/Play échoue sans clé d’upload (`MISE_UPLOAD_*`) — plus de faux AAB « PLAY » signé debug.
+
 ## 0.3.0-beta.5 — 2026-09-28 (reprise Cursor)
 
 - Slogan officiel rétabli : « Cherche ta mise ».

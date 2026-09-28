@@ -5,5 +5,5 @@ export default defineConfig({
   expect: { timeout: 15000 },
   workers: 1,
   use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true },
-  webServer: { command: 'npm run preview -- --host 127.0.0.1', url: 'http://127.0.0.1:4173', reuseExistingServer: false }
+  webServer: { command: 'npm run preview -- --host 127.0.0.1 --port 4173', url: 'http://127.0.0.1:4173', reuseExistingServer: !process.env.CI, timeout: 120000 }
 })

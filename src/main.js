@@ -322,6 +322,14 @@ function searchOwned(q){
   })
   return fuse.search(expandQuery(q)).map(x=>({...x.item,_score:x.score})).sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||(a._score-b._score)).slice(0,20)
 }
+function searchEntities(q){
+  if(!q.trim()) return {cases:[],kits:[],mises:[]}
+  const query=expandQuery(q)
+  const caseHits=new Fuse(cases.map(c=>({...c,label:caseName(c),kind:'case',searchText:[c.name,c.notes,c.location,caseName(c)].filter(Boolean).join(' ')})),{keys:['name','label','notes','searchText'],threshold:.44,ignoreLocation:true,includeScore:true}).search(query).slice(0,6).map(x=>({...x.item,_score:x.score}))
+  const kitHits=new Fuse(kits.map(k=>({...k,kind:'kit',searchText:[k.name,k.source,...(k.contexts||[]),...(k.objectIds||[]).map(id=>objectBy(id)?.name)].filter(Boolean).join(' ')})),{keys:['name','source','contexts','searchText'],threshold:.44,ignoreLocation:true,includeScore:true}).search(query).slice(0,6).map(x=>({...x.item,_score:x.score}))
+  const miseHits=new Fuse(mises.map(m=>({...m,kind:'mise',searchText:[m.name,m.projectName,m.notes,...(m.objectIds||[]).map(id=>objectBy(id)?.name)].filter(Boolean).join(' ')})),{keys:['name','projectName','notes','searchText'],threshold:.44,ignoreLocation:true,includeScore:true}).search(query).slice(0,6).map(x=>({...x.item,_score:x.score}))
+  return {cases:caseHits,kits:kitHits,mises:miseHits}
+}
 function searchExternal(q){
   if(!q.trim()) return []
   return new Fuse(external,{keys:['name','sounds','aliases','summary','source','kind'],threshold:.44,ignoreLocation:true})
@@ -491,22 +499,17 @@ $('#app').innerHTML=`
 <main>
 <section id="projectContext" class="projectContext" aria-label="Contexte du projet" hidden></section>
 <section class="hero">
-  <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance ou contenant"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
-  <div class="quick">
-    <button data-action="search">Rechercher</button>
-    <button data-action="speak">Dictée vocale</button>
-    <button data-action="photo">Ajouter une photo</button>
-    <button data-action="scan">Scanner un QR</button>
-  </div>
-  <div class="quick terrainQuick">
-    <button data-action="inventory">Inventaire rapide</button>
-    <button data-action="vibe">Vibe bruitage</button>
-    <button data-action="hands">Crée ton bruitage</button>
-    <button data-action="exercise">Exercice</button>
+  <label class="searchLabel" for="q">Recherche globale MISES!</label>
+  <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance, contenant, mise, kit…"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
+  <div class="quick fieldShortcuts" aria-label="Raccourcis terrain">
+    <button type="button" data-action="scan">Scanner un QR</button>
+    <button type="button" data-action="photo">Ajouter une photo</button>
+    <button type="button" data-action="inventory">Inventaire photo</button>
+    <button type="button" data-action="last-mise">Dernière mise</button>
   </div>
 </section>
 <div class="goalNav" aria-label="Navigation MISES">
- <details open><summary>Trouver</summary><div><button data-tab="search" class="active">Recherche</button><button data-tab="creator">Créateur d’ambiance</button><button data-tab="vibe">Vibe bruitage</button></div></details>
+ <details open><summary>Trouver</summary><div><button data-tab="creator">Créateur d’ambiance</button><button data-tab="vibe">Vibe bruitage</button></div></details>
  <details><summary>Créer</summary><div><button id="goalHands" type="button">Crée ton bruitage</button><button id="goalExercise" type="button">Exercice</button><button id="goalGroupPhoto" type="button">Photo de groupe</button><button id="goalUniverse" type="button">Univers d’une photo</button><button id="goalChallenge" type="button">Défi bruitage</button></div></details>
  <details><summary>Ranger</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
@@ -579,14 +582,21 @@ function setTab(t){
 $$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
 
 function renderSearch(target='#searchResults'){
-  const q=$('#q').value.trim(), own=searchOwned(q), ideas=searchExternal(q)
+  const q=$('#q').value.trim(), own=searchOwned(q), ideas=searchExternal(q), entities=searchEntities(q)
   const intent=parseIntent(q)
   const answer=intent?answerIntent(intent,{objects,cases,mises,activeMise,learnings}):null
   if(!q){
-    $(target).innerHTML=`<div class="empty"><b>Écris ce que tu cherches.</b><span>Objet, son, ambiance, contenant, ou une question.</span><small>Ex. « Où est mon truc pour faire le tonnerre ? »</small></div>`
+    $(target).innerHTML=`<div class="empty"><b>Écris ce que tu cherches.</b><span>Objet, son, ambiance, contenant, mise, kit, ou une question.</span><small>Ex. « Où est mon truc pour faire le tonnerre ? »</small></div>`
     return
   }
   let h=answer?answerBlock(answer,esc):''
+  const entityCount=entities.cases.length+entities.kits.length+entities.mises.length
+  if(entityCount){
+    h+=`<div class="resultHead"><b>${entityCount} contenant${entityCount>1?'s':''} · kit${entityCount>1?'s':''} · mise${entityCount>1?'s':''}</b><span>Accès direct depuis la recherche globale.</span></div>`
+    h+=entities.cases.map(c=>`<article class="result entityResult"><div class="thumb">▣</div><div><h3>${esc(caseName(c))}</h3><p>Valise / caisse</p><small>${objects.filter(o=>(o.caseId||o.container_id)===c.id).length} objets</small></div><button data-open-case="${c.id}" class="plus" title="Ouvrir">↗</button></article>`).join('')
+    h+=entities.kits.map(k=>`<article class="result entityResult"><div class="thumb">▦</div><div><h3>${esc(k.name)}</h3><p>Kit acoustique</p><small>${(k.objectIds||[]).length} objets · vue sur le parc</small></div><button data-open-kit="${k.id}" class="plus" title="Ouvrir">↗</button></article>`).join('')
+    h+=entities.mises.map(m=>`<article class="result entityResult"><div class="thumb">◇</div><div><h3>${esc(m.name)}</h3><p>Mise</p><small>${(m.objectIds||[]).length} objets · ${(m.checked||[]).length} contrôlés${m.projectName?` · ${esc(m.projectName)}`:''}</small></div><button data-open-mise="${m.id}" class="plus" title="Ouvrir">↗</button></article>`).join('')
+  }
   h+=`<div class="resultHead"><b>${own.length} résultat${own.length>1?'s':''} dans ton parc</b><span>Les idées externes restent séparées.</span></div>`
   h+=own.map(o=>`<article class="result">
     <div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div>
@@ -602,6 +612,9 @@ function renderSearch(target='#searchResults'){
   $$('[data-fav]',$(target)).forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.fav))
   $$('[data-alt]',$(target)).forEach(b=>b.onclick=()=>openAlternatives(b.dataset.alt))
   $$('[data-idea]',$(target)).forEach(b=>b.onclick=()=>openObject({name:b.dataset.idea,source:'suggestion externe',owned:false}))
+  $$('[data-open-case]',$(target)).forEach(b=>b.onclick=()=>showCase(b.dataset.openCase))
+  $$('[data-open-kit]',$(target)).forEach(b=>b.onclick=()=>showKit(b.dataset.openKit))
+  $$('[data-open-mise]',$(target)).forEach(b=>b.onclick=()=>{const m=miseBy(b.dataset.openMise);if(m){activeMise=m.id;setTab('mises');openMise(m)}})
   const scanExercise=$('#doScanExercise',$(target))
   if(scanExercise) scanExercise.onclick=()=>{pendingExerciseMinutes=answer?.minutes||5;$('#handsPhotoInput').click()}
 }
@@ -1213,14 +1226,14 @@ updatePrinterStatus();updateAccountStatus()
 
 $$('[data-action]').forEach(b=>b.onclick=()=>{
   const a=b.dataset.action
-  if(a==='search'){setTab('search');$('#q').focus()}
-  if(a==='speak')startVoice()
   if(a==='photo')pickPhoto('photoInput')
   if(a==='scan')startScan()
   if(a==='inventory')$('#inventoryInput').click()
-  if(a==='vibe')setTab('vibe')
-  if(a==='hands')$('#handsPhotoInput').click()
-  if(a==='exercise')setTab('exercises')
+  if(a==='last-mise'){
+    const m=miseBy(activeMise)||mises.slice().sort((a,b)=>String(b.updatedAt||b.createdAt||'').localeCompare(String(a.updatedAt||a.createdAt||'')))[0]
+    if(!m){toast('Aucune mise pour l’instant');return}
+    activeMise=m.id;setTab('mises');openMise(m)
+  }
 })
 $$('[data-preset]').forEach(b=>b.onclick=()=>{
   $('#q').value=b.dataset.preset;renderCreator()

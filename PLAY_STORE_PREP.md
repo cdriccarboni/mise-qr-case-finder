@@ -6,8 +6,8 @@
 - Sous-titre produit : **QR Case Finder**
 - Package Android : `fr.acousmatictheatre.mises`
 - Catégorie envisagée : Outils
-- Version de test actuelle : `0.3.0-beta.3` (`versionCode` 8, package `fr.acousmatictheatre.mises`). La clé d’envoi Play n’est pas dans le dépôt : ne pas la recréer. Si elle est fournie, Gradle la prend via `MISE_UPLOAD_STORE_FILE`, `MISE_UPLOAD_STORE_PASSWORD`, `MISE_UPLOAD_KEY_ALIAS`, `MISE_UPLOAD_KEY_PASSWORD`.
-- L’APK/AAB du workflow est signé avec la clé de debug. La clé d’upload Play existante n’est pas disponible ici : elle n’a pas été recréée. Ne pas envoyer cet AAB comme mise à jour d’une fiche déjà signée avec cette clé.
+- Version de test actuelle : `0.3.0-beta.6` (`versionCode` 11, package `fr.acousmatictheatre.mises`). La clé d’envoi Play n’est pas dans le dépôt : ne pas la recréer. Si elle est fournie, Gradle la prend via `MISE_UPLOAD_STORE_FILE`, `MISE_UPLOAD_STORE_PASSWORD`, `MISE_UPLOAD_KEY_ALIAS`, `MISE_UPLOAD_KEY_PASSWORD`.
+- Le workflow CI produit uniquement un APK **debug** de test. `assembleRelease` / `bundleRelease` échouent sans `MISE_UPLOAD_STORE_FILE` (+ mots de passe / alias). Aucun artefact n’est présenté comme PLAY s’il est signé debug.
 - Cible Android : API 36
 
 ## Proposition de fiche Store
