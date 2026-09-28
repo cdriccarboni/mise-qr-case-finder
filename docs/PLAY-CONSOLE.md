@@ -18,7 +18,7 @@ Ce document prépare une fiche de **test fermé**. Il n’annonce pas une public
 | versionCode / versionName | **12** / **0.3.0-beta.7** | **vérifié** (sources synchronisées) |
 | minSdk / targetSdk / compileSdk | 26 / 36 / 36 | **vérifié** |
 | APK test (debug) | `MISES-0.3.0-beta.7-v12-TEST.apk` · `/Users/cedriccarboni/Projects/_releases/MISES/0.3.0-beta.7/MISES-0.3.0-beta.7-v12-TEST.apk` · SHA-256 `1e8cb858d4dc8d61bc384ed9564368afef6d72d7a0c5ab419a67b7e8490d90c0` · 21045686 octets | **vérifié** (assembleDebug) |
-| AAB Play | `MISES-0.3.0-beta.7-v12-PLAY.aab` | **bloqué** tant que la clé d’upload n’est pas fournie via `MISE_UPLOAD_*` |
+| AAB Play | `MISES-0.3.0-beta.7-v12-PLAY.aab` · `/Users/cedriccarboni/Projects/_releases/MISES/0.3.0-beta.7/MISES-0.3.0-beta.7-v12-PLAY.aab` · SHA-256 fichier `69b3d49bf3f35593ac37047a489a720cdf72a4f4f8fee34da71cef451f1fd17b` · 20111707 octets · cert SHA-256 `91:1F:5B:04:…:D6:CB` (upload Acousmatic) | **vérifié** (bundleRelease signé upload, pas debug) |
 | Signature release | Clé d’upload uniquement (sinon échec Gradle explicite) | **vérifié** (code) |
 | Clé d’upload dans Git | **absente** (volontaire) | **vérifié** |
 | Clé `.jks` / `.keystore` sur cette machine | **absente** (recherche Projects / Documents / Desktop / Downloads / `~/.android`) | **vérifié** 28/09/2026 |
@@ -65,7 +65,7 @@ Ce document prépare une fiche de **test fermé**. Il n’annonce pas une public
 ### Prochaine action exacte Google Play Console
 
 1. Localiser ou restaurer le `.jks` dont le certificat public SHA-256 est `91:1F:5B:04:…:D6:CB` (ou confirmer qu’aucune fiche `fr.acousmatictheatre.mises` n’existe encore, puis générer via `scripts/prepare-upload-keystore.sh`).
-2. Exporter `MISE_UPLOAD_*` et produire `MISES-0.3.0-beta.7-v12-PLAY.aab`.
+2. AAB `MISES-0.3.0-beta.7-v12-PLAY.aab` déjà produit et signé upload (local). Uploader en **test fermé** Play Console.
 3. Créer la fiche application **MISES!** (package `fr.acousmatictheatre.mises`) en **test fermé uniquement**.
 4. Remplir confidentialité / Data safety / classification / accès (déjà brouillonnés dans ce dossier).
 5. Uploader l’AAB signé upload, ajouter testeurs, **ne pas** promouvoir en production.
