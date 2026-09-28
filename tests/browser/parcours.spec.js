@@ -3,7 +3,7 @@ import { mkdir } from 'node:fs/promises'
 import { exportBinder } from '../../src/data-import.js'
 import { fictionalData } from '../../scripts/fictional-data.mjs'
 
-const shots = '/opt/cursor/artifacts/screenshots'
+const shots = new URL('../../test-results/screenshots', import.meta.url).pathname
 
 async function dotCenters(page) {
   return page.evaluate(() => [...document.querySelectorAll('header .miseWordmark .markDot')].map(el => {
@@ -35,7 +35,7 @@ test('logo dots stay aligned and the fictional catalogue can be corrected offlin
     await page.locator('header').screenshot({ path: `${shots}/logo-${width}.png` })
   }
   await page.setViewportSize({ width: 1280, height: 900 })
-  await page.getByText('Partager & outils', { exact: true }).click()
+  await page.getByText('Partager', { exact: true }).click()
   await page.locator('#goalDataBruitage').click()
   await page.locator('.dataDialog [data-files]').setInputFiles({
     name: 'classeur-fictif.xlsx',
@@ -81,7 +81,7 @@ test('bad audio, refused microphone, container QR and unconfirmed photo stay exp
     Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: denied } })
   })
   await page.goto('/')
-  await page.getByText('Ranger & préparer', { exact: true }).click()
+  await page.getByText('Ranger', { exact: true }).click()
   await page.locator('[data-tab="cases"]').click()
   await page.locator('#addCase').click()
   await page.locator('#cName').fill('Valise fictive parcours')
@@ -116,7 +116,7 @@ test('bad audio, refused microphone, container QR and unconfirmed photo stay exp
     }
   }))
   await page.reload()
-  await page.getByText('Ranger & préparer', { exact: true }).click()
+  await page.getByText('Ranger', { exact: true }).click()
   await page.locator('[data-tab="inventory"]').click()
   await page.getByRole('button', { name: /Objet audio fictif/ }).click()
   await expect(page.locator('#audioNote')).toContainText('absent ou illisible', { timeout: 5000 })

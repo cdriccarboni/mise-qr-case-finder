@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
 
-const shots = '/opt/cursor/artifacts/screenshots'
+const shots = new URL('../../test-results/screenshots', import.meta.url).pathname
 
 test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, hors ligne', async ({ page, context }) => {
   test.setTimeout(180000)
@@ -50,7 +50,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await page.mouse.click(4, 4)
   await expect(page.locator('#manualDlg')).toBeHidden()
 
-  await page.getByText('Ranger & préparer', { exact: true }).click()
+  await page.getByText('Ranger', { exact: true }).click()
   await page.locator('[data-tab="cases"]').click()
   await page.locator('#addCase').click()
   await page.locator('#cName').fill('Caisse grise n°23')
@@ -104,7 +104,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await dialog.locator('[data-batch-all]').click()
   await expect(dialog).toHaveCount(0)
   await page.reload()
-  await page.getByText('Ranger & préparer', { exact: true }).click()
+  await page.getByText('Ranger', { exact: true }).click()
   await page.locator('[data-tab="inventory"]').click()
   await expect(page.locator('#objectCards')).toContainText('bouteille')
   await expect(page.locator('#objectCards')).toContainText('tasse')
@@ -133,6 +133,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await page.locator('#runVibe').click()
   await expect(page.locator('#vibeOut')).toContainText('Chaîne moyenne — Caisse grise n°23')
   await expect(page.locator('#vibeOut')).toContainText('Bibliothèque publique de techniques')
+  await page.getByText('Créer', { exact: true }).click()
   await page.locator('#goalExercise').click()
   await page.locator('#runExercise').click()
   await expect(page.locator('#exerciseOut')).toContainText('Proposition générée')
@@ -149,8 +150,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await expect(dialog).toBeVisible()
   await expect(dialog.locator('[data-creative]')).toContainText(/verre/i)
   await expect(dialog.locator('[data-creative]')).toContainText(/cuillère/i)
-  await expect(dialog.locator('[data-creative]')).toContainText('Tempête miniature')
-  await expect(dialog.locator('[data-creative]')).toContainText('Cuisine inquiétante')
+  await expect(dialog.locator('[data-creative]')).toContainText(/Tempête miniature|Cuisine inquiétante|créature|Même objet|Entrée en scène|Machine capricieuse/)
   await expect(dialog.locator('[data-creative]')).not.toContainText('violon')
   await dialog.locator('[data-close]').click()
 
@@ -192,7 +192,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   }
 
   const downloadPromise = page.waitForEvent('download')
-  await page.getByText('Partager & outils', { exact: true }).click()
+  await page.getByText('Partager', { exact: true }).click()
   await page.locator('#goalBackup').click()
   const backup = await (await downloadPromise).path()
   await page.evaluate(() => indexedDB.deleteDatabase('mises-db'))

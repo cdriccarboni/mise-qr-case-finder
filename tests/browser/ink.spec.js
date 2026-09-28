@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
 
-const shots = '/opt/cursor/artifacts/screenshots'
+const shots = new URL('../../test-results/screenshots', import.meta.url).pathname
 
 async function shoot(locator, path) {
   let last

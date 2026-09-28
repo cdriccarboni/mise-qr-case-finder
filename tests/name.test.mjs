@@ -21,5 +21,14 @@ test('the visible name is MISES! and the wordmark says mises !', () => {
   assert.equal(wordmark.match(/class="markDot"/g).length, 2)
   assert.match(icon, /aria-label="mise !"/)
   assert.match(icon, /viewBox="0 0 64 64"/)
+  assert.match(icon, /<polygon/)
   assert.equal(read('../src/identity.css').includes('--ink:#D12A74'), true)
+})
+
+test('home navigation exposes five separate goal cartouches', () => {
+  const main = read('../src/main.js')
+  for (const label of ['Trouver', 'Créer', 'Ranger', 'Préparer', 'Partager']) {
+    assert.match(main, new RegExp(`<summary>${label}</summary>`))
+  }
+  assert.doesNotMatch(main, /Trouver & créer|Ranger & préparer|Partager & outils/)
 })
