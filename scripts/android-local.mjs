@@ -27,10 +27,23 @@ const commandPath = (names) => {
 
 const gradle = () => commandPath([
   process.env.GRADLE_HOME && join(process.env.GRADLE_HOME, 'bin', 'gradle'),
+  '/opt/homebrew/opt/gradle@8/bin/gradle',
+  '/usr/local/opt/gradle@8/bin/gradle',
   '/opt/homebrew/bin/gradle',
   '/usr/local/bin/gradle',
   'gradle'
 ])
+
+const java17Home = () => {
+  for (const candidate of [
+    process.env.JAVA_HOME,
+    '/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home',
+    '/usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home'
+  ].filter(Boolean)) {
+    if (existsSync(candidate)) return candidate
+  }
+  return null
+}
 
 const adb = () => commandPath([
   process.env.ANDROID_HOME && join(process.env.ANDROID_HOME, 'platform-tools', 'adb'),
@@ -57,7 +70,10 @@ const syncWeb = () => {
 const buildApk = () => {
   const bin = gradle()
   if (!bin) fail('Gradle introuvable. Installe Gradle une fois sur le Mac ou ajoute-le au PATH.')
-  run(bin, ['-p', 'android', ':app:assembleDebug', '--stacktrace'])
+  const javaHome = java17Home()
+  run(bin, ['-p', 'android', ':app:assembleDebug', '--stacktrace'], {
+    env: { ...process.env, ...(javaHome ? { JAVA_HOME: javaHome } : {}) }
+  })
   if (!existsSync(apk)) fail('APK attendu introuvable après le build.')
   console.log('✓ APK debug: ' + apk)
 }
