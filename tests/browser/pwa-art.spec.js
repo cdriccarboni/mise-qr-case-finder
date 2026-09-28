@@ -151,4 +151,11 @@ test('projectId opens, restores, attaches an old mise, and ignores a bad return 
   await expect(page.locator('#artReturn')).toHaveCount(0)
   await page.goto('/?projectId=not%20an%20id&projectName=Nope')
   await expect(page.locator('#projectContext')).toBeHidden()
+
+  await page.goto('/?source=art&returnUrl=https%3A%2F%2Fart.example%2Faccueil')
+  await expect(page.locator('#projectContext')).toBeVisible()
+  await expect(page.locator('#projectContext')).toContainText('aucun spectacle sélectionné')
+  await expect(page.locator('#artReturn')).toHaveAttribute('href', 'https://art.example/accueil')
+  await expect(page.locator('#artAttachBtn')).toHaveCount(0)
+  await expect(page.locator('#artSummary')).toHaveCount(0)
 })

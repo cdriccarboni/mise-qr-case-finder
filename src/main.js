@@ -208,9 +208,17 @@ function recordControl(m,details){
 }
 function renderProjectContext(){
   const el=$('#projectContext');if(!el)return
+  const fromArt=project.source==='art'||Boolean(project.returnUrl)
   if(!project.projectId){
-    el.hidden=true
-    el.innerHTML=''
+    if(!fromArt){
+      el.hidden=true
+      el.innerHTML=''
+      if(projectSyncFailed)toast('Mise enregistrée ici · synchronisation locale à vérifier')
+      return
+    }
+    const back=project.returnUrl?`<a id="artReturn" class="artReturn" href="${esc(project.returnUrl)}">Retour à ART</a>`:''
+    el.hidden=false
+    el.innerHTML=`<div class="artBridge"><p><b>MISES!</b><small>Ouvert depuis ART · aucun spectacle sélectionné · base locale autonome</small></p><div class="row">${back}</div></div>`
     if(projectSyncFailed)toast('Mise enregistrée ici · synchronisation locale à vérifier')
     return
   }
