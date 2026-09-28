@@ -140,7 +140,8 @@ def layout():
     bottoms = []
     for ch in sequence:
         if ch == ' ':
-            cursor += glyphs[cmap[ord(' ')]].width * 0.42
+            # Step 1: a bit more air before the bang, without breaking the lockup.
+            cursor += glyphs[cmap[ord(' ')]].width * 0.68
             continue
         glyph = glyphs[cmap[ord(ch)]]
         found = contours_of(glyph)
@@ -187,12 +188,13 @@ def layout():
 
 
 # Tampon: a second pull, down and to the right, in SVG space (y grows downward).
-# Same shift as the study in docs/design/variante-tampon.svg.
-STAMP_X = 40
-STAMP_Y = 26
+# Step 1 (2026-09-28): slightly stronger offset than the original study, still readable.
+# Legacy Tampon kept in docs/design/legacy/ and public/brand/legacy/.
+STAMP_X = 56
+STAMP_Y = 36
 # The full word does not hold on an icon. m! keeps the effect with a stronger shift.
-ICON_STAMP_X = 86
-ICON_STAMP_Y = 58
+ICON_STAMP_X = 96
+ICON_STAMP_Y = 64
 
 
 def dots_of(mark):
@@ -201,30 +203,55 @@ def dots_of(mark):
     return [mark['dot']]
 
 
-def circle_tags(dots, fill=None, cls=''):
+def jeton_points(cx, cy, r, sides=5):
+    import math
+    radius = r * 1.08
+    pts = []
+    for i in range(sides):
+        angle = -math.pi / 2 + i * 2 * math.pi / sides
+        pts.append((cx + radius * math.cos(angle), cy + radius * math.sin(angle)))
+    return pts
+
+
+def jeton_tag(dot, fill=None, cls=''):
     attrs = []
     if cls:
         attrs.append(f'class="{cls}"')
     if fill:
         attrs.append(f'fill="{fill}"')
     extra = (' ' + ' '.join(attrs)) if attrs else ''
-    return ''.join(
-        f'<circle{extra} cx="{d["cx"]}" cy="{d["cy"]}" r="{d["r"]}"/>' for d in dots
-    )
+    points = ' '.join(f'{x:.2f},{y:.2f}' for x, y in jeton_points(dot['cx'], dot['cy'], dot['r']))
+    return f'<polygon{extra} points="{points}"/>'
 
 
-def stamp_body(mark, sx, sy, letter=None, dot=None, ghost=None, classed=False):
+def circle_tags(dots, fill=None, cls='', jeton=False):
+    attrs = []
+    if cls:
+        attrs.append(f'class="{cls}"')
+    if fill:
+        attrs.append(f'fill="{fill}"')
+    extra = (' ' + ' '.join(attrs)) if attrs else ''
+    parts = []
+    for d in dots:
+        if jeton:
+            parts.append(jeton_tag(d, fill=fill, cls=cls))
+        else:
+            parts.append(f'<circle{extra} cx="{d["cx"]}" cy="{d["cy"]}" r="{d["r"]}"/>')
+    return ''.join(parts)
+
+
+def stamp_body(mark, sx, sy, letter=None, dot=None, ghost=None, classed=False, jeton=False):
     dots = dots_of(mark)
     if classed:
         return (
             f'<g class="stampGhost" transform="translate({sx} {sy})">'
-            f'<path d="{mark["letters"]}"/>{circle_tags(dots)}</g>'
-            f'<path class="letters" d="{mark["letters"]}"/>{circle_tags(dots, cls="markDot")}'
+            f'<path d="{mark["letters"]}"/>{circle_tags(dots, jeton=jeton)}</g>'
+            f'<path class="letters" d="{mark["letters"]}"/>{circle_tags(dots, cls="markDot", jeton=jeton)}'
         )
     return (
         f'<g transform="translate({sx} {sy})" fill="{ghost}">'
-        f'<path d="{mark["letters"]}"/>{circle_tags(dots)}</g>'
-        f'<path fill="{letter}" d="{mark["letters"]}"/>{circle_tags(dots, fill=dot)}'
+        f'<path d="{mark["letters"]}"/>{circle_tags(dots, jeton=jeton)}</g>'
+        f'<path fill="{letter}" d="{mark["letters"]}"/>{circle_tags(dots, fill=dot, jeton=jeton)}'
     )
 
 
@@ -277,7 +304,7 @@ def layout_m_bang():
             tops.append(y1)
             bottoms.append(y0)
             letters.append((cursor, contour))
-        cursor += glyph.width + (40 if ch == 'm' else 0)
+        cursor += glyph.width + (56 if ch == 'm' else 0)
     pad = 80
     baseline = max(tops) + pad
     width = cursor + pad
@@ -531,19 +558,17 @@ def raster_icon(tile, size, ink, sx=ICON_STAMP_X, sy=ICON_STAMP_Y):
     ox, oy = (size - dw) / 2, (size - dh) / 2
     white = (255, 255, 255, 255)
     dots = dots_of(tile)
+
+    def paint_jeton(dx, dy):
+        for d in dots:
+            pts = [(ox + (x + dx) * scale, oy + (y + dy) * scale)
+                   for x, y in jeton_points(d['cx'], d['cy'], d['r'])]
+            pen.polygon(pts, fill=white)
+
     paint_polygons(image, path_polygons(tile['letters']), white, scale, ox + sx * scale, oy + sy * scale)
-    pen2 = ImageDraw.Draw(image)
-    for d in dots:
-        r = d['r'] * scale
-        cx = ox + (d['cx'] + sx) * scale
-        cy = oy + (d['cy'] + sy) * scale
-        pen2.ellipse((cx - r, cy - r, cx + r, cy + r), fill=white)
+    paint_jeton(sx, sy)
     paint_polygons(image, path_polygons(tile['letters']), white, scale, ox, oy)
-    for d in dots:
-        r = d['r'] * scale
-        cx = ox + d['cx'] * scale
-        cy = oy + d['cy'] * scale
-        pen2.ellipse((cx - r, cy - r, cx + r, cy + r), fill=white)
+    paint_jeton(0, 0)
     return image
 
 
@@ -570,21 +595,23 @@ def write_android(tile, ink, sx=ICON_STAMP_X, sy=ICON_STAMP_Y):
     scale = min(box / (tile['width'] + sx), box / (tile['height'] + sy))
     ox = (108 - (tile['width'] + sx) * scale) / 2
     oy = (108 - (tile['height'] + sy) * scale) / 2
-    dot = tile['dot']
-    circle = (
-        f'M{dot["cx"] - dot["r"]},{dot["cy"]} '
-        f'a{dot["r"]},{dot["r"]} 0 1,1 {dot["r"] * 2},0 '
-        f'a{dot["r"]},{dot["r"]} 0 1,1 {-dot["r"] * 2},0'
-    )
+    dots = dots_of(tile)
+    # Step 2: bang head is a jeton (pentagon), not a circle — app icon only.
+    jeton_paths = []
+    for d in dots:
+        pts = jeton_points(d['cx'], d['cy'], d['r'])
+        path = 'M' + ' L'.join(f'{x:.2f},{y:.2f}' for x, y in pts) + ' Z'
+        jeton_paths.append(path)
+    jeton = ' '.join(jeton_paths)
     group = (
         f'<group android:translateX="{ox:.2f}" android:translateY="{oy:.2f}" '
         f'android:scaleX="{scale:.5f}" android:scaleY="{scale:.5f}">'
         f'<group android:translateX="{sx}" android:translateY="{sy}">'
         f'<path android:fillColor="#FFFFFF" android:pathData="{tile["letters"]}"/>'
-        f'<path android:fillColor="#FFFFFF" android:pathData="{circle}"/>'
+        f'<path android:fillColor="#FFFFFF" android:pathData="{jeton}"/>'
         f'</group>'
         f'<path android:fillColor="#FFFFFF" android:pathData="{tile["letters"]}"/>'
-        f'<path android:fillColor="#FFFFFF" android:pathData="{circle}"/>'
+        f'<path android:fillColor="#FFFFFF" android:pathData="{jeton}"/>'
         f'</group>'
     )
     vector = (
@@ -665,7 +692,7 @@ def main():
     scale = min(48 / tile_w, 44 / tile_h)
     ox = 8 + (48 - tile_w * scale) / 2
     oy = 10 + (44 - tile_h * scale) / 2
-    icon_inner = stamp_body(bang, ICON_STAMP_X, ICON_STAMP_Y, '#fff', '#fff', '#fff')
+    icon_inner = stamp_body(bang, ICON_STAMP_X, ICON_STAMP_Y, '#fff', '#fff', '#fff', jeton=True)
     icon_svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="mise !">'
         f'<rect width="64" height="64" rx="14" fill="{ink}"/>'

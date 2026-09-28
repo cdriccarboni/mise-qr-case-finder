@@ -2,7 +2,7 @@
 
 Les fichiers restent sur l’appareil. Ne pas les committer dans ce dépôt public, même fictifs s’ils sont en réalité les 29 documents privés.
 
-Entrée dans l’app : **Partager & outils → Data Bruitage · importer / exporter**, ou **Préférences → Dossier de travail**.
+Entrée dans l’app : **Partager → Data Bruitage · importer / exporter**, ou **Préférences → Dossier de travail**.
 
 Limite : **40 Mo** par fichier. PDF : **300 pages** avec texte. Un PDF ou une photo sans texte n’est pas lu par OCR : le fichier texte vide part dans « À vérifier ».
 

@@ -8,13 +8,15 @@ Le dépôt et l’URL ne changent pas : `mise-qr-case-finder`.
 
 ### Sans spectacle sélectionné
 
-Le bouton MISES! dans ART doit toujours pouvoir ouvrir la PWA, même sans `projectId` :
+Le bouton MISES! dans ART doit **toujours** ouvrir la PWA, même sans `projectId` :
 
 ```
-<URL PWA MISES!>/?source=art&returnUrl=<URL ART de retour, optionnelle>
+<URL PWA MISES!>/?source=art&returnUrl=<URL ART de retour>
 ```
 
-Dans ce cas MISES! s’ouvre normalement, conserve sa base locale, affiche un bandeau de continuité ART, et propose **Retour à ART** si `returnUrl` est valide. Aucune mise n’est créée automatiquement. Aucun jeton OAuth n’est placé dans l’URL : la continuité Google repose sur le même client de production et sur un consentement déjà accordé, pas sur un transfert de session.
+Dans ce cas MISES! s’ouvre normalement, conserve sa base locale, affiche un bandeau de continuité ART, et propose **Retour à ART**. Aucune mise n’est créée automatiquement. Aucun jeton OAuth n’est placé dans l’URL.
+
+Côté ART (dépôt ART, hors de ce dépôt) : ne pas se contenter de l’URL nue. Toujours ajouter `source=art` et un `returnUrl` sûr ; n’ajouter `projectId` / `projectName` que lorsqu’un spectacle ou EAC est réellement sélectionné.
 
 ### Avec un spectacle / EAC
 
