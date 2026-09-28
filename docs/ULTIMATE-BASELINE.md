@@ -8,7 +8,7 @@ Gel de reprise préparé le 28 septembre 2026 pour un travail propre dans Cursor
 - Branche de reprise : `cursor/mises-reprise-20260928`
 - Base : `main`
 - Commit de base : `5ee270805c6b213315cb73871f9f49470c5265ad`
-- Version applicative : `0.3.0-beta.6`
+- Version applicative : `0.3.0-beta.7`
 - Nom produit : **MISES ! — QR Case Finder**
 
 Cette branche est une reprise additive. Ne pas réécrire l'historique et ne pas fusionner automatiquement les anciennes branches de sauvegarde.
@@ -24,7 +24,7 @@ Aucune de ces branches ne doit être supprimée ni fusionnée en bloc. Récupér
 
 ## Écarts déjà repérés
 
-- `package.json` indique `0.3.0-beta.6`.
+- `package.json` indique `0.3.0-beta.7`.
 - `README.md` annonce encore `0.3.0-beta.3` : documentation à réaligner lors de la consolidation.
 - `docs/REPRISE.md` décrit encore l'ancien cycle `0.2.2-beta.1` et doit être considéré comme historique tant qu'il n'est pas actualisé.
 

@@ -148,3 +148,12 @@ html[data-theme=light] .form textarea{color:#151519;background:#fff;border-color
 .inkSwatches{display:flex;flex-wrap:wrap;gap:.45rem}
 .inkSwatches button{width:2.6rem;height:2.6rem;min-height:2.6rem;padding:0;border:2px solid #fff;border-radius:999px}
 .inkSwatches button[aria-pressed=true]{outline:3px solid var(--text)}
+
+.playStats{margin:.35rem 0 .55rem;font-size:.85rem;color:#b1b1b7}.playStats b{color:#f5f5f2}
+.playCtas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin:.35rem 0 .7rem}
+.playCtas button{min-height:48px;font-weight:800}
+.playActions{margin-top:.6rem}
+.playHints,.playSolution{margin:.55rem 0;padding:.7rem .8rem;border:1px solid #2c2c32;border-radius:8px;background:#151519}
+.playChoices{margin:.4rem 0 0;padding-left:1.1rem}.playChoices li{margin:.2rem 0}
+.playConductor .challenge,.playWorkshop .challenge{margin:.45rem 0}
+@media(max-width:620px){.playCtas>:last-child:nth-child(odd){grid-column:1/-1}}

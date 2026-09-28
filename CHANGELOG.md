@@ -1,3 +1,10 @@
+## 0.3.0-beta.7 — 2026-09-28 (jeux ↔ inventaire réel)
+
+- Moteur de jeux / défis / ateliers générés depuis l’inventaire réel (valise, filtres, statuts).
+- Parcours Jouer · Atelier · Défi · Surprise depuis contenant / Créer / inventaire global.
+- Couche relations SOURCE/NORMALIZED/DERIVED/GAME_DATA prête pour Data Bruitage.
+- versionCode 12 · package `fr.acousmatictheatre.mises`.
+
 ## 0.3.0-beta.6 — 2026-09-28 (bêta fermée Play · UX anti-doublons)
 
 - Une seule recherche globale MISES! (champ + dictée) : index objets, sons, contenants, mises, kits et Data Bruitage.
