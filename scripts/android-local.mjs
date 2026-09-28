@@ -45,6 +45,18 @@ const java17Home = () => {
   return null
 }
 
+const androidSdkHome = () => {
+  for (const candidate of [
+    process.env.ANDROID_HOME,
+    process.env.ANDROID_SDK_ROOT,
+    join(process.env.HOME || '', 'Library', 'Android', 'sdk'),
+    '/opt/homebrew/share/android-commandlinetools'
+  ].filter(Boolean)) {
+    if (existsSync(candidate)) return candidate
+  }
+  return null
+}
+
 const adb = () => commandPath([
   process.env.ANDROID_HOME && join(process.env.ANDROID_HOME, 'platform-tools', 'adb'),
   process.env.ANDROID_SDK_ROOT && join(process.env.ANDROID_SDK_ROOT, 'platform-tools', 'adb'),
@@ -71,8 +83,17 @@ const buildApk = () => {
   const bin = gradle()
   if (!bin) fail('Gradle introuvable. Installe Gradle une fois sur le Mac ou ajoute-le au PATH.')
   const javaHome = java17Home()
+  const sdkHome = androidSdkHome()
+  if (!sdkHome) {
+    fail('Android SDK introuvable. Installe les Android command-line tools ou définis ANDROID_HOME.')
+  }
   run(bin, ['-p', 'android', ':app:assembleDebug', '--stacktrace'], {
-    env: { ...process.env, ...(javaHome ? { JAVA_HOME: javaHome } : {}) }
+    env: {
+      ...process.env,
+      ...(javaHome ? { JAVA_HOME: javaHome } : {}),
+      ANDROID_HOME: sdkHome,
+      ANDROID_SDK_ROOT: sdkHome
+    }
   })
   if (!existsSync(apk)) fail('APK attendu introuvable après le build.')
   console.log('✓ APK debug: ' + apk)
