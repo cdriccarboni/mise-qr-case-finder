@@ -1,3 +1,13 @@
+## 0.3.0-beta.5 — 2026-09-28 (reprise Cursor)
+
+- Slogan officiel rétabli : « Cherche ta mise ».
+- ART sans spectacle : `?source=art` (et `returnUrl` valide) ouvre MISES! avec bandeau de continuité et retour ART, sans créer de mise.
+- Défi bruitage : pools élargis + anti-répétition du tirage précédent ; défis photo / univers tirés au hasard parmi les objets réellement vus.
+- UI : motifs nodaux plus espacés vers le haut ; libellés QR « Créer / imprimer » clarifiés.
+- Navigation : **5 cartouches** séparés — Trouver · Créer · Ranger · Préparer · Partager.
+- Logo étapes 1+2 : tampon wordmark renforcé + icône `m!` à tête jeton ; ancien Tampon conservé en `docs/design/legacy/` et `public/brand/legacy/`.
+- Direction graphique : suivi dans `docs/design/EVOLUTION-LOGO.md`.
+
 ## 0.3.0-beta.5 — 2026-09-27
 
 - Fenêtres : un clic sur le fond autour de n’importe quel dialogue ferme de nouveau la fenêtre et revient au niveau précédent.

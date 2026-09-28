@@ -16,7 +16,7 @@ Première enveloppe Android de MISES!, construite à partir de la page Web publi
 
 Un intent-filter `VIEW` reçoit `https://cdriccarboni.github.io/mise-qr-case-finder/…` et ouvre la page locale en conservant la query (`projectId`, `projectName`, `returnUrl`). Ce n’est pas un App Link vérifié : le fichier `assetlinks.json` devrait être servi à `https://cdriccarboni.github.io/.well-known/`, en dehors de ce dépôt.
 
-1. Dans l’ancienne appli : Partager et outils, puis Sauvegarde. Garde le fichier.
+1. Dans l’ancienne appli : Partager, puis Sauvegarde. Garde le fichier.
 2. Installe la nouvelle appli, ouvre-la, puis Importer une sauvegarde et choisis ce fichier.
 3. Vérifie que tes objets, photos et mises sont là, puis désinstalle l’ancienne.
 

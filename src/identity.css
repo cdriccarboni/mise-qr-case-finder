@@ -54,15 +54,15 @@ dialog{background:var(--surface);color:var(--text);border-color:var(--line);bord
 .miseLogo4 .dot{fill:var(--ink);stroke:none}
 @font-face{font-family:Fredoka;src:url("./fonts/Fredoka.ttf") format("truetype");font-weight:100 700;font-display:swap}
 .miseWordmark .letters{fill:var(--text)}
-.miseWordmark .stampGhost,.miseWordmark .stampGhost path,.miseWordmark .stampGhost circle,.miseWordmark .markDot{fill:var(--ink)}
+.miseWordmark .stampGhost,.miseWordmark .stampGhost path,.miseWordmark .stampGhost circle,.miseWordmark .stampGhost polygon,.miseWordmark .markDot{fill:var(--ink)}
 .quick button{min-height:72px;border-radius:18px;font-weight:800}
 .terrainQuick{gap:.45rem}
 .terrainQuick button{background:var(--ink);color:var(--on-ink);border:0}
 .playful{position:relative;overflow:hidden;background:var(--ink);color:var(--on-ink);border:0;
   background-image:radial-gradient(rgba(255,255,255,.28) 1.1px,transparent 1.2px);
-  background-size:9px 9px}
-.tokenStrip{color:var(--on-ink);margin:0 0 .35rem}
-.tokenStrip svg{width:min(240px,70%);height:36px;display:block}
+  background-size:14px 14px;background-position:0 6px;padding-top:1.15rem}
+.tokenStrip{color:var(--on-ink);margin:.2rem 0 .85rem}
+.tokenStrip svg{width:min(280px,78%);height:42px;display:block}
 .tokenStrip circle,.tokenStrip polygon,.tokenStrip path{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
 .tokenStrip polygon:nth-of-type(2){transform:rotate(8deg);transform-origin:108px 20px;transform-box:fill-box}
 .playful h2,.playful p,.playful label,.playful strong{color:var(--on-ink)}
@@ -133,7 +133,7 @@ html[data-theme=regie] .miseLogo4 .crate,html[data-theme=regie] .miseLogo4 .lid,
 html[data-theme=regie] .miseLogo4 .dot{fill:#000;stroke:none}
 html[data-theme=regie] .link{color:#fff}
 html[data-theme=regie] .wordmark{background:#fff;padding:.16rem .28rem .1rem;line-height:0}
-html[data-theme=regie] .miseWordmark .stampGhost,html[data-theme=regie] .miseWordmark .stampGhost path,html[data-theme=regie] .miseWordmark .stampGhost circle,html[data-theme=regie] .miseWordmark .letters,html[data-theme=regie] .miseWordmark .markDot{fill:#000}
+html[data-theme=regie] .miseWordmark .stampGhost,html[data-theme=regie] .miseWordmark .stampGhost path,html[data-theme=regie] .miseWordmark .stampGhost circle,html[data-theme=regie] .miseWordmark .stampGhost polygon,html[data-theme=regie] .miseWordmark .letters,html[data-theme=regie] .miseWordmark .markDot{fill:#000}
 .splash{min-height:calc(100dvh - var(--safe-top) - var(--safe-bottom));display:grid;place-items:center;gap:.6rem;background:var(--ink);color:var(--on-ink)}
 .splash svg rect{fill:var(--ink)}
 .splash svg path,.splash svg circle{fill:var(--on-ink)}
@@ -147,7 +147,7 @@ html[data-theme=regie] .miseWordmark .stampGhost,html[data-theme=regie] .miseWor
 .aboutLinks{display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;margin:0}
 .aboutSheet a.aboutLink{min-height:48px;font-weight:750;text-decoration:underline;text-underline-offset:.2em}
 .aboutVersion{margin:.6rem 0 0}
-html[data-theme=light] .playful,html[data-theme=system] .playful{background-color:var(--ink);color:var(--on-ink);border:0;background-image:radial-gradient(rgba(255,255,255,.28) 1.1px,transparent 1.2px);background-size:9px 9px}
+html[data-theme=light] .playful,html[data-theme=system] .playful{background-color:var(--ink);color:var(--on-ink);border:0;background-image:radial-gradient(rgba(255,255,255,.28) 1.1px,transparent 1.2px);background-size:14px 14px;background-position:0 6px}
 html[data-theme=light] .terrainQuick button,html[data-theme=system] .terrainQuick button{background:var(--ink);color:var(--on-ink);border:0}
 html[data-theme=regie]{--on-ink:#000!important;--button:#fff!important;--button-text:#000!important}
 :root{--stroke:color-mix(in srgb, var(--ink) 62%, #fff)}
@@ -158,17 +158,24 @@ html[data-theme=regie] .goalNav details,html[data-theme=regie] .panel,html[data-
 
 /* 0.3.0-beta.4 · layout polish */
 .goalNav{align-items:start}
-.goalNav details{align-self:start;height:auto}
+.goalNav details{align-self:start;height:auto;border-radius:var(--radius)}
 .goalNav details>div{grid-auto-rows:minmax(48px,auto)}
-.goalNav button{min-height:48px;display:flex;align-items:center}
+.goalNav button{min-height:48px;display:flex;align-items:center;border-radius:calc(var(--radius) - 6px)}
+.goalNav summary{border-radius:var(--radius)}
+dialog{max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - 24px);margin:max(12px,var(--safe-top)) auto max(12px,var(--safe-bottom))}
+#toast{bottom:calc(1rem + var(--safe-bottom));max-width:min(92vw,420px)}
+@media(max-width:620px){
+  .goalNav details[open]{margin-bottom:.35rem}
+  main{padding-bottom:calc(1.5rem + var(--safe-bottom))}
+}
 .playful{border-radius:var(--radius)}
 .playful .grid2>*,.playful label,.playful .row>*{min-width:0}
 .playful input,.playful select,.playful textarea{width:100%;max-width:100%;min-width:0}
 .playful .row{align-items:stretch}
 .playful .row>button{flex:1 1 120px}
 .playful .challenge,.playful .ownedCard,.playful .suggestCard,.playful .uncertain,.playful .assistant{border-radius:var(--radius)}
-.tokenStrip{margin:.05rem 0 .6rem;opacity:.82}
-.tokenStrip svg{width:min(320px,88%);height:48px}
+.tokenStrip{margin:.15rem 0 .9rem;opacity:.82}
+.tokenStrip svg{width:min(340px,92%);height:52px}
 .aboutSheet{width:min(520px,88vw);min-height:250px}
 .aboutMark{width:min(210px,60%);opacity:.9}
 .aboutCredit{margin:auto 0 0;align-self:flex-start;font-size:.61rem;line-height:1.45;letter-spacing:.01em;color:var(--muted);opacity:.62;text-align:left}

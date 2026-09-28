@@ -4,7 +4,21 @@ MISES! reste une PWA autonome. ART ne l’embarque pas. ART ne stocke que le lie
 
 Le dépôt et l’URL ne changent pas : `mise-qr-case-finder`.
 
-## Ouvrir une mise
+## Ouvrir MISES! depuis ART
+
+### Sans spectacle sélectionné
+
+Le bouton MISES! dans ART doit **toujours** ouvrir la PWA, même sans `projectId` :
+
+```
+<URL PWA MISES!>/?source=art&returnUrl=<URL ART de retour>
+```
+
+Dans ce cas MISES! s’ouvre normalement, conserve sa base locale, affiche un bandeau de continuité ART, et propose **Retour à ART**. Aucune mise n’est créée automatiquement. Aucun jeton OAuth n’est placé dans l’URL.
+
+Côté ART (dépôt ART, hors de ce dépôt) : ne pas se contenter de l’URL nue. Toujours ajouter `source=art` et un `returnUrl` sûr ; n’ajouter `projectId` / `projectName` que lorsqu’un spectacle ou EAC est réellement sélectionné.
+
+### Avec un spectacle / EAC
 
 ```
 <URL PWA MISES!>/?projectId=<id stable ART, encodé URL>&projectName=<nom affiché, optionnel>&source=art&returnUrl=<URL ART de retour, optionnelle>
@@ -18,12 +32,12 @@ Le même lien fonctionne dans le navigateur et dans la PWA installée : `start_u
 
 | Paramètre | Règle |
 | --- | --- |
-| `projectId` | Obligatoire pour ouvrir le pont. 1 à 80 caractères, `A–Z`, `a–z`, `0–9`, `_`, `-`. Sinon le paramètre est ignoré. |
+| `projectId` | Optionnel. Requis seulement pour ouvrir / créer / rattacher une mise liée. 1 à 80 caractères, `A–Z`, `a–z`, `0–9`, `_`, `-`. Sinon le paramètre est ignoré. |
 | `projectName` | Optionnel. Caractères de contrôle retirés, 120 caractères maximum. Sert de nom si une mise vide est créée. |
-| `source` | Optionnel. `art` documente l’origine. Le pont fonctionne aussi sans cette valeur. |
+| `source` | Optionnel. `art` documente l’origine et affiche le bandeau de continuité même sans `projectId`. |
 | `returnUrl` | Optionnel. Accepté seulement en `http` ou `https`, sans identifiant ni mot de passe dans l’adresse, 2048 caractères maximum. `javascript:`, `data:` et toute autre forme sont ignorés. L’ancien paramètre `return` reste lu. |
 
-À l’ouverture :
+À l’ouverture avec `projectId` :
 
 1. si une mise porte déjà ce `projectId`, elle s’ouvre ;
 2. sinon, si des mises existent sans projet (créées avant le pont), MISES! propose de rattacher l’une d’elles ;

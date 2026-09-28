@@ -4,7 +4,7 @@ test('sans pont Android, la connexion Google reste proposée et Identity Service
   const requests = []
   page.on('request', request => requests.push(request.url()))
   await page.goto('/')
-  await page.getByText('Partager & outils', { exact: true }).click()
+  await page.getByText('Partager', { exact: true }).click()
   await expect(page.locator('#goalGoogle')).toHaveText('Connexion Google')
   expect(requests.some(url => url.includes('accounts.google.com') || url.includes('googleapis.com'))).toBe(false)
 })
@@ -19,7 +19,7 @@ test('le pont Android affiche le refus et n’appelle pas Google', async ({ page
   const requests = []
   page.on('request', request => requests.push(request.url()))
   await page.goto('/')
-  await page.getByText('Partager & outils', { exact: true }).click()
+  await page.getByText('Partager', { exact: true }).click()
   await expect(page.locator('#goalGoogle')).toHaveText('Connexion Google indisponible')
   await page.locator('#goalGoogle').click()
   const dialog = page.locator('#modal')

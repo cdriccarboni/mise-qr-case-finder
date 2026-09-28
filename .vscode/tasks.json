@@ -1,0 +1,52 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "MISES! · PWA (développement)",
+      "type": "shell",
+      "command": "npm run dev:lan",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "MISES! · PWA (preview build)",
+      "type": "shell",
+      "command": "npm run pwa:preview",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "MISES! · Vérifier tout",
+      "type": "shell",
+      "command": "npm run check",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "MISES! · Tests navigateur",
+      "type": "shell",
+      "command": "npm run test:browser",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "MISES! · Build PWA",
+      "type": "shell",
+      "command": "npm run build",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "MISES! · Build APK test",
+      "type": "shell",
+      "command": "npm run android:apk",
+      "problemMatcher": []
+    },
+    {
+      "label": "MISES! · Lancer sur Pixel",
+      "type": "shell",
+      "command": "npm run android:pixel",
+      "problemMatcher": []
+    }
+  ]
+}

@@ -10,7 +10,13 @@
     "predev": "node scripts/prepare-vision.mjs",
     "prebuild": "node scripts/prepare-vision.mjs",
     "test": "node --test tests/*.test.mjs",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "dev:lan": "vite --host 0.0.0.0",
+    "pwa:preview": "npm run build && vite preview --host 0.0.0.0",
+    "check": "npm test && npm run build",
+    "android:sync": "npm run build && node scripts/android-local.mjs sync",
+    "android:apk": "npm run android:sync && node scripts/android-local.mjs apk",
+    "android:pixel": "npm run android:apk && node scripts/android-local.mjs pixel"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

@@ -23,6 +23,10 @@ test('project context accepts a cross-origin https returnUrl and ignores unsafe 
   assert.equal(readProjectContext('?projectId=../etc&projectName=Nope',pages).projectId,'')
   assert.equal(readProjectContext(`?projectId=${'a'.repeat(81)}`,pages).projectId,'')
   assert.equal(readProjectContext('?projectId=show-1&projectName=%0A%0A<script>',pages).projectName,'<script>')
+  const bare=readProjectContext('?source=art&returnUrl=https%3A%2F%2Fart.example%2Faccueil',pages)
+  assert.equal(bare.projectId,'')
+  assert.equal(bare.source,'art')
+  assert.equal(bare.returnUrl,'https://art.example/accueil')
 })
 
 test('an unknown project is created, a linked one is opened, an old mise is offered for attachment',()=>{

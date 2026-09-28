@@ -125,17 +125,29 @@ export function generateExercises(input = {}) {
   }
 }
 
+function shuffle(list) {
+  const items = [...list]
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[items[i], items[j]] = [items[j], items[i]]
+  }
+  return items
+}
+
 export function handsChallenges(labels) {
   const names = namesOf(labels)
   if (!names.length) return { challenges: [], seen: [], uncertain: ['Rien de visible à utiliser. Je n’invente pas d’objet.'], provenance: 'generated' }
   const list = names.join(', ')
   const first = names[0]
-  const challenges = [
+  const pool = [
     { title: 'Cuisine inquiétante', duration: '30–60 s', steps: [`Uniquement avec : ${list}.`, `Un fond lent avec ${first}.`, 'Un geste sec, puis un silence.'] },
     { title: 'Une créature arrive', duration: '1 min', steps: [`La créature n’est pas un objet de plus : elle naît de ${list}.`, `Commencez loin (${first} très doux), approchez, arrêtez-vous.`] },
     { title: 'Tempête miniature', duration: '1 min', steps: [`Avec ${list} seulement.`, 'Trois plans : vent, impact, accalmie.'] },
-    { title: 'Même objet, trois sons', duration: '45 s', steps: [`Gardez uniquement ${first}.`, 'Frotter, taper du bout des doigts, secouer près de l’oreille.', names.length > 1 ? `Laissez ${names.slice(1).join(', ')} au sol.` : 'Rien d’autre dans les mains.'] }
+    { title: 'Même objet, trois sons', duration: '45 s', steps: [`Gardez uniquement ${first}.`, 'Frotter, taper du bout des doigts, secouer près de l’oreille.', names.length > 1 ? `Laissez ${names.slice(1).join(', ')} au sol.` : 'Rien d’autre dans les mains.'] },
+    { title: 'Entrée en scène', duration: '40 s', steps: [`Seulement ${list}.`, `Un signal lointain avec ${first}, puis tout le monde répond une fois.`, 'Silence net.'] },
+    { title: 'Machine capricieuse', duration: '1 min', steps: [`Les objets vus sont les pièces : ${list}.`, 'La machine démarre, se bloque, repart.', 'Aucun objet inventé.'] }
   ]
+  const challenges = shuffle(pool).slice(0, Math.min(4, pool.length)).map(item => ({ ...item, provenance: 'generated' }))
   return { challenges, seen: names, uncertain: [], provenance: 'generated', disclaimer: 'Défis générés à partir des objets vus. Pas des fiches de ta base.' }
 }
 
@@ -146,7 +158,9 @@ const FRAMES = [
   ['Bateau', 'Le pont tient dans les objets vus.'],
   ['Forêt étrange', 'Le sol de la forêt est fait de ces objets.'],
   ['Tempête', 'La tempête passe par ces objets, un par un.'],
-  ['Petite machine fantastique', 'Ces objets forment une seule petite machine.']
+  ['Petite machine fantastique', 'Ces objets forment une seule petite machine.'],
+  ['Salle d’attente', 'Chaque objet vu marque le temps qui passe.'],
+  ['Sous-sol', 'Les objets vus sont les seuls indices du lieu.']
 ]
 export function sightUniverses(labels) {
   const names = namesOf(labels)
@@ -155,7 +169,7 @@ export function sightUniverses(labels) {
     provenance: 'generated',
     intro: 'Avec ce que je vois, voici quelques univers que tu pourrais essayer',
     uncertain: [],
-    scenarios: FRAMES.map(([title, lead]) => ({
+    scenarios: shuffle(FRAMES).slice(0, 4).map(([title, lead]) => ({
       title, lead, owned: false, provenance: 'generated',
       steps: names.map(name => `${name} : un geste simple, dans « ${title} ». Suggestion, pas un objet de plus.`)
     }))

@@ -4,7 +4,7 @@ import { emptyData } from '../../src/data-bruitage.js'
 import { syntheticDocx, syntheticPdf } from '../synthetic-documents.mjs'
 
 async function openCatalogue(page) {
-  await page.getByText('Partager & outils', { exact: true }).click()
+  await page.getByText('Partager', { exact: true }).click()
   await page.locator('#goalDataBruitage').click()
   await expect(page.locator('.dataDialog')).toBeVisible()
 }
@@ -63,7 +63,7 @@ test('actual bundled COCO model loads offline and manual photo correction surviv
   await dialog.locator('[data-save]').click()
   await expect(dialog).toHaveCount(0)
   await page.reload()
-  await page.getByText('Ranger & préparer', { exact: true }).click()
+  await page.getByText('Ranger', { exact: true }).click()
   await page.locator('[data-tab="inventory"]').click()
   await expect(page.locator('#objectCards')).toContainText('Objet photo synthétique')
   expect(requests.some(url => url.includes('/api/staging-analyse'))).toBe(false)

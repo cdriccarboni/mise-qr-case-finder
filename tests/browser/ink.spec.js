@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
 
-const shots = '/opt/cursor/artifacts/screenshots'
+const shots = new URL('../../test-results/screenshots', import.meta.url).pathname
 
 async function shoot(locator, path) {
   let last
@@ -40,7 +40,7 @@ async function fills(page) {
 test('ink choice recolors the logo, stays readable, and is restored', async ({ page }) => {
   await mkdir(shots, { recursive: true })
   await page.goto('/')
-  await expect(page.locator('#appVersion')).toHaveText('0.3.0-beta.3')
+  await expect(page.locator('#appVersion')).toHaveText('0.3.0-beta.5')
   await page.setViewportSize({ width: 900, height: 800 })
   const rose = await fills(page)
   expect(rose.dot).toBe('rgb(209, 42, 116)')
@@ -119,7 +119,7 @@ test('ink choice recolors the logo, stays readable, and is restored', async ({ p
   await page.locator('#closePreferences').click()
   await expect.poll(() => fills(page).then(value => value.dot)).toBe('rgb(209, 42, 116)')
   await page.reload()
-  await expect(page.locator('#appVersion')).toHaveText('0.3.0-beta.3')
+  await expect(page.locator('#appVersion')).toHaveText('0.3.0-beta.5')
   const restored = await fills(page)
   expect(restored.dot).toBe('rgb(209, 42, 116)')
   expect(await page.evaluate(() => localStorage.getItem('mises-ink'))).toBeNull()

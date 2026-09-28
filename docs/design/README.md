@@ -4,6 +4,8 @@ La piste retenue est **Tampon**. C’est le logo dans l’application : le mot *
 
 L’icône (PWA, Android, favicon) est **m!**, avec le même effet. Le mot entier ne reste pas lisible à cette taille. L’étiquette thermique est le mot en une encre, sans le décalage, pour que le QR se lise. En régie, le tampon est noir sur blanc.
 
+Évolution progressive proposée (sans refonte totale) : [EVOLUTION-LOGO.md](EVOLUTION-LOGO.md).
+
 Les autres dessins restent des études. Ils ne sont pas dans l’application.
 
 La police est Fredoka, licence SIL OFL, la même que le logo en place. Les lettres sont vectorisées. Ce ne sont pas des visuels de Musiques en jeu(x) – LE KIT, ni d’Odia.

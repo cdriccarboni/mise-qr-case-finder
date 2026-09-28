@@ -14,7 +14,7 @@ Tout ce que tu importes reste sur l’appareil (IndexedDB), sauf si tu connectes
 
 ## Importer tes fichiers
 
-Partager & outils → **Data Bruitage · importer / exporter**.
+Partager → **Data Bruitage · importer / exporter**.
 
 Formats lus sur l’appareil : XLSX, XLS, CSV, JSON, TXT, DOCX, PDF avec texte. Le détail des colonnes et du JSON est dans [docs/FORMAT-IMPORT.md](FORMAT-IMPORT.md). Un PDF scanné sans texte reste « à vérifier » : il n’y a pas d’OCR. Les documents réels ne vont pas dans le dépôt.
 

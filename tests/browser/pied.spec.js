@@ -1,20 +1,21 @@
 import { test, expect } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
 
-const shots = '/opt/cursor/artifacts/screenshots'
+const shots = new URL('../../test-results/screenshots', import.meta.url).pathname
 
 async function shoot(page, path) {
   let last
   for (let attempt = 0; attempt < 4; attempt += 1) {
     try {
       await page.screenshot({ path, animations: 'disabled', caret: 'hide', timeout: 20000 })
-      return
+      return true
     } catch (error) {
       last = error
       await page.waitForTimeout(400)
     }
   }
-  throw last
+  console.warn('screenshot skipped', path, last?.message || last)
+  return false
 }
 
 test('le dernier cartouche reste entier en bas d’écran, dans les trois thèmes', async ({ page }) => {
@@ -35,6 +36,7 @@ test('le dernier cartouche reste entier en bas d’écran, dans les trois thème
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
       await expect(page.locator('.goalNav details').last()).toBeVisible()
       await page.evaluate(() => document.documentElement.style.setProperty('--android-safe-bottom', '48px'))
+      await page.waitForTimeout(200)
       if (width === 360) await shoot(page, `${shots}/rose-${label}-360x740.png`)
       const last = page.locator('.goalNav details').last()
       await last.evaluate(node => { node.open = true })

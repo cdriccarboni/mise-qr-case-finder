@@ -7,7 +7,7 @@ public final class AndroidShellBridge {
     static final String GOOGLE_SIGN_IN_MESSAGE =
             "La connexion Google n’est pas disponible dans l’application Android : Google bloque l’identification dans la fenêtre intégrée. "
                     + "Tu peux continuer sans compte. Tes objets, photos et mémos restent sur l’appareil. "
-                    + "Exporte une sauvegarde depuis Partager et outils, ou ouvre MISES ! dans Chrome pour synchroniser ton propre Google Drive.";
+                    + "Exporte une sauvegarde depuis Partager, ou ouvre MISES ! dans Chrome pour synchroniser ton propre Google Drive.";
 
     @JavascriptInterface
     public boolean googleSignInAvailable() {
