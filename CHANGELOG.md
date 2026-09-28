@@ -1,3 +1,11 @@
+## 0.3.0-beta.5 — 2026-09-28 (reprise Cursor)
+
+- Slogan officiel rétabli : « Cherche ta mise ».
+- ART sans spectacle : `?source=art` (et `returnUrl` valide) ouvre MISES! avec bandeau de continuité et retour ART, sans créer de mise.
+- Défi bruitage : pools élargis + anti-répétition du tirage précédent ; défis photo / univers tirés au hasard parmi les objets réellement vus.
+- UI : motifs nodaux plus espacés vers le haut ; libellés QR « Créer / imprimer » clarifiés.
+- Direction graphique : proposition progressive dans `docs/design/EVOLUTION-LOGO.md` (pas de refonte totale).
+
 ## 0.3.0-beta.5 — 2026-09-27
 
 - Fenêtres : un clic sur le fond autour de n’importe quel dialogue ferme de nouveau la fenêtre et revient au niveau précédent.
