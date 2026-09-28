@@ -4,7 +4,7 @@ test('the screen says MISES! and the wordmark is mises !', async ({ page }) => {
   await page.goto('/')
   await expect(page).toHaveTitle('MISES! — QR Case Finder')
   await expect(page.locator('header .miseWordmark')).toHaveAttribute('aria-label', 'mises !')
-  await expect(page.locator('header')).toContainText('Cherche tes mises')
+  await expect(page.locator('header')).toContainText('Cherche ta mise')
   const dots = await page.locator('header .miseWordmark .markDot').count()
   expect(dots).toBe(2)
   await page.locator('#preferencesBtn').click()

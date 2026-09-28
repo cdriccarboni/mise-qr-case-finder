@@ -460,7 +460,7 @@ async function openSharedPackage(fileId){
 $('#app').innerHTML=`
 <header>
   <div class="brand miseBrand">
-    <div class="miseBrandCopy"><div class="wordmark">${wordmarkSvg}</div><div class="sub">QR CASE FINDER</div><div class="tag">Cherche tes mises · <span id="appVersion">${APP_VERSION}</span></div></div>
+    <div class="miseBrandCopy"><div class="wordmark">${wordmarkSvg}</div><div class="sub">QR CASE FINDER</div><div class="tag">Cherche ta mise · <span id="appVersion">${APP_VERSION}</span></div></div>
   </div>
   <div class="headerTools">
     <span id="networkStatus" class="status" role="status"></span>
