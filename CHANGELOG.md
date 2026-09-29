@@ -1,3 +1,14 @@
+## 0.4.0-beta.1 — 2026-09-29 (bibliothèque publique + double interface)
+
+- Bibliothèque publique embarquée issue uniquement de `EXPORT_PUBLIC_WEB` : 99 recettes sourcées, 12 fabrications, URLs conservées.
+- 8 jeux publics et 7 activités pédagogiques reliés à la même base ; Univers aléatoire enrichi par les nouvelles recettes.
+- Les jeux peuvent croiser la bibliothèque publique avec l'inventaire réel sans déclarer qu'un objet Web est possédé.
+- Rubriques Bibliothèque publique, Fabrications et Activités pédagogiques dans l'interface Bruitages.
+- Deux interfaces dans Préférences : **Bruitages & pédagogie** et **Inventaire / régie**.
+- Mode Inventaire / régie : QR, étiquettes, objets, contenants, kits, mises, recherche et catégories personnalisées, sans vocabulaire bruitage.
+- Version `0.4.0-beta.1`, versionCode `13`, cache PWA `mises-0.4.0-beta.1`.
+- CI PR renforcée : tests unitaires avant build PWA et APK debug Android.
+
 ## 0.3.0-beta.7 — 2026-09-28 (jeux ↔ inventaire réel)
 
 - Moteur de jeux / défis / ateliers générés depuis l’inventaire réel (valise, filtres, statuts).
