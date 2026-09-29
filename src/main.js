@@ -463,12 +463,12 @@ function renderPublicSections(){
   const fabs=$('#fabricationCards')
   if(fabs){
     fabs.innerHTML=fabricationsHtml(publicFoley,esc)
-    $('[data-public-fab]',fabs).forEach(button=>button.onclick=()=>openPublicGame('public-fabrication'))
+    $$('[data-public-fab]',fabs).forEach(button=>button.onclick=()=>openPublicGame('public-fabrication'))
   }
   const acts=$('#activityCards')
   if(acts){
     acts.innerHTML=activitiesHtml(publicFoley,esc)
-    $('[data-public-activity]',acts).forEach(button=>button.onclick=()=>{
+    $$('[data-public-activity]',acts).forEach(button=>button.onclick=()=>{
       const activity=(publicFoley.pedagogyActivities||[]).find(x=>x.id===button.dataset.publicActivity)
       openPublicGame(activity?.gameIds?.[0]||null)
     })
