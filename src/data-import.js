@@ -6,9 +6,9 @@ XLSX.set_cptable(codepages)
 
 const tableNames = Object.fromEntries(Object.entries(TABLES).flatMap(([key, name]) => [[normalize(key), key], [normalize(name), key]]))
 Object.assign(tableNames, { containers: 'cases', object_sound_links: 'objectSounds', 'object sound links': 'objectSounds', 'elements a verifier': 'review' })
-const fields = { nom: 'name', objet: 'name', son: 'name', identifiant: 'id', sons: 'sounds', contexte: 'contexts', contextes: 'contexts', contenant: 'caseId', object_id: 'objectId', sound_id: 'soundId', 'object id': 'objectId', 'sound id': 'soundId', 'son a entendre': 'hear', 'son a imaginer': 'imagine', 'objet ou dispositif necessaire': 'device', famille: 'family', statut: 'status', notes: 'notes', provenance: 'provenance', source: 'source' }
+const fields = { nom: 'name', objet: 'name', article: 'name', son: 'name', identifiant: 'id', sons: 'sounds', alias: 'aliases', variantes: 'aliases', tags: 'tags', contexte: 'contexts', contextes: 'contexts', contenant: 'caseId', valise: 'caseId', caisse: 'caseId', localisation: 'location', emplacement: 'location', matiere: 'material', materiau: 'material', geste: 'gesture', technique: 'gesture', categorie: 'family', instrument: 'instrument', object_id: 'objectId', sound_id: 'soundId', 'object id': 'objectId', 'sound id': 'soundId', 'son a entendre': 'hear', 'son a imaginer': 'imagine', 'objet ou dispositif necessaire': 'device', famille: 'family', statut: 'status', notes: 'notes', provenance: 'provenance', source: 'source' }
 const arrayFields = ['sounds', 'tags', 'contexts', 'aliases', 'objectIds', 'checked']
-export const SUPPORTED_IMPORT = /\.(xlsx|xls|csv|json|txt|pdf|docx)$/i
+export const SUPPORTED_IMPORT = /\.(xlsx|xls|ods|csv|tsv|json|txt|md|markdown|pdf|docx|zip|png|jpe?g|webp)$/i
 export async function sourceDigest(bytes) {
   const hash = await crypto.subtle.digest('SHA-256', bytes)
   return [...new Uint8Array(hash)].map(n => n.toString(16).padStart(2, '0')).join('')
@@ -16,6 +16,46 @@ export async function sourceDigest(bytes) {
 function decodeCell(value) {
   if (typeof value === 'string' && value.startsWith('json:')) return JSON.parse(value.slice(5))
   return value
+}
+async function inflateRaw(bytes) {
+  if (typeof DecompressionStream === 'undefined') throw new Error('Décompression ZIP indisponible sur ce navigateur')
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
+  return new Uint8Array(await new Response(stream).arrayBuffer())
+}
+async function unzipFiles(bytes) {
+  const data = new Uint8Array(bytes), view = new DataView(data.buffer, data.byteOffset, data.byteLength)
+  let eocd = -1
+  for (let i = data.length - 22; i >= Math.max(0, data.length - 65557); i--) {
+    if (view.getUint32(i, true) === 0x06054b50) { eocd = i; break }
+  }
+  if (eocd < 0) throw new Error('Archive ZIP illisible')
+  const count = view.getUint16(eocd + 10, true), central = view.getUint32(eocd + 16, true)
+  let p = central; const entries = []
+  for (let n = 0; n < count; n++) {
+    if (view.getUint32(p, true) !== 0x02014b50) throw new Error('Répertoire ZIP invalide')
+    const method = view.getUint16(p + 10, true), size = view.getUint32(p + 20, true)
+    const nameLen = view.getUint16(p + 28, true), extraLen = view.getUint16(p + 30, true), commentLen = view.getUint16(p + 32, true)
+    const local = view.getUint32(p + 42, true), name = new TextDecoder().decode(data.slice(p + 46, p + 46 + nameLen))
+    p += 46 + nameLen + extraLen + commentLen
+    if (name.endsWith('/') || size > 40 * 1024 * 1024 || !SUPPORTED_IMPORT.test(name) || /\.zip$/i.test(name)) continue
+    if (view.getUint32(local, true) !== 0x04034b50) continue
+    const localName = view.getUint16(local + 26, true), localExtra = view.getUint16(local + 28, true)
+    const start = local + 30 + localName + localExtra, packed = data.slice(start, start + size)
+    let unpacked
+    if (method === 0) unpacked = packed
+    else if (method === 8) unpacked = await inflateRaw(packed)
+    else continue
+    entries.push(new File([unpacked], name, { type: 'application/octet-stream' }))
+  }
+  return entries
+}
+export function importCapabilities() {
+  return {
+    direct: ['XLSX','XLS','ODS','CSV','TSV','JSON','TXT','Markdown','PDF texte','DOCX'],
+    archive: ['ZIP contenant des formats pris en charge'],
+    images: ['PNG','JPG/JPEG','WebP — conservées comme source à qualifier; la reconnaissance d’objet passe par MISES Vision'],
+    rule: 'Aucun contenu illisible n’est inventé; toute extraction documentaire non structurée passe par À vérifier.'
+  }
 }
 export function normalizeImportRow(row, table, sourceId, index) {
   const result = {}
@@ -113,11 +153,23 @@ export async function parseImportFile(file) {
   const bytes = await file.arrayBuffer(), digest = await sourceDigest(bytes), sourceId = `source-${digest}`
   const extension = file.name.split('.').pop().toLowerCase()
   let data, canonical = false
-  if (['xlsx', 'xls', 'csv'].includes(extension)) ({ data, canonical } = workbookToData(bytes, sourceId, extension === 'csv'))
+  if (['xlsx', 'xls', 'ods', 'csv', 'tsv'].includes(extension)) ({ data, canonical } = workbookToData(bytes, sourceId, ['csv','tsv'].includes(extension)))
   else if (extension === 'json') {
     const payload = JSON.parse(new TextDecoder().decode(bytes))
     canonical = DATA_MARKERS.includes(payload.schema)
     data = importTables(Array.isArray(payload) ? { objects: payload } : payload.tables || Object.fromEntries(Object.entries(payload).filter(([, value]) => Array.isArray(value))), sourceId, { canonical })
+  } else if (extension === 'zip') {
+    data = emptyData()
+    const entries = await unzipFiles(bytes)
+    if (!entries.length) throw new Error('Aucun document pris en charge trouvé dans le ZIP')
+    for (const entry of entries) {
+      const incoming = await parseImportFile(entry)
+      for (const key of Object.keys(TABLES)) data[key].push(...incoming[key])
+    }
+    data.sources.push({ id: sourceId, name: file.name, format: 'zip', digest, size: file.size, provenance: 'user-document', kind: 'archive-import' })
+  } else if (['png','jpg','jpeg','webp'].includes(extension)) {
+    data = emptyData()
+    data.review.push({ id: `${sourceId}-image`, sourceId, excerpt: file.name, reason: 'Image : aucune extraction de texte inventée. Utiliser MISES Vision pour reconnaître les objets, ou qualifier manuellement.', status: 'pending', provenance: 'review' })
   } else {
     let text
     if (extension === 'docx') {
