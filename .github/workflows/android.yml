@@ -48,9 +48,10 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Build the local PWA embedded in the APK
+      - name: Test and build the local PWA embedded in the APK
         run: |
           npm ci
+          npm test
           npm run build
           rm -rf android/app/src/main/assets/www
           mkdir -p android/app/src/main/assets/www
