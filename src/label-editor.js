@@ -39,11 +39,11 @@ function renderModel(canvas,model,{thermal=model.thermal?.enabled}={}){
       ctx.fillStyle='#000'
       ctx.textAlign=block.align||'center';ctx.textBaseline='top'
       ctx.font=`${block.italic?'italic ':''}${block.bold?'700 ':'400 '}${Math.max(8,Number(block.size)||18)}px system-ui,sans-serif`
-      const lines=String(block.text||'').split('\n')
+      const pad=Number(block.padding)||0,lines=String(block.text||'').split('\n')
       const lineH=(Number(block.size)||18)*(Number(block.lineHeight)||1.15)
       lines.forEach((line,i)=>{
-        const tx=block.align==='left'?0:block.align==='right'?bw:bw/2
-        ctx.fillText(line,tx,i*lineH,Math.max(1,bw))
+        const tx=block.align==='left'?pad:block.align==='right'?bw-pad:bw/2
+        ctx.fillText(line,tx,pad+i*lineH,Math.max(1,bw-pad*2))
         if(block.underline){
           const metrics=ctx.measureText(line),width=Math.min(bw,metrics.width)
           const ux=block.align==='left'?0:block.align==='right'?bw-width:(bw-width)/2
@@ -52,9 +52,9 @@ function renderModel(canvas,model,{thermal=model.thermal?.enabled}={}){
       })
     }else if(block.kind==='image'&&block._image?.complete){
       const img=block._image
-      const ratio=Math.min(bw/img.naturalWidth,bh/img.naturalHeight)
+      const ratio=(block.fit||'contain')==='cover'?Math.max(bw/img.naturalWidth,bh/img.naturalHeight):Math.min(bw/img.naturalWidth,bh/img.naturalHeight)
       const dw=img.naturalWidth*ratio,dh=img.naturalHeight*ratio
-      ctx.drawImage(img,(bw-dw)/2,(bh-dh)/2,dw,dh)
+      ctx.save();ctx.beginPath();ctx.rect(0,0,bw,bh);ctx.clip();ctx.drawImage(img,(bw-dw)/2,(bh-dh)/2,dw,dh);ctx.restore()
     }
     ctx.restore()
   }
@@ -92,6 +92,7 @@ export function openLabelEditor({context={},printImage}={}){
     <div class="labelEditorLayout">
       <div class="labelTools">
         <label>Format<select data-preset>${LABEL_PRESETS.map(p=>`<option value="${p.id}">${p.label}</option>`).join('')}<option value="custom">Personnalisé</option></select></label>
+        <div class="grid2"><label>Orientation<select data-orientation><option value="horizontal">Horizontal</option><option value="vertical">Vertical</option></select></label><label>Rotation globale<select data-global-rotation><option value="0">0°</option><option value="90">90°</option></select></label></div>
         <div class="grid2"><label>Largeur mm<input data-w type="number" min="15" max="150" value="${model.w}"></label><label>Hauteur mm<input data-h type="number" min="15" max="150" value="${model.h}"></label></div>
         <div class="row"><button data-add-text type="button">+ Texte</button><button data-add-image type="button" class="ghost">+ Image</button><input data-image-file type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
         <div data-block-tools></div>
@@ -111,7 +112,7 @@ export function openLabelEditor({context={},printImage}={}){
     const b=selectedBlock(),box=$('[data-block-tools]')
     if(!b){box.innerHTML='<p class="hint">Ajoute ou sélectionne un élément.</p>';return}
     box.innerHTML=`<fieldset><legend>${b.kind==='text'?'Texte':'Image'}</legend>
-      ${b.kind==='text'? `<label>Contenu<textarea data-text rows="3">${esc(b.text)}</textarea></label><div class="grid2"><label>Taille<input data-size type="number" min="8" max="80" value="${b.size}"></label><label>Alignement<select data-align><option value="left">Gauche</option><option value="center">Centre</option><option value="right">Droite</option></select></label></div><div class="row"><label class="check"><input data-bold type="checkbox" ${b.bold?'checked':''}> Gras</label><label class="check"><input data-italic type="checkbox" ${b.italic?'checked':''}> Italique</label><label class="check"><input data-under type="checkbox" ${b.underline?'checked':''}> Souligné</label></div>` : '<p class="hint">Déplace, redimensionne ou tourne l’image directement.</p>'}
+      ${b.kind==='text'? `<label>Contenu<textarea data-text rows="3">${esc(b.text)}</textarea></label><div class="grid2"><label>Taille<input data-size type="number" min="8" max="80" value="${b.size}"></label><label>Alignement<select data-align><option value="left">Gauche</option><option value="center">Centre</option><option value="right">Droite</option></select></label><label>Interligne<input data-lineheight type="number" min="0.8" max="2" step="0.05" value="${b.lineHeight||1.15}"></label><label>Marge interne px<input data-padding type="number" min="0" max="30" value="${b.padding||0}"></label></div><div class="row"><label class="check"><input data-bold type="checkbox" ${b.bold?'checked':''}> Gras</label><label class="check"><input data-italic type="checkbox" ${b.italic?'checked':''}> Italique</label><label class="check"><input data-under type="checkbox" ${b.underline?'checked':''}> Souligné</label></div>` : `<label>Recadrage<select data-fit><option value="contain">Contenir</option><option value="cover">Remplir / recadrer</option></select></label><p class="hint">Déplace, redimensionne ou tourne l’image directement.</p>`}
       <div class="grid2"><label>Rotation<input data-rotation type="number" min="-180" max="180" value="${b.rotation||0}"></label><label>Largeur %<input data-bw type="number" min="5" max="100" value="${Math.round(b.w)}"></label></div>
       <div class="row"><button data-duplicate class="ghost">Dupliquer</button><button data-front class="ghost">Avant</button><button data-back class="ghost">Arrière</button><button data-delete class="ghost">Supprimer</button></div>
     </fieldset>`
@@ -119,11 +120,13 @@ export function openLabelEditor({context={},printImage}={}){
     if(b.kind==='text'){
       bind('[data-text]',el=>b.text=el.value)
       bind('[data-size]',el=>b.size=Number(el.value))
+      bind('[data-lineheight]',el=>b.lineHeight=Number(el.value))
+      bind('[data-padding]',el=>b.padding=Number(el.value))
       const align=$('[data-align]');align.value=b.align||'center';align.onchange=()=>{push();b.align=align.value;draw()}
       $('[data-bold]').onchange=e=>{push();b.bold=e.target.checked;draw()}
       $('[data-italic]').onchange=e=>{push();b.italic=e.target.checked;draw()}
       $('[data-under]').onchange=e=>{push();b.underline=e.target.checked;draw()}
-    }
+    }else{const fit=$('[data-fit]');fit.value=b.fit||'contain';fit.onchange=()=>{push();b.fit=fit.value;draw()}}
     bind('[data-rotation]',el=>b.rotation=Number(el.value))
     bind('[data-bw]',el=>b.w=Number(el.value))
     $('[data-duplicate]').onclick=()=>{push();const copy=clone({...b,_image:undefined});copy.id=uid(b.kind);copy.x=clamp(b.x+4,0,95);copy.y=clamp(b.y+4,0,95);model.blocks.push(copy);if(copy.kind==='image')hydrateImages(model,draw);selected=copy.id;draw()}
@@ -152,7 +155,9 @@ export function openLabelEditor({context={},printImage}={}){
   function draw(){hydrateImages(model,draw);renderModel(canvas,model);stage.style.aspectRatio=`${model.w}/${model.h}`;drawOverlay();blockTools()}
   $('[data-close]').onclick=$('[data-close-bottom]').onclick=()=>dialog.close()
   dialog.addEventListener('close',()=>dialog.remove(),{once:true})
-  $('[data-preset]').onchange=e=>{if(e.target.value==='custom')return;const p=LABEL_PRESETS.find(x=>x.id===e.target.value);if(!p)return;push();model.w=p.w;model.h=p.h;$('[data-w]').value=p.w;$('[data-h]').value=p.h;draw()}
+  $('[data-preset]').onchange=e=>{if(e.target.value==='custom')return;const p=LABEL_PRESETS.find(x=>x.id===e.target.value);if(!p)return;push();model.w=p.w;model.h=p.h;$('[data-w]').value=p.w;$('[data-h]').value=p.h;$('[data-orientation]').value=p.w>=p.h?'horizontal':'vertical';draw()}
+  $('[data-orientation]').onchange=e=>{const want=e.target.value;if((want==='vertical'&&model.w>model.h)||(want==='horizontal'&&model.h>model.w)){push();[model.w,model.h]=[model.h,model.w];$('[data-w]').value=model.w;$('[data-h]').value=model.h;draw()}}
+  $('[data-global-rotation]').onchange=e=>{if(Number(e.target.value)===90){push();[model.w,model.h]=[model.h,model.w];for(const b of model.blocks)b.rotation=(Number(b.rotation)||0)+90;$('[data-w]').value=model.w;$('[data-h]').value=model.h;draw();e.target.value='0'}}
   $('[data-w]').onchange=e=>{push();model.w=clamp(Number(e.target.value)||50,15,150);draw()}
   $('[data-h]').onchange=e=>{push();model.h=clamp(Number(e.target.value)||30,15,150);draw()}
   $('[data-add-text]').onclick=()=>{push();const b=textBlock();model.blocks.push(b);selected=b.id;draw()}
