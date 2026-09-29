@@ -202,7 +202,7 @@ html:not([data-interface="inventory"]) .goalNav .createGoals>div>button:last-chi
 .labelStage [data-overlay]{position:absolute;inset:0}
 .labelBlock{position:absolute;border:1px dashed transparent;color:#111;background:#fff2;overflow:hidden;display:grid;place-items:center;text-align:center;line-height:1.05;touch-action:none;cursor:move;user-select:none}
 .labelBlock.selected{border-color:#d12a74;background:#d12a7418;box-shadow:0 0 0 1px #fff inset}
-.labelBlock[data-id]{font-size:.72rem}
+.labelBlock[data-id]{font-size:.72rem}.labelResizeHandle{position:absolute;right:0;bottom:0;width:26px;height:26px;display:grid;place-items:center;background:#d12a74;color:#fff;border-radius:8px 0 0 0;font-size:14px;touch-action:none;cursor:nwse-resize}
 .labelBottom{justify-content:flex-end}
 .indexDiag{display:grid;gap:.65rem}
 html[data-theme=light] .preferenceActionBlock{background:#fff;border-color:#d8d8de}
