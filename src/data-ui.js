@@ -1,5 +1,5 @@
 import { TABLES, emptyData, readData, planImport, mergeData, saveReviewedRow, newId, findDuplicates, provenanceLabel, soundFields } from './data-bruitage.js'
-import { parseImportFile, downloadWorkbook, downloadBinder, downloadIndexCsv, SUPPORTED_IMPORT } from './data-import.js'
+import { parseImportFile, downloadWorkbook, downloadBinder, downloadIndexCsv, SUPPORTED_IMPORT, importCapabilities } from './data-import.js'
 
 export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 const esc = escapeHtml
@@ -7,10 +7,11 @@ export async function openDataBruitage({ db, changed, files = [] }) {
   const dialog = document.createElement('dialog'); dialog.className = 'dataDialog'
   document.body.append(dialog)
   let data = await readData(db), selectedTable = 'objects', staged = null, closed = false
+  const capabilities=importCapabilities()
   dialog.innerHTML = `<div class="form"><div class="dialoghead"><div><b>Data Bruitage · base globale</b><small>Objets, sons et documents de tous les usages et projets</small></div><button data-close class="ghost">Fermer</button></div>
-    <p class="hint">Les imports restent sur cet appareil. Chaque conflit conserve la version locale et rejoint « À vérifier ». Document de l’utilisateur, source externe, proposition générée et à vérifier restent des origines distinctes. « Son à entendre » et « son à imaginer » ne sont jamais fusionnés.</p>
+    <p class="hint">Les imports restent sur cet appareil. Chaque conflit conserve la version locale et rejoint « À vérifier ». Document de l’utilisateur, source externe, proposition générée et à vérifier restent des origines distinctes. « Son à entendre » et « son à imaginer » ne sont jamais fusionnés.</p><p class="hint"><b>Formats :</b> ${esc(capabilities.direct.join(" · "))} · ${esc(capabilities.archive.join(" · "))}. Images : ${esc(capabilities.images.join(" · "))}</p>
     <div class="row"><button data-import>Importer des fichiers</button><button data-export>Exporter XLSX</button><button data-binder class="ghost">Classeur XLSX</button><button data-csv class="ghost">Index CSV</button><button data-duplicates class="ghost">Doublons</button></div>
-    <input data-files type="file" accept=".xlsx,.xls,.csv,.json,.txt,.pdf,.docx" multiple hidden>
+    <input data-files type="file" accept=".xlsx,.xls,.ods,.csv,.tsv,.json,.txt,.md,.markdown,.pdf,.docx,.zip,.png,.jpg,.jpeg,.webp" multiple hidden>
     <p data-status role="status"></p><div data-preview></div>
     <label>Table<select data-table>${Object.entries(TABLES).map(([key, label]) => `<option value="${key}">${esc(label)}</option>`).join('')}</select></label>
     <label>Filtrer<input data-filter placeholder="Nom, texte ou identifiant"></label>
