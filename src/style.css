@@ -178,3 +178,7 @@ html[data-theme="light"] #customCategories{background:#fff;color:#171717}
   .publicStats{grid-template-columns:repeat(2,minmax(0,1fr))}
   html[data-interface="inventory"] .goalNav{grid-template-columns:1fr}
 }
+
+.inventoryNavGroup{display:none}
+html[data-interface="inventory"] .inventoryNavGroup{display:contents!important}
+html[data-interface="inventory"] #goalQrSimple{grid-column:1/-1}
