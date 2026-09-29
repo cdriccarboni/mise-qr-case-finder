@@ -26,7 +26,7 @@ import { playHubHtml, challengeHtml, workshopSetupHtml, workshopProgramHtml, wor
 import { publicReferenceIdeas, generatePublicGame, randomPublicUniverse, publicActivityProgram } from './public-foley.js'
 import { publicHubHtml, fabricationsHtml, activitiesHtml, publicGameHtml, publicWorkshopHtml } from './public-ui.js'
 import { openLabelEditor } from './label-editor.js'
-import { buildGlobalIndex, indexStats, diagnosticHtml } from './index-engine.js'
+import { buildGlobalIndex, indexStats, diagnosticHtml, searchGlobalIndex } from './index-engine.js'
 import { visionStatus, VISION_BENCHMARK_PLAN, buildVisionVocabulary } from './vision-engine.js'
 import { parseIntent, answerIntent } from './conversation.js'
 import { newLearning } from './learning.js'
@@ -679,7 +679,7 @@ $('#app').innerHTML=`
  <details class="createGoals"><summary>Créer</summary><div><span class="inventoryNavGroup inventoryOnly"><button id="goalAddObjectSimple" type="button">+ Objet</button><button id="goalAddCaseSimple" type="button">+ Contenant</button><button id="goalQrSimple" type="button">Étiquettes QR</button></span><button id="goalPlay" class="foleyOnly" type="button">Jouer</button><button id="goalWorkshop" class="foleyOnly" type="button">Préparer un atelier</button><button id="goalChallenge" class="foleyOnly" type="button">Défi bruitage</button><button id="goalPublic" class="foleyOnly" data-tab="publicLibrary" type="button">Bibliothèque publique</button><button id="goalFabrications" class="foleyOnly" data-tab="fabrications" type="button">Fabrications</button><button id="goalActivities" class="foleyOnly" data-tab="activities" type="button">Activités pédagogiques</button><button id="goalRandomUniverse" class="foleyOnly" type="button">Univers aléatoire</button><button id="goalHands" class="foleyOnly" type="button">Crée ton bruitage</button><button id="goalExercise" class="foleyOnly" type="button">Exercice</button><button id="goalGroupPhoto" class="foleyOnly" type="button">Photo de groupe</button><button id="goalUniverse" class="foleyOnly" type="button">Univers d’une photo</button></div></details>
  <details><summary>Ranger</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
- <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Data Bruitage · importer / exporter</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
+ <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="search" class="tab active"><div id="searchResults"></div></section>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
@@ -754,6 +754,7 @@ $$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.ta
 
 function renderSearch(target='#searchResults'){
   const q=$('#q').value.trim(), own=searchOwned(q), ideas=isInventoryMode()?[]:searchExternal(q), entities=searchEntities(q)
+  const globalHits=q?searchGlobalIndex(currentIndexRows(),q,16).filter(row=>!['objet','contenant','kit','mise'].includes(row.kind)).filter(row=>!isInventoryMode()||['instrument','document','son'].includes(row.kind)):[]
   const intent=parseIntent(q)
   const answer=intent?answerIntent(intent,{objects,cases,mises,activeMise,learnings}):null
   if(!q){
@@ -768,6 +769,7 @@ function renderSearch(target='#searchResults'){
     h+=entities.kits.map(k=>`<article class="result entityResult"><div class="thumb">▦</div><div><h3>${esc(k.name)}</h3><p>Kit acoustique</p><small>${(k.objectIds||[]).length} objets · vue sur le parc</small></div><button data-open-kit="${k.id}" class="plus" title="Ouvrir">↗</button></article>`).join('')
     h+=entities.mises.map(m=>`<article class="result entityResult"><div class="thumb">◇</div><div><h3>${esc(m.name)}</h3><p>Mise</p><small>${(m.objectIds||[]).length} objets · ${(m.checked||[]).length} contrôlés${m.projectName?` · ${esc(m.projectName)}`:''}</small></div><button data-open-mise="${m.id}" class="plus" title="Ouvrir">↗</button></article>`).join('')
   }
+  if(globalHits.length){h+=`<div class="resultHead"><b>${globalHits.length} résultat${globalHits.length>1?'s':''} dans l’index global</b><span>Sons, documents, instruments, jeux et références publiques.</span></div>`+globalHits.slice(0,10).map(row=>`<article class="result idea"><div class="thumb">⌕</div><div><h3>${esc(row.label)}</h3><p>${esc(row.kind)}</p><small>${esc((row.terms||[]).slice(1,5).join(' · '))}</small></div></article>`).join('')}
   h+=`<div class="resultHead"><b>${own.length} résultat${own.length>1?'s':''} dans ton parc</b><span>Les idées externes restent séparées.</span></div>`
   h+=own.map(o=>`<article class="result">
     <div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div>
