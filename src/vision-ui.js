@@ -242,7 +242,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
         + exercises.exercises.map(item => `<article class="challenge"><strong>${esc(item.title)}</strong><small>${esc(item.duration)} · ${esc(item.disclaimer)}</small><p>${item.steps.map(esc).join(' ')}</p></article>`).join('')
         + [...(hands.uncertain || []), ...(universes.uncertain || []), ...(exercises.uncertain || [])].map(line => `<p class="uncertain">${esc(line)}</p>`).join('')
     }
-    $('[data-status]').textContent = matches.length ? `${matches.length} zone(s) proposée(s) localement · IDENTIFIÉ / PROBABLE / SUGGESTION / À IDENTIFIER · aucune validation automatique.` : 'À IDENTIFIER · aucun objet détecté. Ajoutez les objets omis manuellement.'
+    $('[data-status]').textContent = matches.length ? `${matches.length} objet(s) proposés localement · ${matches.length} zone(s) · IDENTIFIÉ / PROBABLE / SUGGESTION / À IDENTIFIER · aucune validation automatique.` : 'Aucun objet détecté · À IDENTIFIER. Ajoutez les objets omis manuellement.'
   } catch {
     if (!closed && !saving) { analysisState = 'unavailable'; $('[data-status]').textContent = 'Modèle local indisponible. Terminez le chargement de la PWA en ligne puis réessayez. La saisie et les corrections restent disponibles.' }
   }
