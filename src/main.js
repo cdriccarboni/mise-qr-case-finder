@@ -308,7 +308,7 @@ const dataBruitageCorpus=[
   ...(seed.musiques_en_jeux_game_index||[]).map(x=>({name:x.title,sounds:[],source:'Data Bruitage · jeux',kind:'Jeu'})),
   ...(seed.resource_index||[]).map(x=>({name:x.name,summary:x.indexed_text?'Document indexé':'Ressource',sounds:[],source:'Data Bruitage · documents',kind:'Document'}))
 ].filter(safeExternal)
-const external=[...dataBruitageCorpus,...publicReferenceIdeas(publicFoley)].filter(safeExternal)
+const external=publicReferenceIdeas(publicFoley).filter(safeExternal)
 const intents=seed.intent_packs||[]
 
 function expandQuery(q){
