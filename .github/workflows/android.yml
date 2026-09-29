@@ -53,6 +53,8 @@ jobs:
           npm ci
           npm test
           npm run build
+          npx playwright install --with-deps chromium
+          npm run test:browser
           rm -rf android/app/src/main/assets/www
           mkdir -p android/app/src/main/assets/www
           cp -a dist/. android/app/src/main/assets/www/

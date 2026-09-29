@@ -1,3 +1,15 @@
+## 0.4.0-beta.2 — 2026-09-29 (étiquettes libres + import universel + index + MISES Vision)
+
+- Nouveau raccourci terrain **Créer une étiquette** et éditeur libre tactile : plusieurs textes/images, déplacement, redimensionnement, rotation, ordre avant/arrière, styles texte, formats thermiques mm, orientation, recadrage, modèles locaux, annuler/rétablir et impression système.
+- Étiquettes contextuelles depuis objet, contenant, kit et mise. Le moteur QR existant reste séparé pour éviter les régressions.
+- Import étendu : XLSX/XLS/ODS/CSV/TSV/JSON/TXT/Markdown/PDF texte/DOCX/ZIP ; images PNG/JPEG/WebP orientées vers MISES Vision ou qualification humaine sans faux OCR.
+- Préférences simplifiées : bloc sauvegarde/restauration, formats du dossier de travail, diagnostic **État de l’index** et reconstruction sans toucher aux données métier.
+- Index global : objets, sons, contenants, kits, mises, documents, jeux, activités, fabrications, recettes publiques et registre extensible d’instruments.
+- MISES Vision : niveaux **IDENTIFIÉ / PROBABLE / SUGGESTION / À IDENTIFIER**, mémoire visuelle locale réversible et vocabulaire métier enrichi. Vision avancée préparée comme module optionnel, non déclarée meilleure sans benchmark Pixel réel.
+- Bibliothèque publique active conservée : 99 recettes PUBLIC_WEB, 12 fabrications, 8 jeux et 7 activités pédagogiques, sans corpus privé.
+- CI renforcée : unitaires + build PWA + Playwright + APK Android debug avant fusion.
+- Version `0.4.0-beta.2`, Android `versionCode 14`, cache PWA `mises-0.4.0-beta.2`.
+
 ## 0.4.0-beta.1 — 2026-09-29 (bibliothèque publique + double interface)
 
 - Bibliothèque publique embarquée issue uniquement de `EXPORT_PUBLIC_WEB` : 99 recettes sourcées, 12 fabrications, URLs conservées.

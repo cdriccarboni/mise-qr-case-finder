@@ -5,6 +5,7 @@ import { escapeHtml as esc } from './data-ui.js'
 import { FAMILIES } from './constants.js'
 import { newLearning } from './learning.js'
 import { handsChallenges, generateExercises, sightUniverses } from './exercise-engine.js'
+import { confidenceLevel, visualReference } from './vision-engine.js'
 
 const TITLES = {
   inventory: ['Inventaire rapide', 'Photo, fiche, QR, objet suivant'],
@@ -72,7 +73,8 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
     const object = catalogue.find(o => o.id === p.objectId)
     const unknown = !p.objectId && !p.rejected
     const row = document.createElement('fieldset'); row.dataset.row = index; row.className = 'visionProposal'
-    row.innerHTML = `<legend>Objet ${index + 1}${p.confidence === undefined ? '' : ` · indice visuel ${Math.round(p.confidence * 100)} %`}</legend>
+    const level=confidenceLevel(p.score ?? p.confidence ?? 0)
+    row.innerHTML = `<legend>Objet ${index + 1} · ${level.label}${p.confidence === undefined ? '' : ` · ${Math.round(p.confidence * 100)} %`}</legend>
       <p class="hint">${esc(p.rawLabel ? `Catégorie : ${p.category || translateLabel(p.rawLabel)} · ${p.evidence}` : 'Saisie humaine')}${p.ambiguous ? ' · Correspondance ambiguë' : ''}${unknown ? ' · Inconnu, à nommer' : ''}${p.objectId ? ' · Déjà dans la base' : ''}</p>
       <div class="fichePicks" data-picks></div>
       <label>Chercher dans ta base<input data-fiche-search type="search" placeholder="Le nom de ta fiche" ${p.rawLabel ? '' : 'hidden'}></label>
@@ -168,6 +170,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
           await tx.objectStore('aliases').put({ id: aliasId, label: p.rawLabel, targetType: 'objects', targetId: p.objectId, humanValidated: true, provenance: 'user-document' })
           await tx.objectStore('learnings').put(newLearning({ kind: 'label-preference', label: p.rawLabel, objectId: p.objectId, context, note: 'Association photo → fiche, sans réentraînement du modèle' }))
           await tx.objectStore('learnings').put(newLearning({ kind: 'photo-object', label: p.rawLabel, objectId: p.objectId, context }))
+          await tx.objectStore('learnings').put(visualReference({ objectId:p.objectId, photo, bbox:p.bbox, context }))
         }
         if (p.rejected) await tx.objectStore('learnings').put(newLearning({ kind: 'false-detection', label: p.rawLabel, context, note: 'Fausse détection écartée' }))
       }
@@ -239,7 +242,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
         + exercises.exercises.map(item => `<article class="challenge"><strong>${esc(item.title)}</strong><small>${esc(item.duration)} · ${esc(item.disclaimer)}</small><p>${item.steps.map(esc).join(' ')}</p></article>`).join('')
         + [...(hands.uncertain || []), ...(universes.uncertain || []), ...(exercises.uncertain || [])].map(line => `<p class="uncertain">${esc(line)}</p>`).join('')
     }
-    $('[data-status]').textContent = matches.length ? `${matches.length} objet(s) proposés localement. Aucune validation automatique.` : 'Aucun objet détecté. Ajoutez les objets omis manuellement.'
+    $('[data-status]').textContent = matches.length ? `${matches.length} objet(s) proposés localement · ${matches.length} zone(s) proposée(s) · IDENTIFIÉ / PROBABLE / SUGGESTION / À IDENTIFIER · aucune validation automatique.` : 'Aucun objet détecté · À IDENTIFIER. Ajoutez les objets omis manuellement.'
   } catch {
     if (!closed && !saving) { analysisState = 'unavailable'; $('[data-status]').textContent = 'Modèle local indisponible. Terminez le chargement de la PWA en ligne puis réessayez. La saisie et les corrections restent disponibles.' }
   }

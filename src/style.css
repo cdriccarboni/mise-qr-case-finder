@@ -184,3 +184,36 @@ html[data-interface="inventory"] .inventoryNavGroup{display:contents!important}
 html[data-interface="inventory"] #goalQrSimple{grid-column:1/-1}
 
 html:not([data-interface="inventory"]) .goalNav .createGoals>div>button:last-child{grid-column:1/-1}
+
+
+/* 0.4.0-beta.2 · free label editor, preferences and diagnostics */
+.fieldShortcuts{grid-template-columns:repeat(5,minmax(0,1fr))}
+.preferenceActionBlock{display:grid;gap:.5rem;padding:.8rem;border:1px solid #303036;border-radius:9px;background:#141418}
+.preferenceActionBlock>.row{justify-content:center}
+.preferenceActionBlock>.row button{min-width:min(220px,45%)}
+.labelEditorDialog{width:min(1040px,96vw);max-height:96dvh;overflow:auto}
+.labelEditor{display:grid;gap:.8rem}
+.labelEditorLayout{display:grid;grid-template-columns:minmax(250px,330px) minmax(300px,1fr);gap:.9rem;align-items:start}
+.labelTools{display:grid;gap:.55rem}
+.labelTools fieldset{border:1px solid #34343b;border-radius:9px;padding:.7rem}
+.labelStageWrap{display:grid;gap:.4rem;justify-items:center;min-width:0}
+.labelStage{position:relative;width:min(100%,650px);background:#fff;border:1px solid #555;border-radius:8px;overflow:hidden;box-shadow:0 8px 24px #0006}
+.labelStage canvas{display:block;width:100%;height:100%;object-fit:fill}
+.labelStage [data-overlay]{position:absolute;inset:0}
+.labelBlock{position:absolute;border:1px dashed transparent;color:#111;background:#fff2;overflow:hidden;display:grid;place-items:center;text-align:center;line-height:1.05;touch-action:none;cursor:move;user-select:none}
+.labelBlock.selected{border-color:#d12a74;background:#d12a7418;box-shadow:0 0 0 1px #fff inset}
+.labelBlock[data-id]{font-size:.72rem}.labelResizeHandle{position:absolute;right:0;bottom:0;width:26px;height:26px;display:grid;place-items:center;background:#d12a74;color:#fff;border-radius:8px 0 0 0;font-size:14px;touch-action:none;cursor:nwse-resize}
+.labelBottom{justify-content:flex-end}
+.indexDiag{display:grid;gap:.65rem}
+html[data-theme=light] .preferenceActionBlock{background:#fff;border-color:#d8d8de}
+html[data-theme=light] .labelTools fieldset{border-color:#d8d8de}
+@media(prefers-color-scheme:light){html[data-theme=system] .preferenceActionBlock{background:#fff;border-color:#d8d8de}}
+@media(max-width:760px){
+  .fieldShortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fieldShortcuts>:last-child:nth-child(odd){grid-column:1/-1}
+  .labelEditorLayout{grid-template-columns:1fr}
+  .labelStageWrap{order:-1}
+  .labelTools{grid-template-columns:1fr}
+  .preferenceActionBlock>.row{display:grid;grid-template-columns:1fr}
+  .preferenceActionBlock>.row button{min-width:0;width:100%}
+}
