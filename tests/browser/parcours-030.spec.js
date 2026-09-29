@@ -98,7 +98,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await page.locator('#groupPhotoInput').setInputFiles({ name: 'groupe.png', mimeType: 'image/png', buffer: image })
   const dialog = page.locator('.visionDialog')
   await expect(dialog).toBeVisible()
-  await expect(dialog.locator('[data-status]')).toContainText('3 objet(s) proposés', { timeout: 20000 })
+  await expect(dialog.locator('[data-status]')).toContainText('3 zone(s) proposée(s)', { timeout: 20000 })
   await expect(dialog.locator('[data-row]')).toHaveCount(3)
   await dialog.locator('[data-batch-case]').selectOption({ label: 'Caisse grise n°23' })
   await dialog.locator('[data-batch-all]').click()
