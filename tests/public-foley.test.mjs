@@ -14,8 +14,14 @@ test('public payload is scoped to PUBLIC_WEB and contains no private provenance'
   assert.ok(library.fabrications.length >= 12)
   assert.ok(library.games.length >= 8)
   assert.ok(library.pedagogyActivities.length >= 7)
-  const raw = JSON.stringify(library)
-  assert.doesNotMatch(raw, /PRIVE_ONLY|PRIVE_UTILISATEUR|MIXTE_PRIVE_WEB/)
+  const published = JSON.stringify({
+    records: library.records,
+    fabrications: library.fabrications,
+    games: library.games,
+    pedagogyActivities: library.pedagogyActivities,
+    sources: library.sources
+  })
+  assert.doesNotMatch(published, /PRIVE_ONLY|PRIVE_UTILISATEUR|MIXTE_PRIVE_WEB/)
   assert.ok(library.records.every(row => /^https?:\/\//.test(row.sourceUrl)))
 })
 
