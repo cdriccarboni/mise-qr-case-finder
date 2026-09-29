@@ -19,6 +19,10 @@ import { entityUrl, shortId, readEntityUrl } from './qr-link.js'
 import { renderLabelDataUrl } from './label-render.js'
 import { proposeVibe } from './vibe-engine.js'
 import { generateExercises } from './exercise-engine.js'
+import { buildRelationGraph, summarizeInventory, OBJECT_STATUSES } from './relations.js'
+import { generateChallenge, generateWorkshop, surprisePick } from './game-engine.js'
+import { rememberGameEvent } from './game-history.js'
+import { playHubHtml, challengeHtml, workshopSetupHtml, workshopProgramHtml, workshopConductorHtml } from './game-ui.js'
 import { parseIntent, answerIntent } from './conversation.js'
 import { newLearning } from './learning.js'
 import { answerBlock, vibeBlock, exerciseBlock } from './terrain-ui.js'
@@ -106,11 +110,14 @@ async function migrateDataBruitage(){
 }
 await migrateDataBruitage()
 
-let objects=[],cases=[],kits=[],mises=[],learnings=[],activeMise=null, scanner=null, photoTargetMiseId=null, pendingExerciseMinutes=1
+let objects=[],cases=[],kits=[],mises=[],learnings=[],catalogueSounds=[],catalogueObjectSounds=[],activeMise=null, scanner=null, photoTargetMiseId=null, pendingExerciseMinutes=1
 let scanPurpose='browse',moveScanState=null
 let projectSyncFailed=false
 async function refresh(){
-  objects=enrichObjects(await readData(db))
+  const data=await readData(db)
+  objects=enrichObjects(data)
+  catalogueSounds=data.sounds||[]
+  catalogueObjectSounds=data.objectSounds||[]
   cases=await db.getAll('cases')
   kits=await db.getAll('kits')
   mises=await db.getAll('mises')
@@ -322,6 +329,14 @@ function searchOwned(q){
   })
   return fuse.search(expandQuery(q)).map(x=>({...x.item,_score:x.score})).sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||(a._score-b._score)).slice(0,20)
 }
+function searchEntities(q){
+  if(!q.trim()) return {cases:[],kits:[],mises:[]}
+  const query=expandQuery(q)
+  const caseHits=new Fuse(cases.map(c=>({...c,label:caseName(c),kind:'case',searchText:[c.name,c.notes,c.location,caseName(c)].filter(Boolean).join(' ')})),{keys:['name','label','notes','searchText'],threshold:.44,ignoreLocation:true,includeScore:true}).search(query).slice(0,6).map(x=>({...x.item,_score:x.score}))
+  const kitHits=new Fuse(kits.map(k=>({...k,kind:'kit',searchText:[k.name,k.source,...(k.contexts||[]),...(k.objectIds||[]).map(id=>objectBy(id)?.name)].filter(Boolean).join(' ')})),{keys:['name','source','contexts','searchText'],threshold:.44,ignoreLocation:true,includeScore:true}).search(query).slice(0,6).map(x=>({...x.item,_score:x.score}))
+  const miseHits=new Fuse(mises.map(m=>({...m,kind:'mise',searchText:[m.name,m.projectName,m.notes,...(m.objectIds||[]).map(id=>objectBy(id)?.name)].filter(Boolean).join(' ')})),{keys:['name','projectName','notes','searchText'],threshold:.44,ignoreLocation:true,includeScore:true}).search(query).slice(0,6).map(x=>({...x.item,_score:x.score}))
+  return {cases:caseHits,kits:kitHits,mises:miseHits}
+}
 function searchExternal(q){
   if(!q.trim()) return []
   return new Fuse(external,{keys:['name','sounds','aliases','summary','source','kind'],threshold:.44,ignoreLocation:true})
@@ -425,28 +440,105 @@ function openCaseCreator(c){
   d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Avec ce que j’ai ici</b><small>${esc(caseName(c))}</small></div><button id="closeCaseCreator" class="ghost">×</button></div><label>Ambiance / son<input id="caseCreatorQ" placeholder="mer, forêt, pluie, maison…"></label><div id="caseCreatorResults" class="cards"></div></div>`
   d.showModal();$('#closeCaseCreator').onclick=()=>d.close();const renderScoped=()=>{const q=$('#caseCreatorQ').value,found=scopedCaseSearch(c,q);$('#caseCreatorResults').innerHTML=found.map(o=>`<article class="card"><b>${esc(o.name)}</b><span>${(o.sounds||[]).slice(0,5).join(' · ')||'Usage à préciser'}</span><button data-caseadd="${o.id}">Ajouter à la mise</button></article>`).join('')||'<div class="empty">Rien de convaincant dans cette valise pour cette recherche.</div>';$$('[data-caseadd]',d).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.caseadd))};$('#caseCreatorQ').oninput=renderScoped;renderScoped()
 }
-let lastChallengeKey=''
-function openChallenge(){
-  const pick=list=>list[Math.floor(Math.random()*list.length)]
-  const universes=['mer de nuit','forêt inquiétante','pluie sur une verrière','orage lointain','pas dans un couloir','vieille maison','vent dans des cordages','atelier mécanique','nuit en ville','feu qui reprend','gare presque vide','cuisine nocturne','bateau en bois','grenier vivant','machine fantastique','fête derrière un mur','grotte humide','marché au petit matin','tempête miniature','ascenseur capricieux','port dans le brouillard','jardin après la pluie','chantier au loin','cabane sous le vent','métro imaginaire','animal invisible','horloge géante','orage dans une boîte','rivière souterraine','coulisses avant l’entrée','salle d’attente','bibliothèque la nuit','manège hors service','sous-sol industriel','serre tropicale','toit sous la pluie','atelier de costumier','cour d’école vide','église en travaux','chambre d’hôtel','labyrinthe de cartons']
-  const constraints=['sans voix','un seul objet à la fois','commencer presque inaudible','finir par un silence net','aucun rythme régulier','faire croire que le son se rapproche','faire croire que le son s’éloigne','alterner très doux / très fort','un geste long, puis trois gestes courts','ne jamais répéter exactement le même geste','changer de rôle au milieu','laisser 5 secondes de silence au centre','jouer uniquement avec les mains','aucun objet posé au sol pendant le son','faire deux plans sonores très différents','partir d’un faux départ, puis recommencer autrement','cacher l’objet principal jusqu’à la dernière seconde','faire croire qu’il y a deux espaces','interdire tout son aigu','interdire tout son grave']
-  const games=['une personne lance, les autres répondent','construire trois couches puis les retirer une à une','faire deviner le lieu sans le nommer','créer un début, un accident et une fin','faire un faux raccord sonore volontaire','faire passer le son de gauche à droite','commencer réaliste puis dériver vers l’imaginaire','faire croire qu’un objet est beaucoup plus grand qu’il ne l’est','transformer progressivement un bruit en autre chose','faire une version sérieuse puis une version absurde','raconter une entrée en scène sans mots','faire un plan-séquence sonore sans coupure','imiter un montage radio live','faire croire à une panne puis la réparer']
-  const surprises=['interdire l’objet qui semblait le plus évident','échanger les objets à mi-parcours','rejouer le même défi deux fois avec des gestes différents','ajouter un silence surprise choisi par quelqu’un d’autre','terminer avec un seul objet','faire la seconde moitié deux fois plus lentement','faire une reprise en ne gardant qu’un seul son','changer d’univers à mi-parcours sans changer d’objets','demander à un spectateur de lancer un signal','finir avant la durée annoncée, puis tenir le silence']
-  const durations=['20 secondes','30 secondes','45 secondes','1 minute','1 min 30','2 minutes','2 min 30']
-  const available=Math.max(1,objects.length)
-  let universe='',constraint='',game='',duration='',surprise='',count=1,key=''
-  for(let attempt=0;attempt<16;attempt++){
-    count=1+Math.floor(Math.random()*Math.max(1,Math.min(5,available)))
-    universe=pick(universes);constraint=pick(constraints);game=pick(games);duration=pick(durations)
-    surprise=Math.random()<.72?pick(surprises):''
-    key=[universe,constraint,game,duration,count,surprise].join('|')
-    if(key!==lastChallengeKey)break
-  }
-  lastChallengeKey=key
-  const d=$('#modal')
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Défi bruitage</b><small>Tirage aléatoire · évite de répéter le précédent</small></div><button id="closeChallenge" class="ghost">×</button></div><div class="challenge"><strong>Crée « ${esc(universe)} » · ${duration} · ${count} objet${count>1?'s':''} maximum.</strong><p><b>Contrainte :</b> ${esc(constraint)}.</p><p><b>Jeu :</b> ${esc(game)}.</p>${surprise?`<p><b>Surprise :</b> ${esc(surprise)}.</p>`:''}<small>Proposition générée pour s’exercer. Ce n’est pas un document de ta base.</small></div><div class="row"><button id="tryChallenge">Voir mes pistes</button><button id="newChallenge" class="ghost">Encore plus random</button></div></div>`
-  d.showModal();$('#closeChallenge').onclick=()=>d.close();$('#newChallenge').onclick=()=>{d.close();openChallenge()};$('#tryChallenge').onclick=()=>{d.close();$('#q').value=universe;setTab('creator');renderCreator()}
+
+function currentGameGraph(){
+  return buildRelationGraph({objects,cases,sounds:catalogueSounds,objectSounds:catalogueObjectSounds})
 }
+function gameFiltersFromCase(containerId, extra={}){
+  return {containerId:containerId||undefined,...extra}
+}
+function openPlayHub(containerId=null){
+  const graph=currentGameGraph()
+  const filters=gameFiltersFromCase(containerId)
+  const summary=summarizeInventory(graph,filters)
+  const label=containerId?caseName(caseBy(containerId)):'tout l’inventaire'
+  const d=$('#modal')
+  d.innerHTML=`<div class="form">${playHubHtml(summary,label,esc)}</div>`
+  d.showModal()
+  const close=()=>d.close()
+  d.querySelector('[data-play-close]')?.addEventListener('click',close)
+  d.querySelector('[data-play-action="challenge"]')?.addEventListener('click',()=>{d.close();openInventoryChallenge(filters)})
+  d.querySelector('[data-play-action="workshop"]')?.addEventListener('click',()=>{d.close();openWorkshopFlow(filters,label)})
+  d.querySelector('[data-play-action="universe"]')?.addEventListener('click',()=>{d.close();openInventoryChallenge({...filters,gameType:'E',universe:'forêt'})})
+  d.querySelector('[data-play-action="surprise"]')?.addEventListener('click',()=>{d.close();openSurprise(filters)})
+}
+function openInventoryChallenge(filters={}, preset=null){
+  const graph=currentGameGraph()
+  let state={reveal:false,hintIndex:0,challenge:preset}
+  if(!state.challenge){
+    const out=generateChallenge(filters,{graph,objects,cases,learnings})
+    if(!out.ok){toast(out.uncertain?.[0]||'Défi impossible');return}
+    state.challenge=out.challenge
+  }
+  const render=()=>{
+    const d=$('#modal')
+    d.innerHTML=`<div class="form">${challengeHtml(state.challenge,esc,{reveal:state.reveal,hintIndex:state.hintIndex})}</div>`
+    if(!d.open)d.showModal()
+    d.querySelector('[data-play-close]')?.addEventListener('click',()=>d.close())
+    d.querySelector('[data-chal="hint"]')?.addEventListener('click',()=>{state.hintIndex=Math.min((state.challenge.hints||[]).length,state.hintIndex+1);render()})
+    d.querySelector('[data-chal="solution"]')?.addEventListener('click',()=>{state.reveal=true;render()})
+    d.querySelector('[data-chal="validate"]')?.addEventListener('click',()=>{
+      rememberGameEvent({kind:'challenge',id:state.challenge.id,fingerprint:state.challenge.fingerprint,gameType:state.challenge.gameType,foleyId:state.challenge.foleyId,objectIds:state.challenge.objectIds})
+      toast('Défi validé · noté localement');d.close()
+    })
+    d.querySelector('[data-chal="next"]')?.addEventListener('click',()=>{
+      rememberGameEvent({kind:'challenge',id:state.challenge.id,fingerprint:state.challenge.fingerprint,gameType:state.challenge.gameType,foleyId:state.challenge.foleyId,objectIds:state.challenge.objectIds})
+      const out=generateChallenge(filters,{graph,objects,cases,learnings})
+      if(!out.ok){toast(out.uncertain?.[0]||'Plus de défi');return}
+      state={reveal:false,hintIndex:0,challenge:out.challenge};render()
+    })
+    d.querySelector('[data-chal="free"]')?.addEventListener('click',()=>{
+      state.challenge={...state.challenge,prompt:state.challenge.prompt+' · variante libre',instruction:(state.challenge.instruction||'')+' Tu choisis le geste, sans objet hors inventaire.'}
+      state.reveal=false;render()
+    })
+  }
+  render()
+}
+function openWorkshopFlow(filters={}, label='Inventaire'){
+  const d=$('#modal')
+  let workshop=null, step=0, mode='setup'
+  const draw=()=>{
+    let html=''
+    if(mode==='setup') html=workshopSetupHtml(label,esc)
+    else if(mode==='program') html=workshopProgramHtml(workshop,esc)
+    else html=workshopConductorHtml(workshop,step,esc)
+    d.innerHTML=`<div class="form">${html}</div>`
+    if(!d.open)d.showModal()
+    d.querySelector('[data-play-close]')?.addEventListener('click',()=>d.close())
+    d.querySelector('[data-ws="build"]')?.addEventListener('click',()=>{
+      const duration=Number($('#wsDuration')?.value||30)
+      const universe=$('#wsUniverse')?.value.trim()||undefined
+      const groupSize=Number($('#wsGroup')?.value||1)
+      const out=generateWorkshop({...filters,duration,universe,groupSize},{graph:currentGameGraph(),objects,cases,learnings})
+      if(!out.ok){toast(out.uncertain?.[0]||'Atelier impossible');return}
+      workshop=out.workshop;mode='program';draw()
+      if(out.uncertain?.length)toast(out.uncertain[0])
+    })
+    d.querySelector('[data-ws="regen"]')?.addEventListener('click',()=>{mode='setup';draw()})
+    d.querySelector('[data-ws="launch"]')?.addEventListener('click',()=>{
+      rememberGameEvent({kind:'workshop',id:workshop.id,fingerprint:`ws:${workshop.id}`,objectIds:workshop.activities.flatMap(a=>a.objectIds||[])})
+      step=0;mode='conduct';draw()
+    })
+    d.querySelector('[data-ws-nav="next"]')?.addEventListener('click',()=>{
+      if(step>=(workshop.activities.length-1)){toast('Atelier terminé');d.close();return}
+      step+=1;draw()
+    })
+    d.querySelector('[data-ws-nav="prev"]')?.addEventListener('click',()=>{if(step>0){step-=1;draw()}})
+  }
+  draw()
+}
+function openSurprise(filters={}){
+  const out=surprisePick(filters,{graph:currentGameGraph(),objects,cases,learnings})
+  if(out.kind==='challenge'&&out.challenge){openInventoryChallenge(filters,out.challenge);return}
+  if(out.kind==='foley'){toast(`Surprise bruitage : ${out.foley.name}`);openInventoryChallenge({...filters,gameType:'A'},null);return}
+  if(out.kind==='universe'){openInventoryChallenge({...filters,gameType:'E',universe:out.title||out.universeId});return}
+  if(out.kind==='objects'){toast(`Surprise objets : ${(out.objects||[]).map(o=>o.name).join(', ')}`);return}
+  toast('Surprise indisponible avec ce filtre')
+}
+function openChallenge(){
+  openInventoryChallenge({})
+}
+
 function sharePayload({miseIds=[],kitIds=[],caseIds=[],objectIds=[],includeMedia=false}={}){
   const selectedMises=mises.filter(x=>miseIds.includes(x.id)),selectedKits=kits.filter(x=>kitIds.includes(x.id)),selectedCases=cases.filter(x=>caseIds.includes(x.id))
   const ids=new Set(objectIds)
@@ -491,23 +583,18 @@ $('#app').innerHTML=`
 <main>
 <section id="projectContext" class="projectContext" aria-label="Contexte du projet" hidden></section>
 <section class="hero">
-  <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance ou contenant"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
-  <div class="quick">
-    <button data-action="search">Rechercher</button>
-    <button data-action="speak">Dictée vocale</button>
-    <button data-action="photo">Ajouter une photo</button>
-    <button data-action="scan">Scanner un QR</button>
-  </div>
-  <div class="quick terrainQuick">
-    <button data-action="inventory">Inventaire rapide</button>
-    <button data-action="vibe">Vibe bruitage</button>
-    <button data-action="hands">Crée ton bruitage</button>
-    <button data-action="exercise">Exercice</button>
+  <label class="searchLabel" for="q">Recherche globale MISES!</label>
+  <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance, contenant, mise, kit…"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
+  <div class="quick fieldShortcuts" aria-label="Raccourcis terrain">
+    <button type="button" data-action="scan">Scanner un QR</button>
+    <button type="button" data-action="photo">Ajouter une photo</button>
+    <button type="button" data-action="inventory">Inventaire photo</button>
+    <button type="button" data-action="last-mise">Dernière mise</button>
   </div>
 </section>
 <div class="goalNav" aria-label="Navigation MISES">
- <details open><summary>Trouver</summary><div><button data-tab="search" class="active">Recherche</button><button data-tab="creator">Créateur d’ambiance</button><button data-tab="vibe">Vibe bruitage</button></div></details>
- <details><summary>Créer</summary><div><button id="goalHands" type="button">Crée ton bruitage</button><button id="goalExercise" type="button">Exercice</button><button id="goalGroupPhoto" type="button">Photo de groupe</button><button id="goalUniverse" type="button">Univers d’une photo</button><button id="goalChallenge" type="button">Défi bruitage</button></div></details>
+ <details open><summary>Trouver</summary><div><button data-tab="creator">Créateur d’ambiance</button><button data-tab="vibe">Vibe bruitage</button></div></details>
+ <details><summary>Créer</summary><div><button id="goalPlay" type="button">Jouer</button><button id="goalWorkshop" type="button">Préparer un atelier</button><button id="goalChallenge" type="button">Défi bruitage</button><button id="goalHands" type="button">Crée ton bruitage</button><button id="goalExercise" type="button">Exercice</button><button id="goalGroupPhoto" type="button">Photo de groupe</button><button id="goalUniverse" type="button">Univers d’une photo</button></div></details>
  <details><summary>Ranger</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
  <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Data Bruitage · importer / exporter</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
@@ -579,14 +666,21 @@ function setTab(t){
 $$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
 
 function renderSearch(target='#searchResults'){
-  const q=$('#q').value.trim(), own=searchOwned(q), ideas=searchExternal(q)
+  const q=$('#q').value.trim(), own=searchOwned(q), ideas=searchExternal(q), entities=searchEntities(q)
   const intent=parseIntent(q)
   const answer=intent?answerIntent(intent,{objects,cases,mises,activeMise,learnings}):null
   if(!q){
-    $(target).innerHTML=`<div class="empty"><b>Écris ce que tu cherches.</b><span>Objet, son, ambiance, contenant, ou une question.</span><small>Ex. « Où est mon truc pour faire le tonnerre ? »</small></div>`
+    $(target).innerHTML=`<div class="empty"><b>Écris ce que tu cherches.</b><span>Objet, son, ambiance, contenant, mise, kit, ou une question.</span><small>Ex. « Où est mon truc pour faire le tonnerre ? »</small></div>`
     return
   }
   let h=answer?answerBlock(answer,esc):''
+  const entityCount=entities.cases.length+entities.kits.length+entities.mises.length
+  if(entityCount){
+    h+=`<div class="resultHead"><b>${entityCount} contenant${entityCount>1?'s':''} · kit${entityCount>1?'s':''} · mise${entityCount>1?'s':''}</b><span>Accès direct depuis la recherche globale.</span></div>`
+    h+=entities.cases.map(c=>`<article class="result entityResult"><div class="thumb">▣</div><div><h3>${esc(caseName(c))}</h3><p>Valise / caisse</p><small>${objects.filter(o=>(o.caseId||o.container_id)===c.id).length} objets</small></div><button data-open-case="${c.id}" class="plus" title="Ouvrir">↗</button></article>`).join('')
+    h+=entities.kits.map(k=>`<article class="result entityResult"><div class="thumb">▦</div><div><h3>${esc(k.name)}</h3><p>Kit acoustique</p><small>${(k.objectIds||[]).length} objets · vue sur le parc</small></div><button data-open-kit="${k.id}" class="plus" title="Ouvrir">↗</button></article>`).join('')
+    h+=entities.mises.map(m=>`<article class="result entityResult"><div class="thumb">◇</div><div><h3>${esc(m.name)}</h3><p>Mise</p><small>${(m.objectIds||[]).length} objets · ${(m.checked||[]).length} contrôlés${m.projectName?` · ${esc(m.projectName)}`:''}</small></div><button data-open-mise="${m.id}" class="plus" title="Ouvrir">↗</button></article>`).join('')
+  }
   h+=`<div class="resultHead"><b>${own.length} résultat${own.length>1?'s':''} dans ton parc</b><span>Les idées externes restent séparées.</span></div>`
   h+=own.map(o=>`<article class="result">
     <div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div>
@@ -602,6 +696,9 @@ function renderSearch(target='#searchResults'){
   $$('[data-fav]',$(target)).forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.fav))
   $$('[data-alt]',$(target)).forEach(b=>b.onclick=()=>openAlternatives(b.dataset.alt))
   $$('[data-idea]',$(target)).forEach(b=>b.onclick=()=>openObject({name:b.dataset.idea,source:'suggestion externe',owned:false}))
+  $$('[data-open-case]',$(target)).forEach(b=>b.onclick=()=>showCase(b.dataset.openCase))
+  $$('[data-open-kit]',$(target)).forEach(b=>b.onclick=()=>showKit(b.dataset.openKit))
+  $$('[data-open-mise]',$(target)).forEach(b=>b.onclick=()=>{const m=miseBy(b.dataset.openMise);if(m){activeMise=m.id;setTab('mises');openMise(m)}})
   const scanExercise=$('#doScanExercise',$(target))
   if(scanExercise) scanExercise.onclick=()=>{pendingExerciseMinutes=answer?.minutes||5;$('#handsPhotoInput').click()}
 }
@@ -667,7 +764,7 @@ function openObject(p={}){
   <label>Usages déjà saisis, distincts des deux sons<input id="fSounds" value="${esc((o.sounds||[]).join(', '))}" placeholder="liste libre, non fusionnée"></label>
   <label>Notes<textarea id="fNotes" rows="3">${esc(o.notes||'')}</textarea></label>
   <div class="grid2"><label>Origine<select id="fProvenance">${Object.entries(PROVENANCE).map(([key,label])=>`<option value="${key}" ${(o.provenance||'user-document')===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
-  <label>Statut<select id="fStatus">${[['available','Disponible'],['review','À vérifier'],['missing','Manquant'],...(o.status&&!['available','review','missing'].includes(o.status)?[[o.status,o.status]]: [])].map(([key,label])=>`<option value="${key}" ${(o.status||'available')===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label></div>
+  <label>Statut<select id="fStatus">${[...OBJECT_STATUSES,...(o.status&&!OBJECT_STATUSES.some(([k])=>k===o.status)?[[o.status,o.status]]: [])].map(([key,label])=>`<option value="${key}" ${(o.status||'available')===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label></div>
   <label>Tags / contexte<input id="fTags" value="${esc(unique([...(o.tags||[]),...(o.contexts||[])]).join(', '))}" placeholder="atelier, kit perso, #spectacle…"></label>
   ${(o.locationHistory||[]).length?`<details><summary>Historique de rangement</summary><div class="historyList">${(o.locationHistory||[]).slice().reverse().slice(0,12).map(h=>`<small>${esc(new Date(h.at).toLocaleString('fr-FR'))} · ${esc(caseName(caseBy(h.from)))} → ${esc(caseName(caseBy(h.to)))}</small>`).join('')}</div></details>`:''}
   <div class="row"><button type="button" id="pickGallery" class="ghost">Importer photo</button><button type="button" id="pickCamera" class="ghost">Appareil photo</button><button id="saveObject">Enregistrer</button></div></form>`
@@ -737,9 +834,16 @@ async function showCase(id){
   <div class="miniList">${items.map(o=>`<span>${esc(o.name)} <button type="button" data-remove-object="${o.id}" class="ghost">Retirer</button></span>`).join('')||'<span>Aucun objet dans cette caisse.</span>'}</div>
   <label>Ajouter un objet<select id="caseAddObject"><option value="">Choisir</option>${elsewhere.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join('')}</select></label>
   <p class="hint">${missing.length?`Dans la mise active, pas dans cette caisse : ${missing.map(o=>`${esc(o.name)} (${esc(caseName(caseBy(o.caseId||o.container_id)))})`).join(', ')}`:'Contrôle : rien de la mise active ne manque ici, ou aucune mise n’est active.'}</p>
+  <p class="playStats" id="casePlayStats"></p>
+  <div class="row playCtas"><button type="button" id="casePlay">Jouer</button><button type="button" id="caseWorkshop">Atelier</button><button type="button" id="caseDefi" class="ghost">Défi</button><button type="button" id="caseSurprise" class="ghost">Surprise</button></div>
   <div class="row"><button id="caseCreator">Avec ce que j’ai ici</button><button id="printLabel">Créer / imprimer le QR</button><button id="scanNext" type="button" class="ghost">Scanner le suivant</button><button id="editCase" class="ghost">Modifier</button></div></div>`
   m.showModal()
+  {const sum=summarizeInventory(currentGameGraph(),{containerId:id});const el=$('#casePlayStats');if(el)el.innerHTML=`<b>${sum.foleyCount}</b> bruitage${sum.foleyCount>1?'s':''} et <b>${sum.gameTypeCount}</b> type${sum.gameTypeCount>1?'s':''} de jeu avec cette valise · ${sum.objectCount} objet${sum.objectCount>1?'s':''} dispo`}
   $('#closeCase').onclick=()=>m.close()
+  $('#casePlay').onclick=()=>{m.close();openPlayHub(id)}
+  $('#caseWorkshop').onclick=()=>{m.close();openWorkshopFlow({containerId:id},caseName(c))}
+  $('#caseDefi').onclick=()=>{m.close();openInventoryChallenge({containerId:id})}
+  $('#caseSurprise').onclick=()=>{m.close();openSurprise({containerId:id})}
   $('#caseCreator').onclick=()=>{m.close();openCaseCreator(c)}
   $('#printLabel').onclick=()=>openEntityLabel('case', c)
   $('#scanNext').onclick=()=>{m.close();startScan()}
@@ -1202,6 +1306,8 @@ $('#runVibe').onclick=()=>runVibe()
 $$('[data-vibe-preset]').forEach(button=>button.onclick=()=>{setTab('vibe');runVibe(button.dataset.vibePreset)})
 $('#runExercise').onclick=()=>{setTab('exercises');runExercise()}
 $('#goalChallenge').onclick=openChallenge
+$('#goalPlay').onclick=()=>openPlayHub()
+$('#goalWorkshop').onclick=()=>openWorkshopFlow({},'tout l’inventaire')
 $('#goalMove').onclick=startMoveScans
 $('#goalShare').onclick=openShareDialog
 $('#goalBatchPrint').onclick=openBatchPrint
@@ -1213,14 +1319,14 @@ updatePrinterStatus();updateAccountStatus()
 
 $$('[data-action]').forEach(b=>b.onclick=()=>{
   const a=b.dataset.action
-  if(a==='search'){setTab('search');$('#q').focus()}
-  if(a==='speak')startVoice()
   if(a==='photo')pickPhoto('photoInput')
   if(a==='scan')startScan()
   if(a==='inventory')$('#inventoryInput').click()
-  if(a==='vibe')setTab('vibe')
-  if(a==='hands')$('#handsPhotoInput').click()
-  if(a==='exercise')setTab('exercises')
+  if(a==='last-mise'){
+    const m=miseBy(activeMise)||mises.slice().sort((a,b)=>String(b.updatedAt||b.createdAt||'').localeCompare(String(a.updatedAt||a.createdAt||'')))[0]
+    if(!m){toast('Aucune mise pour l’instant');return}
+    activeMise=m.id;setTab('mises');openMise(m)
+  }
 })
 $$('[data-preset]').forEach(b=>b.onclick=()=>{
   $('#q').value=b.dataset.preset;renderCreator()

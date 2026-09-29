@@ -33,7 +33,7 @@ test('installability criteria, standalone launch, offline reload, restore and ca
   })
   await page.waitForFunction(async () => !(await caches.keys()).includes('workbox-precache-v2-mises-old'))
   const names = await page.evaluate(() => caches.keys())
-  expect(names.some(name => name.includes('mises-0.3.0-beta.5'))).toBeTruthy()
+  expect(names.some(name => name.includes('mises-0.3.0-beta.7'))).toBeTruthy()
 
   await page.evaluate(async () => {
     const db = await new Promise((resolve, reject) => {

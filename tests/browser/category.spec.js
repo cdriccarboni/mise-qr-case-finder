@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test('one gesture replaces the water-bottle category with the fiche and remembers it', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('#appVersion')).toHaveText('0.3.0-beta.5')
+  await expect(page.locator('#appVersion')).toHaveText('0.3.0-beta.7')
   await page.evaluate(async () => {
     const db = await new Promise((resolve, reject) => {
       const request = indexedDB.open('mises-db')
@@ -21,7 +21,7 @@ test('one gesture replaces the water-bottle category with the fiche and remember
     db.close()
   })
   await page.reload()
-  await expect(page.locator('#appVersion')).toHaveText('0.3.0-beta.5')
+  await expect(page.locator('#appVersion')).toHaveText('0.3.0-beta.7')
   const image = Buffer.from(await page.evaluate(() => {
     const canvas = document.createElement('canvas')
     canvas.width = 80

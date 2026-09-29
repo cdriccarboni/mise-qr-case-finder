@@ -32,3 +32,29 @@ test('home navigation exposes five separate goal cartouches', () => {
   }
   assert.doesNotMatch(main, /Trouver & créer|Ranger & préparer|Partager & outils/)
 })
+
+test('home keeps a single global search field and no redundant Recherche cartouches', () => {
+  const main = read('../src/main.js')
+  assert.equal(main.match(/id="q"/g)?.length, 1)
+  assert.match(main, /searchLabel" for="q">Recherche globale MISES!/)
+  assert.doesNotMatch(main, /data-action="search">Rechercher/)
+  assert.doesNotMatch(main, /data-action="speak">Dictée vocale/)
+  assert.doesNotMatch(main, /<button data-tab="search"[^>]*>Recherche</)
+  assert.match(main, /data-action="scan">Scanner un QR/)
+  assert.match(main, /data-action="photo">Ajouter une photo/)
+  assert.match(main, /data-action="inventory">Inventaire photo/)
+  assert.match(main, /data-action="last-mise">Dernière mise/)
+  assert.match(main, /function searchEntities/)
+  // Exercice / vibe / hands only via cartouches, not duplicate quick row
+  assert.doesNotMatch(main, /terrainQuick/)
+  assert.doesNotMatch(main, /data-action="exercise"/)
+  assert.doesNotMatch(main, /data-action="vibe"/)
+  assert.doesNotMatch(main, /data-action="hands"/)
+})
+
+test('tile grids fill the last odd cell on two-column layouts', () => {
+  const css = read('../src/style.css')
+  assert.match(css, /\.goalNav details>div>:last-child:nth-child\(odd\)/)
+  assert.match(css, /\.quick>:last-child:nth-child\(odd\)/)
+  assert.match(css, /grid-column:1\/-1/)
+})

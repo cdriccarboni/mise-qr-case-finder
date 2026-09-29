@@ -14,8 +14,8 @@ android {
         applicationId = playApplicationId
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.3.0-beta.5"
+        versionCode = 12
+        versionName = "0.3.0-beta.7"
     }
 
     signingConfigs {
@@ -33,13 +33,11 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Clé d’upload Play seulement si MISE_UPLOAD_STORE_FILE est défini.
-            // Sinon signature debug : ce n’est pas une mise à jour Play.
-            signingConfig = if (signingConfigs.findByName("upload") != null) {
-                signingConfigs.getByName("upload")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            // Play/release exige la vraie clé d’upload. Jamais de faux « PLAY » signé debug.
+            signingConfigs.findByName("upload")?.let { signingConfig = it }
+        }
+        debug {
+            // APK de test installable (Pixel, sideload). Ne pas présenter comme artefact Play.
         }
     }
 
@@ -59,6 +57,22 @@ tasks.named("preBuild") {
         val index = file("src/main/assets/www/index.html")
         if (!index.exists()) {
             throw GradleException("PWA absente de android/app/src/main/assets/www. Construis le web (npm run build) et copie dist/ avant Gradle.")
+        }
+    }
+}
+
+
+afterEvaluate {
+    val uploadMissing = android.signingConfigs.findByName("upload") == null
+    tasks.matching { it.name in setOf("assembleRelease", "bundleRelease", "packageReleaseBundle", "signReleaseBundle") }.configureEach {
+        doFirst {
+            if (uploadMissing) {
+                throw GradleException(
+                    "Build Play/release refusé : clé d'upload absente. " +
+                    "Définis MISE_UPLOAD_STORE_FILE, MISE_UPLOAD_STORE_PASSWORD, MISE_UPLOAD_KEY_ALIAS, MISE_UPLOAD_KEY_PASSWORD. " +
+                    "Pour un APK test installable, utilise :app:assembleDebug (jamais présenté comme PLAY)."
+                )
+            }
         }
     }
 }

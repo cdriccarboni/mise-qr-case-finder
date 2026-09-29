@@ -1,0 +1,33 @@
+import { test, expect } from '@playwright/test'
+
+test('valise → Jouer / Défi depuis inventaire réel', async ({ page }) => {
+  await page.goto('/')
+  await page.getByText('Ranger', { exact: true }).click()
+  await page.locator('[data-tab="cases"]').click()
+  await page.locator('#addCase').click()
+  await page.locator('#cName').fill('Valise test jeux')
+  await page.locator('#saveCase').click()
+  await expect(page.locator('#toast')).toContainText('enregistré')
+  await page.locator('[data-tab="inventory"]').click()
+  await page.locator('#addObject').click()
+  await page.locator('#fName').fill('Chaîne test')
+  await page.locator('#fHear').fill('cliquetis test')
+  const caseValue = await page.locator('#fCase option').evaluateAll(opts => {
+    const hit = opts.find(o => (o.textContent || '').includes('Valise test jeux'))
+    return hit ? hit.value : ''
+  })
+  expect(caseValue).toBeTruthy()
+  await page.locator('#fCase').selectOption(caseValue)
+  await page.locator('#saveObject').click()
+  await expect(page.locator('#toast')).toContainText('Objet enregistré')
+  await page.locator('[data-tab="cases"]').click()
+  await page.locator('.caseCard').filter({ hasText: 'Valise test jeux' }).click()
+  await expect(page.locator('#casePlayStats')).toContainText('bruitage')
+  await page.locator('#casePlay').click()
+  await expect(page.locator('.playHub')).toContainText('Jouer avec')
+  await page.locator('[data-play-action="challenge"]').click()
+  await expect(page.locator('.playChallenge')).toContainText('inventaire réel')
+  await page.locator('[data-chal="hint"]').click()
+  await page.locator('[data-chal="solution"]').click()
+  await expect(page.locator('.playSolution')).toBeVisible()
+})
