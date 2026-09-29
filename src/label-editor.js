@@ -20,6 +20,7 @@ function defaultModel(context={}){
   const name=context.name||context.label||''
   const blocks=[]
   if(name)blocks.push({id:uid('txt'),kind:'text',text:name,x:8,y:8,w:84,h:24,rotation:0,size:18,bold:true,italic:false,underline:false,align:'center',lineHeight:1.1})
+  if(context.photo)blocks.push({...imageBlock(context.photo),x:20,y:38,w:60,h:52})
   return {id:uid('label'),name:name||'Étiquette',w:50,h:30,orientation:'horizontal',thermal:{enabled:false,threshold:145,invert:false,dither:false},blocks}
 }
 function textBlock(text='Texte'){return {id:uid('txt'),kind:'text',text,x:10,y:12,w:80,h:28,rotation:0,size:18,bold:false,italic:false,underline:false,align:'center',lineHeight:1.15}}
@@ -92,7 +93,7 @@ export function openLabelEditor({context={},printImage}={}){
       <div class="labelTools">
         <label>Format<select data-preset>${LABEL_PRESETS.map(p=>`<option value="${p.id}">${p.label}</option>`).join('')}<option value="custom">Personnalisé</option></select></label>
         <div class="grid2"><label>Largeur mm<input data-w type="number" min="15" max="150" value="${model.w}"></label><label>Hauteur mm<input data-h type="number" min="15" max="150" value="${model.h}"></label></div>
-        <div class="row"><button data-add-text type="button">+ Texte</button><button data-add-image type="button" class="ghost">+ Image</button><input data-image-file type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></div>
+        <div class="row"><button data-add-text type="button">+ Texte</button><button data-add-image type="button" class="ghost">+ Image</button><input data-image-file type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
         <div data-block-tools></div>
         <fieldset><legend>Rendu thermique</legend><label class="check"><input data-thermal type="checkbox"> Aperçu imprimé</label><label>Seuil<input data-threshold type="range" min="40" max="220" value="145"></label><label class="check"><input data-dither type="checkbox"> Tramage</label><label class="check"><input data-invert type="checkbox"> Inverser</label></fieldset>
         <div class="row"><button data-undo class="ghost">Annuler</button><button data-redo class="ghost">Rétablir</button><button data-reset class="ghost">Réinitialiser</button></div>
@@ -137,10 +138,12 @@ export function openLabelEditor({context={},printImage}={}){
       const el=document.createElement('div');el.className='labelBlock'+(b.id===selected?' selected':'');el.dataset.id=b.id
       Object.assign(el.style,{left:`${b.x}%`,top:`${b.y}%`,width:`${b.w}%`,height:`${b.h}%`,transform:`rotate(${b.rotation||0}deg)`})
       el.innerHTML=b.kind==='text'?esc(b.text).replace(/\n/g,'<br>'):'Image'
+      const handle=document.createElement('span');handle.className='labelResizeHandle';handle.textContent='↘';el.append(handle)
+      handle.onpointerdown=e=>{e.stopPropagation();selected=b.id;blockTools();handle.setPointerCapture(e.pointerId);const sx=e.clientX,sy=e.clientY,ow=b.w,oh=b.h;push();handle.onpointermove=ev=>{if(!handle.hasPointerCapture(ev.pointerId))return;b.w=clamp(ow+(ev.clientX-sx)/rect.width*100,5,100-b.x);b.h=clamp(oh+(ev.clientY-sy)/rect.height*100,5,100-b.y);renderModel(canvas,model);el.style.width=`${b.w}%`;el.style.height=`${b.h}%`};handle.onpointerup=ev=>{try{handle.releasePointerCapture(ev.pointerId)}catch{};handle.onpointermove=null;blockTools()}}
       el.onpointerdown=e=>{
         selected=b.id;blockTools();drawOverlay();el.setPointerCapture(e.pointerId)
         const sx=e.clientX,sy=e.clientY,ox=b.x,oy=b.y;push()
-        el.onpointermove=ev=>{if(!el.hasPointerCapture(ev.pointerId))return;b.x=clamp(ox+(ev.clientX-sx)/rect.width*100,0,100-b.w);b.y=clamp(oy+(ev.clientY-sy)/rect.height*100,0,100-b.h);draw()}
+        el.onpointermove=ev=>{if(!el.hasPointerCapture(ev.pointerId))return;b.x=clamp(ox+(ev.clientX-sx)/rect.width*100,0,100-b.w);b.y=clamp(oy+(ev.clientY-sy)/rect.height*100,0,100-b.h);renderModel(canvas,model);el.style.left=`${b.x}%`;el.style.top=`${b.y}%`}
         el.onpointerup=ev=>{try{el.releasePointerCapture(ev.pointerId)}catch{};el.onpointermove=null}
       }
       overlay.append(el)
