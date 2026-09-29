@@ -23,6 +23,8 @@ import { buildRelationGraph, summarizeInventory, OBJECT_STATUSES } from './relat
 import { generateChallenge, generateWorkshop, surprisePick } from './game-engine.js'
 import { rememberGameEvent } from './game-history.js'
 import { playHubHtml, challengeHtml, workshopSetupHtml, workshopProgramHtml, workshopConductorHtml } from './game-ui.js'
+import { publicReferenceIdeas, generatePublicGame, randomPublicUniverse, publicActivityProgram } from './public-foley.js'
+import { publicHubHtml, fabricationsHtml, activitiesHtml, publicGameHtml, publicWorkshopHtml } from './public-ui.js'
 import { parseIntent, answerIntent } from './conversation.js'
 import { newLearning } from './learning.js'
 import { answerBlock, vibeBlock, exerciseBlock } from './terrain-ui.js'
@@ -52,6 +54,14 @@ const unique=a=>[...new Set((a||[]).filter(Boolean))]
 const safeExternal=x=>!/(gun|weapon|arme|fusil|pisto|coup de feu|explosi|knife)/i.test(JSON.stringify(x))
 const params=new URLSearchParams(location.search)
 const project=readProjectContext(location.search,location.href)
+const INTERFACE_MODE_KEY='mises-interface-mode'
+const CUSTOM_CATEGORIES_KEY='mises-custom-categories'
+const isInventoryMode=()=>localStorage.getItem(INTERFACE_MODE_KEY)==='inventory'
+const currentCategories=()=>{
+  let custom=[]
+  try{custom=JSON.parse(localStorage.getItem(CUSTOM_CATEGORIES_KEY)||'[]')}catch{}
+  return unique([...FAMILIES,...(Array.isArray(custom)?custom:[])])
+}
 
 await migrateDatabase()
 const db=await openDB(DB_NAME,DB_VERSION,{upgrade(d){
@@ -60,6 +70,7 @@ const db=await openDB(DB_NAME,DB_VERSION,{upgrade(d){
 const undoStack=[]
 
 const seed=await fetch('./data.json').then(r=>r.json()).catch(()=>({objects:[],containers:[],object_sound_links:[],web_reference_ideas:[],intent_packs:[]}))
+const publicFoley=await fetch('./public-foley.json').then(r=>r.json()).catch(()=>({records:[],fabrications:[],games:[],pedagogyActivities:[],universeFrames:[],sources:[]}))
 
 async function seedPersonal(){
   if(await db.get('settings','seeded-v3')) return
@@ -297,7 +308,7 @@ const dataBruitageCorpus=[
   ...(seed.musiques_en_jeux_game_index||[]).map(x=>({name:x.title,sounds:[],source:'Data Bruitage · jeux',kind:'Jeu'})),
   ...(seed.resource_index||[]).map(x=>({name:x.name,summary:x.indexed_text?'Document indexé':'Ressource',sounds:[],source:'Data Bruitage · documents',kind:'Document'}))
 ].filter(safeExternal)
-const external=dataBruitageCorpus
+const external=publicReferenceIdeas(publicFoley).filter(safeExternal)
 const intents=seed.intent_packs||[]
 
 function expandQuery(q){
@@ -441,6 +452,54 @@ function openCaseCreator(c){
   d.showModal();$('#closeCaseCreator').onclick=()=>d.close();const renderScoped=()=>{const q=$('#caseCreatorQ').value,found=scopedCaseSearch(c,q);$('#caseCreatorResults').innerHTML=found.map(o=>`<article class="card"><b>${esc(o.name)}</b><span>${(o.sounds||[]).slice(0,5).join(' · ')||'Usage à préciser'}</span><button data-caseadd="${o.id}">Ajouter à la mise</button></article>`).join('')||'<div class="empty">Rien de convaincant dans cette valise pour cette recherche.</div>';$$('[data-caseadd]',d).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.caseadd))};$('#caseCreatorQ').oninput=renderScoped;renderScoped()
 }
 
+function renderPublicSections(){
+  const hub=$('#publicLibraryBody')
+  if(hub){
+    hub.innerHTML=publicHubHtml(publicFoley,esc)
+    $('#publicRandomGame')?.addEventListener('click',()=>openPublicGame())
+    $('#publicRandomUniverse')?.addEventListener('click',()=>openRandomPublicUniverse())
+    $('#publicBuildWorkshop')?.addEventListener('click',()=>openPublicWorkshop())
+  }
+  const fabs=$('#fabricationCards')
+  if(fabs){
+    fabs.innerHTML=fabricationsHtml(publicFoley,esc)
+    $$('[data-public-fab]',fabs).forEach(button=>button.onclick=()=>openPublicGame('public-fabrication'))
+  }
+  const acts=$('#activityCards')
+  if(acts){
+    acts.innerHTML=activitiesHtml(publicFoley,esc)
+    $$('[data-public-activity]',acts).forEach(button=>button.onclick=()=>{
+      const activity=(publicFoley.pedagogyActivities||[]).find(x=>x.id===button.dataset.publicActivity)
+      openPublicGame(activity?.gameIds?.[0]||null)
+    })
+  }
+}
+function openPublicGame(gameId=null){
+  let reveal=false
+  let game=generatePublicGame(publicFoley,objects,{gameId})
+  if(!game){toast('Jeu public indisponible');return}
+  const d=$('#modal')
+  const draw=()=>{
+    d.innerHTML=`<div class="form">${publicGameHtml(game,esc,{reveal})}</div>`
+    if(!d.open)d.showModal()
+    d.querySelector('[data-play-close]')?.addEventListener('click',()=>d.close())
+    d.querySelector('[data-public-game="solution"]')?.addEventListener('click',()=>{reveal=true;draw()})
+    d.querySelector('[data-public-game="again"]')?.addEventListener('click',()=>{game=generatePublicGame(publicFoley,objects,{gameId});reveal=false;draw()})
+  }
+  draw()
+}
+function openRandomPublicUniverse(){
+  const universe=randomPublicUniverse(publicFoley,objects)
+  if(!universe){toast('Univers public indisponible');return}
+  const game=generatePublicGame({...publicFoley,universeFrames:[universe.frame]},objects,{gameId:'public-random-universe'})
+  if(game)openInventoryChallenge({},game)
+}
+function openPublicWorkshop(duration=30){
+  const program=publicActivityProgram(publicFoley,objects,duration)
+  const d=$('#modal');d.innerHTML=`<div class="form">${publicWorkshopHtml(program,esc)}</div>`;d.showModal()
+  d.querySelector('[data-play-close]')?.addEventListener('click',()=>d.close())
+}
+
 function currentGameGraph(){
   return buildRelationGraph({objects,cases,sounds:catalogueSounds,objectSounds:catalogueObjectSounds})
 }
@@ -461,6 +520,8 @@ function openPlayHub(containerId=null){
   d.querySelector('[data-play-action="workshop"]')?.addEventListener('click',()=>{d.close();openWorkshopFlow(filters,label)})
   d.querySelector('[data-play-action="universe"]')?.addEventListener('click',()=>{d.close();openInventoryChallenge({...filters,gameType:'E',universe:'forêt'})})
   d.querySelector('[data-play-action="surprise"]')?.addEventListener('click',()=>{d.close();openSurprise(filters)})
+  d.querySelector('[data-play-action="public"]')?.addEventListener('click',()=>{d.close();openPublicGame()})
+  d.querySelector('[data-play-action="random-universe"]')?.addEventListener('click',()=>{d.close();openRandomPublicUniverse()})
 }
 function openInventoryChallenge(filters={}, preset=null){
   const graph=currentGameGraph()
@@ -593,8 +654,8 @@ $('#app').innerHTML=`
   </div>
 </section>
 <div class="goalNav" aria-label="Navigation MISES">
- <details open><summary>Trouver</summary><div><button data-tab="creator">Créateur d’ambiance</button><button data-tab="vibe">Vibe bruitage</button></div></details>
- <details><summary>Créer</summary><div><button id="goalPlay" type="button">Jouer</button><button id="goalWorkshop" type="button">Préparer un atelier</button><button id="goalChallenge" type="button">Défi bruitage</button><button id="goalHands" type="button">Crée ton bruitage</button><button id="goalExercise" type="button">Exercice</button><button id="goalGroupPhoto" type="button">Photo de groupe</button><button id="goalUniverse" type="button">Univers d’une photo</button></div></details>
+ <details open><summary>Trouver</summary><div><button class="foleyOnly" data-tab="creator">Créateur d’ambiance</button><button class="foleyOnly" data-tab="vibe">Vibe bruitage</button></div></details>
+ <details class="createGoals"><summary>Créer</summary><div><span class="inventoryNavGroup inventoryOnly"><button id="goalAddObjectSimple" type="button">+ Objet</button><button id="goalAddCaseSimple" type="button">+ Contenant</button><button id="goalQrSimple" type="button">Étiquettes QR</button></span><button id="goalPlay" class="foleyOnly" type="button">Jouer</button><button id="goalWorkshop" class="foleyOnly" type="button">Préparer un atelier</button><button id="goalChallenge" class="foleyOnly" type="button">Défi bruitage</button><button id="goalPublic" class="foleyOnly" data-tab="publicLibrary" type="button">Bibliothèque publique</button><button id="goalFabrications" class="foleyOnly" data-tab="fabrications" type="button">Fabrications</button><button id="goalActivities" class="foleyOnly" data-tab="activities" type="button">Activités pédagogiques</button><button id="goalRandomUniverse" class="foleyOnly" type="button">Univers aléatoire</button><button id="goalHands" class="foleyOnly" type="button">Crée ton bruitage</button><button id="goalExercise" class="foleyOnly" type="button">Exercice</button><button id="goalGroupPhoto" class="foleyOnly" type="button">Photo de groupe</button><button id="goalUniverse" class="foleyOnly" type="button">Univers d’une photo</button></div></details>
  <details><summary>Ranger</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
  <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Data Bruitage · importer / exporter</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
@@ -604,9 +665,12 @@ $('#app').innerHTML=`
 <section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Crée une valise ou une caisse, puis ouvre-la pour créer / imprimer son QR code. Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
 <section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation : spectacle, atelier, tournée ou besoin ponctuel.</p><div id="kitCards" class="cards"></div></section>
 <section id="mises" class="tab"><div class="miseSectionHead"><div><small>MISES ET CONTRÔLE</small><h2>Mises et contrôle</h2><p>Préparer, ouvrir et vérifier la mise du spectacle.</p></div><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards miseCards"></div></section>
-<section id="vibe" class="tab"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 360 52"><circle cx="28" cy="28" r="12"/><polygon points="108,10 132,22 124,46 93,46 84,22"/><polygon points="210,10 240,28 210,46 180,28"/><path d="M286 34c14-16 28-16 42 0s28 16 42 0"/></svg></div><h2>Vibe bruitage</h2><p>Décris un univers. MISES! reste hors ligne et sépare ce que tu possèdes de ce qui est seulement suggéré.</p><label>Univers<textarea id="vibePrompt" rows="3" placeholder="Une forêt inquiétante la nuit…"></textarea></label><div class="row"><button id="runVibe" type="button">Proposer</button><button type="button" class="ghost" data-vibe-preset="Une forêt inquiétante la nuit avec quelque chose qui rôde au loin">Forêt</button><button type="button" class="ghost" data-vibe-preset="Une vieille maison qui travaille pendant une tempête">Maison</button><button type="button" class="ghost" data-vibe-preset="un bateau en bois pris dans une mer violente">Bateau</button></div><div id="vibeOut"></div></div></section>
-<section id="exercises" class="tab"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 360 52"><circle cx="28" cy="28" r="12"/><polygon points="108,10 132,22 124,46 93,46 84,22"/><polygon points="210,10 240,28 210,46 180,28"/><path d="M286 34c14-16 28-16 42 0s28 16 42 0"/></svg></div><h2>Exercice</h2><p>Généré à partir de ta base. Ce n’est pas une liste figée, et ce n’est pas une fiche.</p><div class="grid2"><label>Durée<select id="exDuration"><option value="0.5">30 secondes</option><option value="1">1 min</option><option value="3">3 min</option><option value="5" selected>5 min</option></select></label><label>Personnes<input id="exPeople" type="number" min="1" value="1"></label><label>Niveau<select id="exLevel"><option value="découverte">Découverte</option><option value="atelier" selected>Atelier</option><option value="avancé">Avancé</option></select></label><label>Mode<select id="exMode"><option value="">Plusieurs modes</option><option value="decouverte">Découverte</option><option value="echauffement">Échauffement</option><option value="improvisation">Improvisation</option><option value="contrainte">Contrainte</option><option value="defi">Défi</option><option value="ambiance">Création d’ambiance</option><option value="histoire">Histoire sonore</option><option value="detournement">Détournement d’objet</option><option value="meme-objet">Même objet, plusieurs sons</option><option value="plusieurs-un-son">Plusieurs objets, un seul son</option></select></label></div><label>Univers (facultatif)<input id="exUniverse" placeholder="port, forêt, cuisine…"></label><button id="runExercise" type="button">Générer</button><div id="exerciseOut"></div></div></section>
-<section id="creator" class="tab">
+<section id="publicLibrary" class="tab foleyOnly"><div id="publicLibraryBody"></div></section>
+<section id="fabrications" class="tab foleyOnly"><div id="fabricationCards"></div></section>
+<section id="activities" class="tab foleyOnly"><div id="activityCards"></div></section>
+<section id="vibe" class="tab foleyOnly"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 360 52"><circle cx="28" cy="28" r="12"/><polygon points="108,10 132,22 124,46 93,46 84,22"/><polygon points="210,10 240,28 210,46 180,28"/><path d="M286 34c14-16 28-16 42 0s28 16 42 0"/></svg></div><h2>Vibe bruitage</h2><p>Décris un univers. MISES! reste hors ligne et sépare ce que tu possèdes de ce qui est seulement suggéré.</p><label>Univers<textarea id="vibePrompt" rows="3" placeholder="Une forêt inquiétante la nuit…"></textarea></label><div class="row"><button id="runVibe" type="button">Proposer</button><button type="button" class="ghost" data-vibe-preset="Une forêt inquiétante la nuit avec quelque chose qui rôde au loin">Forêt</button><button type="button" class="ghost" data-vibe-preset="Une vieille maison qui travaille pendant une tempête">Maison</button><button type="button" class="ghost" data-vibe-preset="un bateau en bois pris dans une mer violente">Bateau</button></div><div id="vibeOut"></div></div></section>
+<section id="exercises" class="tab foleyOnly"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 360 52"><circle cx="28" cy="28" r="12"/><polygon points="108,10 132,22 124,46 93,46 84,22"/><polygon points="210,10 240,28 210,46 180,28"/><path d="M286 34c14-16 28-16 42 0s28 16 42 0"/></svg></div><h2>Exercice</h2><p>Généré à partir de ta base. Ce n’est pas une liste figée, et ce n’est pas une fiche.</p><div class="grid2"><label>Durée<select id="exDuration"><option value="0.5">30 secondes</option><option value="1">1 min</option><option value="3">3 min</option><option value="5" selected>5 min</option></select></label><label>Personnes<input id="exPeople" type="number" min="1" value="1"></label><label>Niveau<select id="exLevel"><option value="découverte">Découverte</option><option value="atelier" selected>Atelier</option><option value="avancé">Avancé</option></select></label><label>Mode<select id="exMode"><option value="">Plusieurs modes</option><option value="decouverte">Découverte</option><option value="echauffement">Échauffement</option><option value="improvisation">Improvisation</option><option value="contrainte">Contrainte</option><option value="defi">Défi</option><option value="ambiance">Création d’ambiance</option><option value="histoire">Histoire sonore</option><option value="detournement">Détournement d’objet</option><option value="meme-objet">Même objet, plusieurs sons</option><option value="plusieurs-un-son">Plusieurs objets, un seul son</option></select></label></div><label>Univers (facultatif)<input id="exUniverse" placeholder="port, forêt, cuisine…"></label><button id="runExercise" type="button">Générer</button><div id="exerciseOut"></div></div></section>
+<section id="creator" class="tab foleyOnly">
   <div class="panel"><h2>Créateur de bruitage</h2><p>Décrivez une ambiance ou un son pour explorer votre parc et les références.</p>
   <div class="row"><button data-preset="mer" class="ghost">Mer</button><button data-preset="forêt" class="ghost">Forêt</button><button data-preset="feu" class="ghost">Feu</button><button data-preset="orage" class="ghost">Orage</button></div></div>
   <div id="creatorResults"></div>
@@ -624,7 +688,7 @@ $('#app').innerHTML=`
 <dialog id="scanDlg"><div class="dialoghead"><strong>Caméra</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline muted></video><p id="scanFeedback" class="scanFeedback" role="status">Cadre un QR. La lecture est continue, sans bouton déclencheur.</p><div class="row"><button id="scanObjects" type="button">Analyser les objets</button></div></dialog>
 <dialog id="printDlg"></dialog>
 <dialog id="preferencesDlg"><div class="form"><div class="dialoghead"><div><b>Préférences</b><small>Affichage · connexions · données</small></div><button id="closePreferences" class="ghost" type="button">×</button></div>
-  <div class="grid2"><label><span>Affichage</span><select id="displayMode"><option value="auto">Auto</option><option value="desktop">Ordinateur</option><option value="mobile">Mobile</option></select></label><label><span>Thème</span><select id="themeMode"><option value="system">Système</option><option value="dark">Sombre</option><option value="light">Clair</option><option value="regie">Mode régie</option></select></label></div>
+  <div class="grid2"><label><span>Interface</span><select id="interfaceMode"><option value="foley">Bruitages & pédagogie</option><option value="inventory">Inventaire / régie</option></select></label><label><span>Affichage</span><select id="displayMode"><option value="auto">Auto</option><option value="desktop">Ordinateur</option><option value="mobile">Mobile</option></select></label><label><span>Thème</span><select id="themeMode"><option value="system">Système</option><option value="dark">Sombre</option><option value="light">Clair</option><option value="regie">Mode régie</option></select></label></div><label><span>Catégories personnalisées</span><textarea id="customCategories" rows="3" placeholder="Costumes, accessoires, câbles, consommables…"></textarea></label>
   <fieldset class="inkPicker"><legend>Encre</legend><div id="inkSwatches" class="inkSwatches"></div><label>Couleur libre<input id="inkCustom" type="color" value="${DEFAULT_INK}"></label><button id="inkDefault" type="button" class="ghost">Couleur par défaut</button></fieldset>
   <div id="preferencesGoogleState" class="preferenceState"><b>Google Drive</b><span>Non connecté</span></div>
   <button id="preferencesGoogle" type="button">Raccorder Google Drive</button>
@@ -666,11 +730,11 @@ function setTab(t){
 $$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
 
 function renderSearch(target='#searchResults'){
-  const q=$('#q').value.trim(), own=searchOwned(q), ideas=searchExternal(q), entities=searchEntities(q)
+  const q=$('#q').value.trim(), own=searchOwned(q), ideas=isInventoryMode()?[]:searchExternal(q), entities=searchEntities(q)
   const intent=parseIntent(q)
   const answer=intent?answerIntent(intent,{objects,cases,mises,activeMise,learnings}):null
   if(!q){
-    $(target).innerHTML=`<div class="empty"><b>Écris ce que tu cherches.</b><span>Objet, son, ambiance, contenant, mise, kit, ou une question.</span><small>Ex. « Où est mon truc pour faire le tonnerre ? »</small></div>`
+    $(target).innerHTML=isInventoryMode()?`<div class="empty"><b>Écris ce que tu cherches.</b><span>Objet, catégorie, contenant, mise ou kit.</span><small>Ex. « Où est le câble HDMI ? »</small></div>`:`<div class="empty"><b>Écris ce que tu cherches.</b><span>Objet, son, ambiance, contenant, mise, kit, ou une question.</span><small>Ex. « Où est mon truc pour faire le tonnerre ? »</small></div>`
     return
   }
   let h=answer?answerBlock(answer,esc):''
@@ -756,10 +820,10 @@ function openObject(p={}){
   <p id="audioNote" class="hint" role="status" ${o.audioMemo?'hidden':''}>${o.audioMemo?'':'Aucun mémo sonore pour cette fiche.'}</p>
   <audio id="audioMemoPlayer" controls data-memo ${o.audioMemo?'':'hidden'}></audio>
   <label>Nom<input id="fName" value="${esc(o.name)}" placeholder="Bouteille fictive"></label>
-  <label>Son à entendre<input id="fHear" value="${esc(shown.hear)}" placeholder="glouglou fictif"></label>
-  <label>Son à imaginer<input id="fImagine" value="${esc(shown.imagine)}" placeholder="océan imaginé fictif"></label>
-  <label>Objet ou dispositif nécessaire<input id="fDevice" value="${esc(o.device||'')}" placeholder="bouteille en verre fictive"></label>
-  <div class="grid2"><label>Famille<select id="fFamily">${FAMILIES.map(x=>`<option ${o.family===x?'selected':''}>${x}</option>`)}</select></label>
+  <label class="foleyOnly">Son à entendre<input id="fHear" value="${esc(shown.hear)}" placeholder="glouglou fictif"></label>
+  <label class="foleyOnly">Son à imaginer<input id="fImagine" value="${esc(shown.imagine)}" placeholder="océan imaginé fictif"></label>
+  <label class="foleyOnly">Objet ou dispositif nécessaire<input id="fDevice" value="${esc(o.device||'')}" placeholder="bouteille en verre fictive"></label>
+  <div class="grid2"><label>Famille<select id="fFamily">${currentCategories().map(x=>`<option ${o.family===x?'selected':''}>${x}</option>`)}</select></label>
   <label>Contenant<select id="fCase"><option value="">Sans contenant</option>${cases.map(c=>`<option value="${c.id}" ${(o.caseId||o.container_id)===c.id?'selected':''}>${esc(caseName(c))}</option>`)}</select></label></div>
   <label>Usages déjà saisis, distincts des deux sons<input id="fSounds" value="${esc((o.sounds||[]).join(', '))}" placeholder="liste libre, non fusionnée"></label>
   <label>Notes<textarea id="fNotes" rows="3">${esc(o.notes||'')}</textarea></label>
@@ -1174,12 +1238,16 @@ function paintInkSwatches(current = parseInk(localStorage.getItem(LOCAL_KEYS.ink
 }
 function applyUiPreferences(){
   paintInkSwatches(parseInk(localStorage.getItem(LOCAL_KEYS.ink)) || DEFAULT_INK)
-  const display=localStorage.getItem(LOCAL_KEYS.display)||'auto',theme=localStorage.getItem(LOCAL_KEYS.theme)||'system'
+  const display=localStorage.getItem(LOCAL_KEYS.display)||'auto',theme=localStorage.getItem(LOCAL_KEYS.theme)||'system',interfaceMode=localStorage.getItem(INTERFACE_MODE_KEY)||'foley'
   document.documentElement.dataset.display=display
   document.documentElement.dataset.theme=theme
-  const displaySelect=$('#displayMode'),themeSelect=$('#themeMode')
+  document.documentElement.dataset.interface=interfaceMode
+  const displaySelect=$('#displayMode'),themeSelect=$('#themeMode'),interfaceSelect=$('#interfaceMode')
   if(displaySelect)displaySelect.value=display
   if(themeSelect)themeSelect.value=theme
+  if(interfaceSelect)interfaceSelect.value=interfaceMode
+  const categoryBox=$('#customCategories');if(categoryBox){let custom=[];try{custom=JSON.parse(localStorage.getItem(CUSTOM_CATEGORIES_KEY)||'[]')}catch{};categoryBox.value=(Array.isArray(custom)?custom:[]).join(', ')}
+  const q=$('#q');if(q)q.placeholder=interfaceMode==='inventory'?'Objet, catégorie, contenant, mise, kit…':'Objet, son, ambiance, contenant, mise, kit…'
   const googleState=$('#preferencesGoogleState')
   if(googleState){
     if(androidGoogleSignInBlocked()){
@@ -1201,6 +1269,8 @@ applyUiPreferences()
 $('#inkCustom').addEventListener('input', event => { void rememberInk(event.target.value) })
 $('#inkDefault').onclick = () => { void rememberInk(DEFAULT_INK) }
 $('#preferencesBtn').onclick=()=>{applyUiPreferences();$('#preferencesDlg').showModal()}
+$('#interfaceMode').onchange=e=>{localStorage.setItem(INTERFACE_MODE_KEY,e.target.value);applyUiPreferences();if(e.target.value==='inventory'&&$('.tab.active')?.classList.contains('foleyOnly'))setTab('search');render()}
+$('#customCategories').onchange=e=>{const values=unique(String(e.target.value||'').split(/[,\n;]/).map(x=>x.trim()).filter(Boolean));localStorage.setItem(CUSTOM_CATEGORIES_KEY,JSON.stringify(values));toast('Catégories enregistrées')}
 $('#displayMode').onchange=e=>{localStorage.setItem(LOCAL_KEYS.display,e.target.value);applyUiPreferences()}
 $('#themeMode').onchange=e=>{localStorage.setItem(LOCAL_KEYS.theme,e.target.value);applyUiPreferences()}
 $('#closePreferences').onclick=()=>$('#preferencesDlg').close()
@@ -1282,6 +1352,10 @@ $('#goalGroupPhoto').onclick=()=>$('#groupPhotoInput').click()
 $('#goalHands').onclick=()=>{$('#handsPhotoInput').click()}
 $('#goalUniverse').onclick=()=>$('#universePhotoInput').click()
 $('#goalExercise').onclick=()=>setTab('exercises')
+$('#goalRandomUniverse').onclick=()=>openRandomPublicUniverse()
+$('#goalAddObjectSimple').onclick=()=>openObject()
+$('#goalAddCaseSimple').onclick=()=>$('#addCase').click()
+$('#goalQrSimple').onclick=()=>{setTab('cases');toast('Ouvre un contenant pour créer / imprimer ses étiquettes QR')}
 $('#inventoryInput').onchange=e=>{const file=e.target.files?.[0];e.target.value='';if(file)runLocalPhoto(file,null,'inventory')}
 $('#handsPhotoInput').onchange=e=>{const file=e.target.files?.[0];e.target.value='';pendingExerciseMinutes=pendingExerciseMinutes||1;if(file)runLocalPhoto(file,null,'hands')}
 $('#universePhotoInput').onchange=e=>{const file=e.target.files?.[0];e.target.value='';if(file)runLocalPhoto(file,null,'universe')}
@@ -1342,6 +1416,7 @@ function renderCreator(){
 
 function render(){
   renderSearch()
+  renderPublicSections()
   $('#objectCards').innerHTML=objects.length?objects.slice().sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'fr')).map(o=>`<button class="card objectCard" data-object="${o.id}">
     <b>${o.favorite?'★ ':''}${esc(o.name)}</b><span>${esc(soundSummary(o)||'Son à préciser')}</span><small>${esc(caseName(caseBy(o.caseId||o.container_id)))}${o.audioMemo?' · mémo sonore':''} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></button>`).join(''):'<div class="empty"><b>Aucun objet pour l’instant.</b><span>Importe tes Data Bruitage ou ajoute une fiche. Rien n’est inventé à ta place.</span></div>'
   $$('[data-object]').forEach(b=>b.onclick=()=>openObject(objects.find(o=>o.id===b.dataset.object)))
