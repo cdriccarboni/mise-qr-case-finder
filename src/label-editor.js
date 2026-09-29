@@ -19,11 +19,11 @@ function uid(prefix){return `${prefix}-${crypto.randomUUID()}`}
 function defaultModel(context={}){
   const name=context.name||context.label||''
   const blocks=[]
-  if(name)blocks.push({id:uid('txt'),kind:'text',text:name,x:8,y:8,w:84,h:24,rotation:0,size:18,bold:true,italic:false,underline:false,align:'center',lineHeight:1.1})
+  if(name)blocks.push({id:uid('txt'),kind:'text',text:name,x:8,y:8,w:84,h:24,rotation:0,size:18,bold:true,italic:false,underline:false,align:'center',lineHeight:1.1,font:'system-ui'})
   if(context.photo)blocks.push({...imageBlock(context.photo),x:20,y:38,w:60,h:52})
   return {id:uid('label'),name:name||'Étiquette',w:50,h:30,orientation:'horizontal',thermal:{enabled:false,threshold:145,invert:false,dither:false},blocks}
 }
-function textBlock(text='Texte'){return {id:uid('txt'),kind:'text',text,x:10,y:12,w:80,h:28,rotation:0,size:18,bold:false,italic:false,underline:false,align:'center',lineHeight:1.15}}
+function textBlock(text='Texte'){return {id:uid('txt'),kind:'text',text,x:10,y:12,w:80,h:28,rotation:0,size:18,bold:false,italic:false,underline:false,align:'center',lineHeight:1.15,font:'system-ui'}}
 function imageBlock(src){return {id:uid('img'),kind:'image',src,x:15,y:15,w:70,h:70,rotation:0,fit:'contain'}}
 
 function renderModel(canvas,model,{thermal=model.thermal?.enabled}={}){
@@ -38,7 +38,7 @@ function renderModel(canvas,model,{thermal=model.thermal?.enabled}={}){
     if(block.kind==='text'){
       ctx.fillStyle='#000'
       ctx.textAlign=block.align||'center';ctx.textBaseline='top'
-      ctx.font=`${block.italic?'italic ':''}${block.bold?'700 ':'400 '}${Math.max(8,Number(block.size)||18)}px system-ui,sans-serif`
+      ctx.font=`${block.italic?'italic ':''}${block.bold?'700 ':'400 '}${Math.max(8,Number(block.size)||18)}px ${block.font||'system-ui'},sans-serif`
       const pad=Number(block.padding)||0,lines=String(block.text||'').split('\n')
       const lineH=(Number(block.size)||18)*(Number(block.lineHeight)||1.15)
       lines.forEach((line,i)=>{
@@ -60,12 +60,13 @@ function renderModel(canvas,model,{thermal=model.thermal?.enabled}={}){
   }
   for(const block of model.blocks||[])drawBlock(block)
   if(thermal){
-    const image=ctx.getImageData(0,0,w,h),d=image.data,t=Number(model.thermal?.threshold)||145,inv=Boolean(model.thermal?.invert),dither=Boolean(model.thermal?.dither)
+    const image=ctx.getImageData(0,0,w,h),d=image.data,t=Number(model.thermal?.threshold)||145,inv=Boolean(model.thermal?.invert),dither=Boolean(model.thermal?.dither),mode=model.thermal?.mode||'bw'
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){
       const i=(y*w+x)*4
       let gray=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2]
-      if(dither)gray+=((x+y)%2?18:-18)
-      const bit=gray<t?0:255,val=inv?255-bit:bit
+      if(mode==='bw'&&dither)gray+=((x+y)%2?18:-18)
+      let val=mode==='gray'?Math.round(gray):(gray<t?0:255)
+      if(inv)val=255-val
       d[i]=d[i+1]=d[i+2]=val
     }
     ctx.putImageData(image,0,0)
@@ -96,7 +97,7 @@ export function openLabelEditor({context={},printImage}={}){
         <div class="grid2"><label>Largeur mm<input data-w type="number" min="15" max="150" value="${model.w}"></label><label>Hauteur mm<input data-h type="number" min="15" max="150" value="${model.h}"></label></div>
         <div class="row"><button data-add-text type="button">+ Texte</button><button data-add-image type="button" class="ghost">+ Image</button><input data-image-file type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
         <div data-block-tools></div>
-        <fieldset><legend>Rendu thermique</legend><label class="check"><input data-thermal type="checkbox"> Aperçu imprimé</label><label>Seuil<input data-threshold type="range" min="40" max="220" value="145"></label><label class="check"><input data-dither type="checkbox"> Tramage</label><label class="check"><input data-invert type="checkbox"> Inverser</label></fieldset>
+        <fieldset><legend>Rendu thermique</legend><label class="check"><input data-thermal type="checkbox"> Aperçu imprimé</label><label>Mode<select data-thermal-mode><option value="bw">Noir / blanc</option><option value="gray">Niveaux de gris</option></select></label><label>Seuil<input data-threshold type="range" min="40" max="220" value="145"></label><label class="check"><input data-dither type="checkbox"> Tramage</label><label class="check"><input data-invert type="checkbox"> Inverser</label></fieldset>
         <div class="row"><button data-undo class="ghost">Annuler</button><button data-redo class="ghost">Rétablir</button><button data-reset class="ghost">Réinitialiser</button></div>
         <label>Nom du modèle<input data-template-name value="${esc(model.name)}"></label>
         <div class="row"><button data-save-template class="ghost">Enregistrer modèle</button><button data-load-template class="ghost">Modèles / récentes</button></div>
@@ -112,7 +113,7 @@ export function openLabelEditor({context={},printImage}={}){
     const b=selectedBlock(),box=$('[data-block-tools]')
     if(!b){box.innerHTML='<p class="hint">Ajoute ou sélectionne un élément.</p>';return}
     box.innerHTML=`<fieldset><legend>${b.kind==='text'?'Texte':'Image'}</legend>
-      ${b.kind==='text'? `<label>Contenu<textarea data-text rows="3">${esc(b.text)}</textarea></label><div class="grid2"><label>Taille<input data-size type="number" min="8" max="80" value="${b.size}"></label><label>Alignement<select data-align><option value="left">Gauche</option><option value="center">Centre</option><option value="right">Droite</option></select></label><label>Interligne<input data-lineheight type="number" min="0.8" max="2" step="0.05" value="${b.lineHeight||1.15}"></label><label>Marge interne px<input data-padding type="number" min="0" max="30" value="${b.padding||0}"></label></div><div class="row"><label class="check"><input data-bold type="checkbox" ${b.bold?'checked':''}> Gras</label><label class="check"><input data-italic type="checkbox" ${b.italic?'checked':''}> Italique</label><label class="check"><input data-under type="checkbox" ${b.underline?'checked':''}> Souligné</label></div>` : `<label>Recadrage<select data-fit><option value="contain">Contenir</option><option value="cover">Remplir / recadrer</option></select></label><p class="hint">Déplace, redimensionne ou tourne l’image directement.</p>`}
+      ${b.kind==='text'? `<label>Contenu<textarea data-text rows="3">${esc(b.text)}</textarea></label><div class="grid2"><label>Taille<input data-size type="number" min="8" max="80" value="${b.size}"></label><label>Alignement<select data-align><option value="left">Gauche</option><option value="center">Centre</option><option value="right">Droite</option></select></label><label>Police<select data-font><option value="system-ui">Système</option><option value="serif">Serif locale</option><option value="monospace">Mono locale</option><option value="cursive">Manuscrite locale</option></select></label><label>Interligne<input data-lineheight type="number" min="0.8" max="2" step="0.05" value="${b.lineHeight||1.15}"></label><label>Marge interne px<input data-padding type="number" min="0" max="30" value="${b.padding||0}"></label></div><div class="row"><label class="check"><input data-bold type="checkbox" ${b.bold?'checked':''}> Gras</label><label class="check"><input data-italic type="checkbox" ${b.italic?'checked':''}> Italique</label><label class="check"><input data-under type="checkbox" ${b.underline?'checked':''}> Souligné</label></div>` : `<label>Recadrage<select data-fit><option value="contain">Contenir</option><option value="cover">Remplir / recadrer</option></select></label><p class="hint">Déplace, redimensionne ou tourne l’image directement.</p>`}
       <div class="grid2"><label>Rotation<input data-rotation type="number" min="-180" max="180" value="${b.rotation||0}"></label><label>Largeur %<input data-bw type="number" min="5" max="100" value="${Math.round(b.w)}"></label></div>
       <div class="row"><button data-duplicate class="ghost">Dupliquer</button><button data-front class="ghost">Avant</button><button data-back class="ghost">Arrière</button><button data-delete class="ghost">Supprimer</button></div>
     </fieldset>`
@@ -120,6 +121,7 @@ export function openLabelEditor({context={},printImage}={}){
     if(b.kind==='text'){
       bind('[data-text]',el=>b.text=el.value)
       bind('[data-size]',el=>b.size=Number(el.value))
+      const font=$('[data-font]');font.value=b.font||'system-ui';font.onchange=()=>{push();b.font=font.value;draw()}
       bind('[data-lineheight]',el=>b.lineHeight=Number(el.value))
       bind('[data-padding]',el=>b.padding=Number(el.value))
       const align=$('[data-align]');align.value=b.align||'center';align.onchange=()=>{push();b.align=align.value;draw()}
@@ -164,6 +166,7 @@ export function openLabelEditor({context={},printImage}={}){
   $('[data-add-image]').onclick=()=> $('[data-image-file]').click()
   $('[data-image-file]').onchange=async e=>{const f=e.target.files?.[0];e.target.value='';if(!f)return;push();const src=await readFile(f);const b=imageBlock(src);model.blocks.push(b);selected=b.id;hydrateImages(model,draw);draw()}
   $('[data-thermal]').onchange=e=>{model.thermal.enabled=e.target.checked;draw()}
+  $('[data-thermal-mode]').onchange=e=>{model.thermal.mode=e.target.value;draw()}
   $('[data-threshold]').oninput=e=>{model.thermal.threshold=Number(e.target.value);draw()}
   $('[data-dither]').onchange=e=>{model.thermal.dither=e.target.checked;draw()}
   $('[data-invert]').onchange=e=>{model.thermal.invert=e.target.checked;draw()}
