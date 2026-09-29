@@ -14,7 +14,7 @@ test('0.4.0-beta.1 is the same version in the app, the package, Android and the 
   assert.match(read('../android/app/build.gradle.kts'), new RegExp(`versionName = "${APP_VERSION}"`))
   assert.match(read('../android/app/src/main/java/fr/acousmatictheatre/mises/MainActivity.java'), /package fr\.acousmatictheatre\.mises/)
   assert.match(read('../android/app/src/main/java/fr/acousmatictheatre/mises/MainActivity.java'), /MISES-Android\/0\.4\.0-beta\.1/)
-  assert.match(read('../vite.config.js'), /cacheId:'mises-0\.3\.0-beta\.7'/)
+  assert.match(read('../vite.config.js'), /cacheId:'mises-0\.4\.0-beta\.1'/)
   assert.match(read('../android/app/build.gradle.kts'), /val playApplicationId = "fr\.acousmatictheatre\.mises"/)
   assert.match(read('../android/app/build.gradle.kts'), /namespace = playApplicationId/)
   assert.match(read('../android/app/build.gradle.kts'), /applicationId = playApplicationId/)
