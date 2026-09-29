@@ -31,7 +31,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   ANDROID_HOME: /usr/local/lib/android/sdk
@@ -83,3 +83,22 @@ jobs:
           path: |
             android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Publish GitHub pre-release APK TEST
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="v${VERSION}"
+          APK="$(find android/app/build/outputs/apk/debug -name '*.apk' -type f | head -n 1)"
+          ASSET="MISES-${VERSION}-TEST.apk"
+          cp "$APK" "/tmp/$ASSET"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "/tmp/$ASSET" --clobber
+          else
+            gh release create "$TAG" "/tmp/$ASSET" \
+              --prerelease \
+              --title "MISES! ${VERSION} — APK TEST" \
+              --notes "APK Android de test validé par la recette GitHub (unitaires, build PWA, Playwright, assembleDebug). Test uniquement — aucune promotion Google Play production."
+          fi
