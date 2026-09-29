@@ -1468,8 +1468,8 @@ function render(){
   </article>`).join(''):'<div class="empty"><b>Aucune mise pour le moment.</b><span>Crée une mise ou ouvre un kit pour préparer le spectacle.</span></div>'
   $$('[data-active]').forEach(b=>b.onclick=()=>{activeMise=b.dataset.active;render()})
   $$('#miseCards .check input').forEach(x=>x.onchange=()=>toggleCheck(miseBy(x.dataset.mise),x.value,x.checked))
-  $('[data-editmise]').forEach(b=>b.onclick=()=>openMise(miseBy(b.dataset.editmise)))
-  $('[data-labelmise]').forEach(b=>b.onclick=()=>{const m=miseBy(b.dataset.labelmise);if(m)openFreeLabel({type:'mise',id:m.id,name:m.name})})
+  $$('[data-editmise]').forEach(b=>b.onclick=()=>openMise(miseBy(b.dataset.editmise)))
+  $$('[data-labelmise]').forEach(b=>b.onclick=()=>{const m=miseBy(b.dataset.labelmise);if(m)openFreeLabel({type:'mise',id:m.id,name:m.name})})
   $$('[data-control]').forEach(b=>b.onclick=()=>{activeMise=b.dataset.control;photoTargetMiseId=b.dataset.control;$('#photoInput').click()})
 }
 render()
