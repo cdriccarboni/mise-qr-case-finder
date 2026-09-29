@@ -182,3 +182,5 @@ html[data-theme="light"] #customCategories{background:#fff;color:#171717}
 .inventoryNavGroup{display:none}
 html[data-interface="inventory"] .inventoryNavGroup{display:contents!important}
 html[data-interface="inventory"] #goalQrSimple{grid-column:1/-1}
+
+html:not([data-interface="inventory"]) .goalNav .createGoals>div>button:last-child{grid-column:1/-1}
