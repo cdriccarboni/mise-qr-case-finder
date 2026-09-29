@@ -13,6 +13,8 @@ export function playHubHtml(summary, caseName, esc) {
       <button type="button" data-play-action="challenge">Défi</button>
       <button type="button" data-play-action="workshop">Atelier</button>
       <button type="button" data-play-action="universe">Univers</button>
+      <button type="button" data-play-action="random-universe">Univers aléatoire</button>
+      <button type="button" data-play-action="public">Jeux publics</button>
       <button type="button" data-play-action="surprise" class="ghost">Surprise</button>
     </div>
     <p class="hint">Aucun objet absent ou indisponible n’entre dans ces propositions.</p>
