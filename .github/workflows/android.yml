@@ -36,6 +36,7 @@ permissions:
 env:
   ANDROID_HOME: /usr/local/lib/android/sdk
   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+  MISES_UPLOAD_CERT_SHA256: "911F5B046A511E9AF1077CE045219D54FEC1ADFFA584B15C4CFD17665AE5D6CB"
 
 jobs:
   android:
@@ -64,7 +65,6 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-
       - name: Install Android 16 SDK
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
@@ -80,8 +80,56 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: MISES-Android-build
-          path: |
-            android/app/build/outputs/apk/debug/*.apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Restore and verify Play upload key when configured
+        id: play_signing
+        if: github.event_name != 'pull_request'
+        env:
+          MISE_UPLOAD_KEYSTORE_B64: ${{ secrets.MISE_UPLOAD_KEYSTORE_B64 }}
+          MISE_UPLOAD_STORE_PASSWORD: ${{ secrets.MISE_UPLOAD_STORE_PASSWORD }}
+          MISE_UPLOAD_KEY_ALIAS: ${{ secrets.MISE_UPLOAD_KEY_ALIAS }}
+          MISE_UPLOAD_KEY_PASSWORD: ${{ secrets.MISE_UPLOAD_KEY_PASSWORD }}
+        run: |
+          if [ -z "$MISE_UPLOAD_KEYSTORE_B64" ] || [ -z "$MISE_UPLOAD_STORE_PASSWORD" ] || [ -z "$MISE_UPLOAD_KEY_ALIAS" ] || [ -z "$MISE_UPLOAD_KEY_PASSWORD" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Clé Play MISES absente des secrets GitHub : APK test seulement."
+            exit 0
+          fi
+
+          STORE="$RUNNER_TEMP/mises-upload.jks"
+          CERT="$RUNNER_TEMP/mises-upload.der"
+          printf '%s' "$MISE_UPLOAD_KEYSTORE_B64" | base64 --decode > "$STORE"
+          keytool -exportcert -keystore "$STORE" -storepass "$MISE_UPLOAD_STORE_PASSWORD" -alias "$MISE_UPLOAD_KEY_ALIAS" -file "$CERT"
+          ACTUAL="$(openssl dgst -sha256 "$CERT" | awk '{print toupper($2)}')"
+          if [ "$ACTUAL" != "$MISES_UPLOAD_CERT_SHA256" ]; then
+            echo "::error::Mauvaise clé d'upload MISES. SHA-256 reçu: $ACTUAL"
+            exit 1
+          fi
+
+          echo "MISE_UPLOAD_STORE_FILE=$STORE" >> "$GITHUB_ENV"
+          echo "MISE_UPLOAD_STORE_PASSWORD=$MISE_UPLOAD_STORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "MISE_UPLOAD_KEY_ALIAS=$MISE_UPLOAD_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "MISE_UPLOAD_KEY_PASSWORD=$MISE_UPLOAD_KEY_PASSWORD" >> "$GITHUB_ENV"
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
+      - name: Build signed Play AAB
+        if: steps.play_signing.outputs.available == 'true'
+        run: gradle -p android :app:bundleRelease --stacktrace
+
+      - name: Verify signed Play AAB
+        if: steps.play_signing.outputs.available == 'true'
+        run: |
+          AAB="$(find android/app/build/outputs/bundle/release -name '*.aab' -type f | head -n 1)"
+          test -n "$AAB"
+          jarsigner -verify -verbose -certs "$AAB" >/dev/null
+
+      - uses: actions/upload-artifact@v4
+        if: steps.play_signing.outputs.available == 'true'
+        with:
+          name: MISES-Play-AAB
+          path: android/app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
 
       - name: Publish GitHub pre-release APK TEST
@@ -97,8 +145,18 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "/tmp/$ASSET" --clobber
           else
-            gh release create "$TAG" "/tmp/$ASSET" \
-              --prerelease \
-              --title "MISES! ${VERSION} — APK TEST" \
-              --notes "APK Android de test validé par la recette GitHub (unitaires, build PWA, Playwright, assembleDebug). Test uniquement — aucune promotion Google Play production."
+            gh release create "$TAG" "/tmp/$ASSET"               --prerelease               --title "MISES! ${VERSION} — APK TEST"               --notes "APK Android de test validé par la recette GitHub (unitaires, build PWA, Playwright, assembleDebug). Test uniquement."
           fi
+
+      - name: Attach signed Play AAB to the pre-release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.play_signing.outputs.available == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          VERSION_CODE="$(grep -E 'versionCode = ' android/app/build.gradle.kts | head -n1 | grep -oE '[0-9]+')"
+          TAG="v${VERSION}"
+          AAB="$(find android/app/build/outputs/bundle/release -name '*.aab' -type f | head -n 1)"
+          ASSET="MISES-${VERSION}-v${VERSION_CODE}-PLAY.aab"
+          cp "$AAB" "/tmp/$ASSET"
+          gh release upload "$TAG" "/tmp/$ASSET" --clobber
