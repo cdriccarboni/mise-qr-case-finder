@@ -217,3 +217,9 @@ html[data-theme=light] .labelTools fieldset{border-color:#d8d8de}
   .preferenceActionBlock>.row{display:grid;grid-template-columns:1fr}
   .preferenceActionBlock>.row button{min-width:0;width:100%}
 }
+
+
+.participantPlan{margin:.8rem 0;padding:.7rem .85rem;border:1px solid color-mix(in srgb,var(--ink,#D12A74) 42%,transparent);border-radius:14px;background:color-mix(in srgb,var(--ink,#D12A74) 7%,transparent)}
+.participantPlan summary{cursor:pointer;font-weight:700}
+.participantPlan ol{margin:.65rem 0 0;padding-left:1.4rem;display:grid;gap:.35rem}
+.participantPlan li{line-height:1.35}
