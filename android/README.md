@@ -5,10 +5,10 @@ Première enveloppe Android de MISES!, construite à partir de la page Web publi
 - Application ID : `fr.acousmatictheatre.mises` (constante `playApplicationId` dans `app/build.gradle.kts`)
 - minSdk : 26
 - targetSdk / compileSdk : 36
-- Version : `0.3.0-beta.7` (`versionCode` 12)
+- Version : `0.4.0-beta.3` (`versionCode` 15)
 - La PWA est embarquée dans l’APK (`src/main/assets/www`, copiée depuis `dist/` par le workflow). L’application ne charge pas la page ART.
 - Signature des artefacts CI : keystore debug, pour test. La clé d’upload Play n’est pas dans le dépôt.
-- Le workflow CI produit un APK debug de test. Release/AAB Play exigent la clé d’upload (`MISE_UPLOAD_*`) et échouent clairement sinon. L’impression passe par le service d’impression Android. L’essai WalkPrint/YHK par Bluetooth Classic/RFCOMM reste disponible à part.
+- Le workflow CI produit un APK debug de test après unitaires, build PWA et recette navigateur. Release/AAB Play exigent la clé d’upload (`MISE_UPLOAD_*`) et échouent clairement sinon. L’impression passe par le service d’impression Android. L’essai WalkPrint/YHK par Bluetooth Classic/RFCOMM reste disponible à part.
 
 ## Nouvelle appli, à côté de l’ancienne
 
