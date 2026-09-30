@@ -1,3 +1,12 @@
+## 0.4.0-beta.3 — 2026-09-30 (groupes, jeux et ambiances multi-participant·es)
+
+- Sélecteur **Participant·es** dans Jouer, ateliers, jeux publics, Vibe, exercices et création d’ambiance.
+- Le moteur garantit désormais une **répartition sonore pour chaque personne**, même lorsque le groupe est plus grand que le nombre d’objets : les objets peuvent être partagés avec gestes, entrées, intensités ou variantes distinctes.
+- Les défis A–J, scènes sonores, univers, ateliers, exercices et jeux publics exposent leur plan de répartition dans l’interface.
+- Les ateliers propagent le nombre de participant·es à chaque activité et au conducteur.
+- Tests ajoutés pour groupes de 8, 9, 10 et 12 participant·es, avec moins d’objets que de personnes.
+- Version `0.4.0-beta.3`, Android `versionCode 15`, cache PWA `mises-0.4.0-beta.3`.
+
 ## 0.4.0-beta.2 — 2026-09-29 (étiquettes libres + import universel + index + MISES Vision)
 
 - Nouveau raccourci terrain **Créer une étiquette** et éditeur libre tactile : plusieurs textes/images, déplacement, redimensionnement, rotation, ordre avant/arrière, styles texte, formats thermiques mm, orientation, recadrage, modèles locaux, annuler/rétablir et impression système.
