@@ -33,5 +33,7 @@ test('generated exercises keep owned objects distinct from invention', () => {
   assert.deepEqual(pack.seen, ['Grelot', 'Papier'])
   for (const exercise of pack.exercises) {
     for (const used of exercise.objectsUsed) assert.ok(['Grelot', 'Papier'].includes(used))
+    assert.equal(exercise.participantPlan.length, 2)
+    assert.ok(exercise.participantPlan.every(role => role.object && role.cue))
   }
 })
