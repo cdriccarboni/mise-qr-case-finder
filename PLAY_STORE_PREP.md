@@ -7,7 +7,7 @@
 - Package Android : `fr.acousmatictheatre.mises`
 - Catégorie envisagée : Outils
 - Version de test actuelle : `0.4.0-beta.3` (`versionCode` 15, package `fr.acousmatictheatre.mises`). La clé d’envoi Play n’est pas dans le dépôt : ne pas la recréer. Si elle est fournie, Gradle la prend via `MISE_UPLOAD_STORE_FILE`, `MISE_UPLOAD_STORE_PASSWORD`, `MISE_UPLOAD_KEY_ALIAS`, `MISE_UPLOAD_KEY_PASSWORD`.
-- Le workflow CI produit un APK **debug** de test installable après la recette web + Android. `assembleRelease` / `bundleRelease` échouent sans `MISE_UPLOAD_STORE_FILE` (+ mots de passe / alias). Aucun artefact n’est présenté comme PLAY s’il est signé debug.
+- Le workflow CI produit toujours un APK **debug** de test installable. Sur `main`, il peut aussi restaurer la vraie clé depuis les secrets GitHub, vérifier que son SHA-256 vaut `91:1F:5B:04:6A:51:1E:9A:F1:07:7C:E0:45:21:9D:54:FE:C1:AD:FF:A5:84:B1:5C:4C:FD:17:66:5A:E5:D6:CB`, puis produire un AAB Play signé. Sans ces secrets, l’étape Play est ignorée et aucun faux AAB n’est publié.
 - Cible Android : API 36
 
 ## Proposition de fiche Store
