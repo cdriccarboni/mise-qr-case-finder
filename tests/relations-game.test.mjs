@@ -131,3 +131,23 @@ test('historique local simple', () => {
   rememberGameEvent({ kind: 'challenge', fingerprint: 'A:x', gameType: 'A' }, storage)
   assert.equal(loadGameHistory(storage).items[0].fingerprint, 'A:x')
 })
+
+
+test('13 grand groupe : chaque participant a un rôle de bruitage', () => {
+  const out = generateChallenge({ containerId: 'case-1', gameType: 'C', participants: 12 }, base(), { rng: () => 0.2 })
+  assert.equal(out.ok, true)
+  assert.equal(out.challenge.participants, 12)
+  assert.equal(out.challenge.participantPlan.length, 12)
+  assert.ok(out.challenge.participantPlan.every(role => role.object && role.cue))
+})
+
+test('14 atelier grand groupe conserve la répartition à chaque activité', () => {
+  const out = generateWorkshop({ containerId: 'case-1', duration: 30, groupSize: 12 }, base(), { rng: () => 0.2 })
+  assert.equal(out.ok, true)
+  assert.equal(out.workshop.groupSize, 12)
+  assert.ok(out.workshop.activities.length >= 1)
+  for (const activity of out.workshop.activities) {
+    assert.equal(activity.participantPlan.length, 12)
+    assert.ok(activity.participantPlan.every(role => role.object && role.cue))
+  }
+})

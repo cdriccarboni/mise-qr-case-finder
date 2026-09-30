@@ -9,6 +9,7 @@ import {
   completeMethods, foleysPlayable, sharedSoundGroups, summarizeInventory, supportedGameTypes
 } from './relations.js'
 import { loadGameHistory, recentFingerprints } from './game-history.js'
+import { buildParticipantPlan, participantCount } from './participant-plan.js'
 
 export const GAME_TYPES = {
   A: { id: 'A', title: 'Fais ce son', needs: 'foley' },
@@ -96,6 +97,45 @@ function buildChallenge(type, payload) {
     ...payload,
     layer: DATA_LAYER.DERIVED,
     provenance: 'generated'
+  }
+}
+
+function challengeParticipantRoles(challenge, graph) {
+  const roles = []
+  const vibeLines = (challenge?.vibe?.proposals || []).flatMap(proposal => proposal.lines || []).filter(line => line.owned)
+  for (const line of vibeLines) {
+    roles.push({ object: line.objectName, cue: line.gesture, role: line.role || 'ambiance' })
+  }
+  for (const id of challenge?.objectIds || []) {
+    const object = graph.objectById.get(id)
+    if (!object) continue
+    const sounds = unique([soundFields(object).hear, ...(object.sounds || []), object.device].filter(Boolean))
+    if (sounds.length) {
+      for (const sound of sounds) roles.push({ object: object.name, cue: sound, role: 'bruitage' })
+    } else {
+      roles.push({ object: object.name, cue: challenge?.solution?.gesture || 'geste sonore libre', role: 'bruitage' })
+    }
+  }
+  if (!roles.length) {
+    for (const object of challenge?.solution?.objects || []) {
+      roles.push({ object: object.name, cue: challenge?.solution?.gesture || 'geste sonore libre', role: 'bruitage' })
+    }
+  }
+  return roles
+}
+
+function withParticipantPlan(challenge, graph, value) {
+  const participants = participantCount(value)
+  return {
+    ...challenge,
+    participants,
+    participantPlan: buildParticipantPlan({
+      participants,
+      roles: challengeParticipantRoles(challenge, graph),
+      objects: (challenge?.solution?.objects || []).map(object => object.name),
+      cues: [challenge?.solution?.gesture, ...(challenge?.solution?.tips || [])].filter(Boolean),
+      context: challenge?.gameType === 'E' || challenge?.gameType === 'J' ? 'ambiance' : 'bruitage'
+    })
   }
 }
 
@@ -296,7 +336,9 @@ export function generateChallenge(filters = {}, data = {}, options = {}) {
     const challenge = builders[type]?.()
     if (challenge) {
       return {
-        ok: true, challenge, summary: summarizeInventory(graph, filters),
+        ok: true,
+        challenge: withParticipantPlan(challenge, graph, filters.participants ?? filters.groupSize ?? 1),
+        summary: summarizeInventory(graph, filters),
         uncertain: [], graph
       }
     }
@@ -341,6 +383,7 @@ const WORKSHOP_TEMPLATES = {
 
 export function generateWorkshop(input = {}, data = {}, options = {}) {
   const duration = [15, 30, 45, 60].includes(Number(input.duration)) ? Number(input.duration) : 30
+  const groupSize = participantCount(input.groupSize ?? input.participants ?? 1)
   const filters = {
     containerId: input.containerId || undefined,
     objectIds: input.objectIds,
@@ -359,14 +402,14 @@ export function generateWorkshop(input = {}, data = {}, options = {}) {
   const usedFingerprints = recentFingerprints(history, 'workshop-step')
   const activities = []
   for (const step of template) {
-    const result = generateChallenge({ ...filters, gameType: step.gameType, universe: filters.universe || 'forêt' }, { ...data, graph }, {
+    const result = generateChallenge({ ...filters, gameType: step.gameType, universe: filters.universe || 'forêt', participants: groupSize }, { ...data, graph }, {
       history: { items: [...(history.items || []), ...[...usedFingerprints].map(fingerprint => ({ fingerprint, kind: 'challenge' }))] },
       rng: options.rng, storage: options.storage
     })
     if (!result.ok || !result.challenge) continue
     if (result.challenge.foleyId && usedFoleys.has(result.challenge.foleyId) && step.gameType !== 'J') {
       // try once more
-      const again = generateChallenge({ ...filters, gameType: step.gameType }, { ...data, graph }, { history, rng: options.rng })
+      const again = generateChallenge({ ...filters, gameType: step.gameType, participants: groupSize }, { ...data, graph }, { history, rng: options.rng })
       if (again.ok && again.challenge && again.challenge.foleyId !== result.challenge.foleyId) {
         result.challenge = again.challenge
       }
@@ -385,11 +428,14 @@ export function generateWorkshop(input = {}, data = {}, options = {}) {
       objectIds: result.challenge.objectIds || [],
       objectsUseful: (result.challenge.objectIds || []).map(id => graph.objectById.get(id)?.name).filter(Boolean),
       challenge: result.challenge,
+      participants: groupSize,
+      participantPlan: result.challenge.participantPlan || [],
       conductor: {
         activity: step.title,
         consigne: result.challenge.instruction || result.challenge.prompt,
         objects: (result.challenge.objectIds || []).map(id => graph.objectById.get(id)?.name).filter(Boolean),
-        durationMin: step.minutes
+        durationMin: step.minutes,
+        participantPlan: result.challenge.participantPlan || []
       }
     })
   }
@@ -405,7 +451,7 @@ export function generateWorkshop(input = {}, data = {}, options = {}) {
       totalMinutes,
       containerId: filters.containerId || null,
       universe: filters.universe || null,
-      groupSize: Math.max(1, Number(input.groupSize) || 1),
+      groupSize,
       difficulty: input.difficulty || null, // non attribuée arbitrairement
       activities,
       summary,

@@ -1,3 +1,5 @@
+import { buildParticipantPlan, participantCount } from './participant-plan.js'
+
 const normalize=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()
 const unique=list=>[...new Set((list||[]).filter(Boolean))]
 const pick=(list,rng=Math.random)=>list.length?list[Math.floor(rng()*list.length)]:null
@@ -71,6 +73,28 @@ function publicSolution(record){
     gesture:record.technique,
     tips:[record.sourceRef].filter(Boolean),
     source:record.sourceUrl||'Bibliothèque publique MISES!'
+  }
+}
+
+export function withPublicParticipants(game, value=1){
+  if(!game)return game
+  const participants=participantCount(value)
+  const roles=(game.publicRecords||[]).flatMap(record=>{
+    const names=record.ownedMatches?.length
+      ? record.ownedMatches.map(item=>item.name)
+      : (record.objects||[])
+    return names.map(name=>({object:name,cue:record.technique||record.sound||game.solution?.gesture,role:'bruitage'}))
+  })
+  return {
+    ...game,
+    participants,
+    participantPlan:buildParticipantPlan({
+      participants,
+      roles,
+      objects:(game.solution?.objects||[]).map(item=>item.name),
+      cues:[game.solution?.gesture,...(game.solution?.tips||[])].filter(Boolean),
+      context:game.gameType==='PUB-UNI'||game.gameType==='PUB-STORY'?'ambiance':'bruitage'
+    })
   }
 }
 
@@ -156,11 +180,11 @@ export function publicActivityProgram(library={},objects=[],duration=30,options=
   let total=0
   for(const activity of [...activities].sort(()=>rng()-.5)){
     if(total+activity.durationMin>duration&&selected.length)continue
-    const game=generatePublicGame(library,objects,{gameId:pick(activity.gameIds||[],rng),rng})
+    const game=withPublicParticipants(generatePublicGame(library,objects,{gameId:pick(activity.gameIds||[],rng),rng}),options.participants)
     if(!game)continue
     selected.push({...activity,game})
     total+=activity.durationMin
     if(total>=duration)break
   }
-  return {duration,totalMinutes:total,activities:selected,source:'PUBLIC_WEB'}
+  return {duration,totalMinutes:total,participants:participantCount(options.participants),activities:selected,source:'PUBLIC_WEB'}
 }

@@ -1,4 +1,5 @@
 import { normalize } from './data-bruitage.js'
+import { buildParticipantPlan, participantCount } from './participant-plan.js'
 import { learningBoost } from './learning.js'
 
 // Local, transparent lexicon. A line is owned only when it cites a real fiche.
@@ -158,7 +159,8 @@ function lineFrom(hit, component, gesture) {
     gestureLabel: 'Geste suggéré'
   }
 }
-export function proposeVibe(prompt, objects = [], cases = [], learnings = []) {
+export function proposeVibe(prompt, objects = [], cases = [], learnings = [], options = {}) {
+  const participants = participantCount(options.participants)
   const { universe, score } = matchUniverse(prompt)
   const uncertain = []
   if (!universe || !score) {
@@ -182,7 +184,7 @@ export function proposeVibe(prompt, objects = [], cases = [], learnings = []) {
   })
   const bestHit = pool.flatMap(item => item.hits.map(hit => ({ ...hit, component: item.component }))).sort((a, b) => b.score - a.score)[0]
   const minimal = {
-    id: 'C', title: 'Minimal, une personne', rhythm: 'Un seul objet, trois intensités.', provenance: 'generated',
+    id: 'C', title: participants > 1 ? 'Minimal, un objet partagé' : 'Minimal, une personne', rhythm: 'Un seul objet, trois intensités.', provenance: 'generated',
     lines: bestHit ? [{
       ...lineFrom(bestHit, bestHit.component, `Avec ${bestHit.object.name} seulement : doux, puis présent, puis loin. Une personne.`),
       gestureLabel: 'Geste suggéré'
@@ -206,8 +208,21 @@ export function proposeVibe(prompt, objects = [], cases = [], learnings = []) {
     }
   }
   if (!general.lines.length) uncertain.push('Aucun objet possédé ne correspond assez. Les pistes ci-dessous restent des suggestions.')
+  const proposals = [general, other, minimal].map(proposal => ({
+    ...proposal,
+    participants,
+    participantPlan: buildParticipantPlan({
+      participants,
+      roles: (proposal.lines || []).map(line => ({
+        object: line.objectName,
+        cue: line.gesture,
+        role: line.role || 'ambiance'
+      })),
+      context: 'ambiance'
+    })
+  }))
   return {
     engine: 'lexique-local', offline: true, universe: { id: universe.id, title: universe.title },
-    proposals: [general, other, minimal], ifYouHave, uncertain, provenance: 'generated'
+    participants, proposals, ifYouHave, uncertain, provenance: 'generated'
   }
 }
