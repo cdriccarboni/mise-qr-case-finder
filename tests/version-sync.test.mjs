@@ -7,7 +7,7 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8')
 
 test('0.4.0-beta.3 is the same version in the app, the package, Android and the service worker', () => {
   assert.equal(APP_VERSION, '0.4.0-beta.3')
-  assert.equal(APP_VERSION_CODE, 14)
+  assert.equal(APP_VERSION_CODE, 15)
   assert.equal(JSON.parse(read('../package.json')).version, APP_VERSION)
   assert.equal(JSON.parse(read('../public/version.json')).version, APP_VERSION)
   assert.match(read('../android/app/build.gradle.kts'), new RegExp(`versionCode = ${APP_VERSION_CODE}`))
