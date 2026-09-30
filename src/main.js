@@ -468,7 +468,7 @@ function renderPublicSections(){
   const fabs=$('#fabricationCards')
   if(fabs){
     fabs.innerHTML=fabricationsHtml(publicFoley,esc)
-    [...fabs.querySelectorAll('[data-public-fab]')].forEach(button=>button.onclick=()=>openPublicGame('public-fabrication',publicParticipants()))
+    Array.from(fabs.querySelectorAll('[data-public-fab]')).forEach(button=>button.onclick=()=>openPublicGame('public-fabrication',publicParticipants()))
   }
   const acts=$('#activityCards')
   if(acts){
