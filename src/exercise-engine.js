@@ -1,3 +1,5 @@
+import { buildParticipantPlan, participantCount } from './participant-plan.js'
+
 export const EXERCISE_MODES = [
   ['decouverte', 'Découverte'],
   ['echauffement', 'Échauffement'],
@@ -33,6 +35,12 @@ function exercise(mode, names, options, steps) {
     provenance: 'generated',
     disclaimer: 'Proposition générée. Ce n’est pas une fiche de ta base.',
     objectsUsed: names.filter(name => text.includes(name)),
+    participantPlan: buildParticipantPlan({
+      participants: options.participants,
+      objects: names,
+      cues: steps,
+      context: mode === 'ambiance' || mode === 'histoire' ? 'ambiance' : 'bruitage'
+    }),
     steps
   }
 }
@@ -101,7 +109,7 @@ export function generateExercises(input = {}) {
   const names = namesOf(input.objects)
   const options = {
     durationMin: input.durationMin ?? 1,
-    participants: Math.max(1, Number(input.participants) || 1),
+    participants: participantCount(input.participants),
     level: input.level || 'atelier',
     universe: input.universe || ''
   }
