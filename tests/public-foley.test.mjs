@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
   publicReferenceIdeas, publicRecordsForOwned, randomPublicUniverse,
-  generatePublicGame, publicActivityProgram
+  generatePublicGame, publicActivityProgram, withPublicParticipants
 } from '../src/public-foley.js'
 
 const library = JSON.parse(readFileSync(new URL('../public/public-foley.json', import.meta.url), 'utf8'))
@@ -71,4 +71,19 @@ test('main exposes the two interface modes and custom categories', () => {
   assert.match(main, /Bibliothèque publique/)
   assert.match(main, /Fabrications/)
   assert.match(main, /Activités pédagogiques/)
+})
+
+
+test('public games can assign a sound role to a large group', () => {
+  const game = withPublicParticipants(generatePublicGame(library, [], { gameId: 'public-sound-story', rng: () => 0 }), 10)
+  assert.ok(game)
+  assert.equal(game.participants, 10)
+  assert.equal(game.participantPlan.length, 10)
+  assert.ok(game.participantPlan.every(role => role.object && role.cue))
+})
+
+test('public workshop propagates participant count', () => {
+  const program = publicActivityProgram(library, [], 30, { rng: () => 0, participants: 9 })
+  assert.equal(program.participants, 9)
+  assert.ok(program.activities.every(activity => activity.game.participantPlan.length === 9))
 })
