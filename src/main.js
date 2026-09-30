@@ -23,7 +23,7 @@ import { buildRelationGraph, summarizeInventory, OBJECT_STATUSES } from './relat
 import { generateChallenge, generateWorkshop, surprisePick } from './game-engine.js'
 import { rememberGameEvent } from './game-history.js'
 import { playHubHtml, challengeHtml, workshopSetupHtml, workshopProgramHtml, workshopConductorHtml } from './game-ui.js'
-import { publicReferenceIdeas, generatePublicGame, randomPublicUniverse, publicActivityProgram } from './public-foley.js'
+import { publicReferenceIdeas, generatePublicGame, randomPublicUniverse, publicActivityProgram, withPublicParticipants } from './public-foley.js'
 import { publicHubHtml, fabricationsHtml, activitiesHtml, publicGameHtml, publicWorkshopHtml } from './public-ui.js'
 import { openLabelEditor } from './label-editor.js'
 import { buildGlobalIndex, indexStats, diagnosticHtml, searchGlobalIndex } from './index-engine.js'
@@ -31,6 +31,7 @@ import { visionStatus, VISION_BENCHMARK_PLAN, buildVisionVocabulary } from './vi
 import { parseIntent, answerIntent } from './conversation.js'
 import { newLearning } from './learning.js'
 import { answerBlock, vibeBlock, exerciseBlock } from './terrain-ui.js'
+import { participantCount } from './participant-plan.js'
 import './identity.css'
 import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSetting, parseInk } from './ink.js'
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
@@ -124,7 +125,7 @@ async function migrateDataBruitage(){
 }
 await migrateDataBruitage()
 
-let objects=[],cases=[],kits=[],mises=[],learnings=[],catalogueSounds=[],catalogueObjectSounds=[],activeMise=null, scanner=null, photoTargetMiseId=null, pendingExerciseMinutes=1
+let objects=[],cases=[],kits=[],mises=[],learnings=[],catalogueSounds=[],catalogueObjectSounds=[],activeMise=null, scanner=null, photoTargetMiseId=null, pendingExerciseMinutes=1, lastParticipantCount=1
 let scanPurpose='browse',moveScanState=null
 let projectSyncFailed=false
 async function refresh(){
@@ -451,35 +452,38 @@ function scopedCaseSearch(c,q){
 }
 function openCaseCreator(c){
   const d=$('#modal')
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Avec ce que j’ai ici</b><small>${esc(caseName(c))}</small></div><button id="closeCaseCreator" class="ghost">×</button></div><label>Ambiance / son<input id="caseCreatorQ" placeholder="mer, forêt, pluie, maison…"></label><div id="caseCreatorResults" class="cards"></div></div>`
-  d.showModal();$('#closeCaseCreator').onclick=()=>d.close();const renderScoped=()=>{const q=$('#caseCreatorQ').value,found=scopedCaseSearch(c,q);$('#caseCreatorResults').innerHTML=found.map(o=>`<article class="card"><b>${esc(o.name)}</b><span>${(o.sounds||[]).slice(0,5).join(' · ')||'Usage à préciser'}</span><button data-caseadd="${o.id}">Ajouter à la mise</button></article>`).join('')||'<div class="empty">Rien de convaincant dans cette valise pour cette recherche.</div>';$$('[data-caseadd]',d).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.caseadd))};$('#caseCreatorQ').oninput=renderScoped;renderScoped()
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Avec ce que j’ai ici</b><small>${esc(caseName(c))}</small></div><button id="closeCaseCreator" class="ghost">×</button></div><label>Ambiance / son<input id="caseCreatorQ" placeholder="mer, forêt, pluie, maison…"></label><label>Participant·es<input id="caseCreatorPeople" type="number" min="1" max="99" inputmode="numeric" value="${lastParticipantCount}"></label><button id="caseCreatorGroup" type="button">Créer l’ambiance pour le groupe</button><div id="caseCreatorResults" class="cards"></div></div>`
+  d.showModal();$('#closeCaseCreator').onclick=()=>d.close();$('#caseCreatorGroup').onclick=()=>{lastParticipantCount=participantCount($('#caseCreatorPeople')?.value||lastParticipantCount);const universe=$('#caseCreatorQ')?.value.trim()||'ambiance libre';d.close();openInventoryChallenge({containerId:c.id,gameType:'E',universe,participants:lastParticipantCount})};const renderScoped=()=>{const q=$('#caseCreatorQ').value,found=scopedCaseSearch(c,q);$('#caseCreatorResults').innerHTML=found.map(o=>`<article class="card"><b>${esc(o.name)}</b><span>${(o.sounds||[]).slice(0,5).join(' · ')||'Usage à préciser'}</span><button data-caseadd="${o.id}">Ajouter à la mise</button></article>`).join('')||'<div class="empty">Rien de convaincant dans cette valise pour cette recherche.</div>';$$('[data-caseadd]',d).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.caseadd))};$('#caseCreatorQ').oninput=renderScoped;renderScoped()
 }
 
 function renderPublicSections(){
+  const publicParticipants=()=>{lastParticipantCount=participantCount($('#publicPeople')?.value||lastParticipantCount);return lastParticipantCount}
   const hub=$('#publicLibraryBody')
   if(hub){
-    hub.innerHTML=publicHubHtml(publicFoley,esc)
-    $('#publicRandomGame')?.addEventListener('click',()=>openPublicGame())
-    $('#publicRandomUniverse')?.addEventListener('click',()=>openRandomPublicUniverse())
-    $('#publicBuildWorkshop')?.addEventListener('click',()=>openPublicWorkshop())
+    hub.innerHTML=publicHubHtml(publicFoley,esc,lastParticipantCount)
+    $('#publicRandomGame')?.addEventListener('click',()=>openPublicGame(null,publicParticipants()))
+    $('#publicRandomUniverse')?.addEventListener('click',()=>openRandomPublicUniverse(publicParticipants()))
+    $('#publicBuildWorkshop')?.addEventListener('click',()=>openPublicWorkshop(30,publicParticipants()))
   }
   const fabs=$('#fabricationCards')
   if(fabs){
     fabs.innerHTML=fabricationsHtml(publicFoley,esc)
-    $$('[data-public-fab]',fabs).forEach(button=>button.onclick=()=>openPublicGame('public-fabrication'))
+    $('[data-public-fab]',fabs).forEach(button=>button.onclick=()=>openPublicGame('public-fabrication',publicParticipants()))
   }
   const acts=$('#activityCards')
   if(acts){
     acts.innerHTML=activitiesHtml(publicFoley,esc)
     $$('[data-public-activity]',acts).forEach(button=>button.onclick=()=>{
       const activity=(publicFoley.pedagogyActivities||[]).find(x=>x.id===button.dataset.publicActivity)
-      openPublicGame(activity?.gameIds?.[0]||null)
+      openPublicGame(activity?.gameIds?.[0]||null,publicParticipants())
     })
   }
 }
-function openPublicGame(gameId=null){
+function openPublicGame(gameId=null, participants=lastParticipantCount){
+  participants=participantCount(participants)
+  lastParticipantCount=participants
   let reveal=false
-  let game=generatePublicGame(publicFoley,objects,{gameId})
+  let game=withPublicParticipants(generatePublicGame(publicFoley,objects,{gameId}),participants)
   if(!game){toast('Jeu public indisponible');return}
   const d=$('#modal')
   const draw=()=>{
@@ -487,18 +491,22 @@ function openPublicGame(gameId=null){
     if(!d.open)d.showModal()
     d.querySelector('[data-play-close]')?.addEventListener('click',()=>d.close())
     d.querySelector('[data-public-game="solution"]')?.addEventListener('click',()=>{reveal=true;draw()})
-    d.querySelector('[data-public-game="again"]')?.addEventListener('click',()=>{game=generatePublicGame(publicFoley,objects,{gameId});reveal=false;draw()})
+    d.querySelector('[data-public-game="again"]')?.addEventListener('click',()=>{game=withPublicParticipants(generatePublicGame(publicFoley,objects,{gameId}),participants);reveal=false;draw()})
   }
   draw()
 }
-function openRandomPublicUniverse(){
+function openRandomPublicUniverse(participants=lastParticipantCount){
+  participants=participantCount(participants)
+  lastParticipantCount=participants
   const universe=randomPublicUniverse(publicFoley,objects)
   if(!universe){toast('Univers public indisponible');return}
-  const game=generatePublicGame({...publicFoley,universeFrames:[universe.frame]},objects,{gameId:'public-random-universe'})
-  if(game)openInventoryChallenge({},game)
+  const game=withPublicParticipants(generatePublicGame({...publicFoley,universeFrames:[universe.frame]},objects,{gameId:'public-random-universe'}),participants)
+  if(game)openInventoryChallenge({participants},game)
 }
-function openPublicWorkshop(duration=30){
-  const program=publicActivityProgram(publicFoley,objects,duration)
+function openPublicWorkshop(duration=30,participants=lastParticipantCount){
+  participants=participantCount(participants)
+  lastParticipantCount=participants
+  const program=publicActivityProgram(publicFoley,objects,duration,{participants})
   const d=$('#modal');d.innerHTML=`<div class="form">${publicWorkshopHtml(program,esc)}</div>`;d.showModal()
   d.querySelector('[data-play-close]')?.addEventListener('click',()=>d.close())
 }
@@ -532,16 +540,17 @@ function openPlayHub(containerId=null){
   const summary=summarizeInventory(graph,filters)
   const label=containerId?caseName(caseBy(containerId)):'tout l’inventaire'
   const d=$('#modal')
-  d.innerHTML=`<div class="form">${playHubHtml(summary,label,esc)}</div>`
+  d.innerHTML=`<div class="form">${playHubHtml(summary,label,esc,lastParticipantCount)}</div>`
   d.showModal()
   const close=()=>d.close()
+  const selectedParticipants=()=>{lastParticipantCount=participantCount(d.querySelector('#playPeople')?.value||lastParticipantCount);return lastParticipantCount}
   d.querySelector('[data-play-close]')?.addEventListener('click',close)
-  d.querySelector('[data-play-action="challenge"]')?.addEventListener('click',()=>{d.close();openInventoryChallenge(filters)})
-  d.querySelector('[data-play-action="workshop"]')?.addEventListener('click',()=>{d.close();openWorkshopFlow(filters,label)})
-  d.querySelector('[data-play-action="universe"]')?.addEventListener('click',()=>{d.close();openInventoryChallenge({...filters,gameType:'E',universe:'forêt'})})
-  d.querySelector('[data-play-action="surprise"]')?.addEventListener('click',()=>{d.close();openSurprise(filters)})
-  d.querySelector('[data-play-action="public"]')?.addEventListener('click',()=>{d.close();openPublicGame()})
-  d.querySelector('[data-play-action="random-universe"]')?.addEventListener('click',()=>{d.close();openRandomPublicUniverse()})
+  d.querySelector('[data-play-action="challenge"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openInventoryChallenge({...filters,participants})})
+  d.querySelector('[data-play-action="workshop"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openWorkshopFlow(filters,label,participants)})
+  d.querySelector('[data-play-action="universe"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openInventoryChallenge({...filters,gameType:'E',universe:'forêt',participants})})
+  d.querySelector('[data-play-action="surprise"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openSurprise({...filters,participants})})
+  d.querySelector('[data-play-action="public"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openPublicGame(null,participants)})
+  d.querySelector('[data-play-action="random-universe"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openRandomPublicUniverse(participants)})
 }
 function openInventoryChallenge(filters={}, preset=null){
   const graph=currentGameGraph()
@@ -575,12 +584,14 @@ function openInventoryChallenge(filters={}, preset=null){
   }
   render()
 }
-function openWorkshopFlow(filters={}, label='Inventaire'){
+function openWorkshopFlow(filters={}, label='Inventaire', participants=lastParticipantCount){
   const d=$('#modal')
+  participants=participantCount(participants)
+  lastParticipantCount=participants
   let workshop=null, step=0, mode='setup'
   const draw=()=>{
     let html=''
-    if(mode==='setup') html=workshopSetupHtml(label,esc)
+    if(mode==='setup') html=workshopSetupHtml(label,esc,participants)
     else if(mode==='program') html=workshopProgramHtml(workshop,esc)
     else html=workshopConductorHtml(workshop,step,esc)
     d.innerHTML=`<div class="form">${html}</div>`
@@ -589,7 +600,8 @@ function openWorkshopFlow(filters={}, label='Inventaire'){
     d.querySelector('[data-ws="build"]')?.addEventListener('click',()=>{
       const duration=Number($('#wsDuration')?.value||30)
       const universe=$('#wsUniverse')?.value.trim()||undefined
-      const groupSize=Number($('#wsGroup')?.value||1)
+      const groupSize=participantCount($('#wsGroup')?.value||participants)
+      participants=groupSize;lastParticipantCount=groupSize
       const out=generateWorkshop({...filters,duration,universe,groupSize},{graph:currentGameGraph(),objects,cases,learnings})
       if(!out.ok){toast(out.uncertain?.[0]||'Atelier impossible');return}
       workshop=out.workshop;mode='program';draw()
@@ -617,7 +629,7 @@ function openSurprise(filters={}){
   toast('Surprise indisponible avec ce filtre')
 }
 function openChallenge(){
-  openInventoryChallenge({})
+  openInventoryChallenge({participants:lastParticipantCount})
 }
 
 function sharePayload({miseIds=[],kitIds=[],caseIds=[],objectIds=[],includeMedia=false}={}){
@@ -689,11 +701,12 @@ $('#app').innerHTML=`
 <section id="publicLibrary" class="tab foleyOnly"><div id="publicLibraryBody"></div></section>
 <section id="fabrications" class="tab foleyOnly"><div id="fabricationCards"></div></section>
 <section id="activities" class="tab foleyOnly"><div id="activityCards"></div></section>
-<section id="vibe" class="tab foleyOnly"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 360 52"><circle cx="28" cy="28" r="12"/><polygon points="108,10 132,22 124,46 93,46 84,22"/><polygon points="210,10 240,28 210,46 180,28"/><path d="M286 34c14-16 28-16 42 0s28 16 42 0"/></svg></div><h2>Vibe bruitage</h2><p>Décris un univers. MISES! reste hors ligne et sépare ce que tu possèdes de ce qui est seulement suggéré.</p><label>Univers<textarea id="vibePrompt" rows="3" placeholder="Une forêt inquiétante la nuit…"></textarea></label><div class="row"><button id="runVibe" type="button">Proposer</button><button type="button" class="ghost" data-vibe-preset="Une forêt inquiétante la nuit avec quelque chose qui rôde au loin">Forêt</button><button type="button" class="ghost" data-vibe-preset="Une vieille maison qui travaille pendant une tempête">Maison</button><button type="button" class="ghost" data-vibe-preset="un bateau en bois pris dans une mer violente">Bateau</button></div><div id="vibeOut"></div></div></section>
-<section id="exercises" class="tab foleyOnly"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 360 52"><circle cx="28" cy="28" r="12"/><polygon points="108,10 132,22 124,46 93,46 84,22"/><polygon points="210,10 240,28 210,46 180,28"/><path d="M286 34c14-16 28-16 42 0s28 16 42 0"/></svg></div><h2>Exercice</h2><p>Généré à partir de ta base. Ce n’est pas une liste figée, et ce n’est pas une fiche.</p><div class="grid2"><label>Durée<select id="exDuration"><option value="0.5">30 secondes</option><option value="1">1 min</option><option value="3">3 min</option><option value="5" selected>5 min</option></select></label><label>Personnes<input id="exPeople" type="number" min="1" value="1"></label><label>Niveau<select id="exLevel"><option value="découverte">Découverte</option><option value="atelier" selected>Atelier</option><option value="avancé">Avancé</option></select></label><label>Mode<select id="exMode"><option value="">Plusieurs modes</option><option value="decouverte">Découverte</option><option value="echauffement">Échauffement</option><option value="improvisation">Improvisation</option><option value="contrainte">Contrainte</option><option value="defi">Défi</option><option value="ambiance">Création d’ambiance</option><option value="histoire">Histoire sonore</option><option value="detournement">Détournement d’objet</option><option value="meme-objet">Même objet, plusieurs sons</option><option value="plusieurs-un-son">Plusieurs objets, un seul son</option></select></label></div><label>Univers (facultatif)<input id="exUniverse" placeholder="port, forêt, cuisine…"></label><button id="runExercise" type="button">Générer</button><div id="exerciseOut"></div></div></section>
+<section id="vibe" class="tab foleyOnly"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 360 52"><circle cx="28" cy="28" r="12"/><polygon points="108,10 132,22 124,46 93,46 84,22"/><polygon points="210,10 240,28 210,46 180,28"/><path d="M286 34c14-16 28-16 42 0s28 16 42 0"/></svg></div><h2>Vibe bruitage</h2><p>Décris un univers. MISES! reste hors ligne et sépare ce que tu possèdes de ce qui est seulement suggéré.</p><div class="grid2"><label>Univers<textarea id="vibePrompt" rows="3" placeholder="Une forêt inquiétante la nuit…"></textarea></label><label>Participant·es<input id="vibePeople" type="number" min="1" max="99" inputmode="numeric" value="${lastParticipantCount}"></label></div><div class="row"><button id="runVibe" type="button">Proposer</button><button type="button" class="ghost" data-vibe-preset="Une forêt inquiétante la nuit avec quelque chose qui rôde au loin">Forêt</button><button type="button" class="ghost" data-vibe-preset="Une vieille maison qui travaille pendant une tempête">Maison</button><button type="button" class="ghost" data-vibe-preset="un bateau en bois pris dans une mer violente">Bateau</button></div><div id="vibeOut"></div></div></section>
+<section id="exercises" class="tab foleyOnly"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 360 52"><circle cx="28" cy="28" r="12"/><polygon points="108,10 132,22 124,46 93,46 84,22"/><polygon points="210,10 240,28 210,46 180,28"/><path d="M286 34c14-16 28-16 42 0s28 16 42 0"/></svg></div><h2>Exercice</h2><p>Généré à partir de ta base. Ce n’est pas une liste figée, et ce n’est pas une fiche.</p><div class="grid2"><label>Durée<select id="exDuration"><option value="0.5">30 secondes</option><option value="1">1 min</option><option value="3">3 min</option><option value="5" selected>5 min</option></select></label><label>Participant·es<input id="exPeople" type="number" min="1" max="99" inputmode="numeric" value="${lastParticipantCount}"></label><label>Niveau<select id="exLevel"><option value="découverte">Découverte</option><option value="atelier" selected>Atelier</option><option value="avancé">Avancé</option></select></label><label>Mode<select id="exMode"><option value="">Plusieurs modes</option><option value="decouverte">Découverte</option><option value="echauffement">Échauffement</option><option value="improvisation">Improvisation</option><option value="contrainte">Contrainte</option><option value="defi">Défi</option><option value="ambiance">Création d’ambiance</option><option value="histoire">Histoire sonore</option><option value="detournement">Détournement d’objet</option><option value="meme-objet">Même objet, plusieurs sons</option><option value="plusieurs-un-son">Plusieurs objets, un seul son</option></select></label></div><label>Univers (facultatif)<input id="exUniverse" placeholder="port, forêt, cuisine…"></label><button id="runExercise" type="button">Générer</button><div id="exerciseOut"></div></div></section>
 <section id="creator" class="tab foleyOnly">
   <div class="panel"><h2>Créateur de bruitage</h2><p>Décrivez une ambiance ou un son pour explorer votre parc et les références.</p>
-  <div class="row"><button data-preset="mer" class="ghost">Mer</button><button data-preset="forêt" class="ghost">Forêt</button><button data-preset="feu" class="ghost">Feu</button><button data-preset="orage" class="ghost">Orage</button></div></div>
+  <label>Participant·es<input id="creatorPeople" type="number" min="1" max="99" inputmode="numeric" value="${lastParticipantCount}"></label>
+  <div class="row"><button data-preset="mer" class="ghost">Mer</button><button data-preset="forêt" class="ghost">Forêt</button><button data-preset="feu" class="ghost">Feu</button><button data-preset="orage" class="ghost">Orage</button><button id="creatorGroupAmbience" type="button">Créer l’ambiance pour le groupe</button></div></div>
   <div id="creatorResults"></div>
 </section>
 </main>
@@ -1381,7 +1394,7 @@ $('#goalGroupPhoto').onclick=()=>$('#groupPhotoInput').click()
 $('#goalHands').onclick=()=>{$('#handsPhotoInput').click()}
 $('#goalUniverse').onclick=()=>$('#universePhotoInput').click()
 $('#goalExercise').onclick=()=>setTab('exercises')
-$('#goalRandomUniverse').onclick=()=>openRandomPublicUniverse()
+$('#goalRandomUniverse').onclick=()=>openRandomPublicUniverse(lastParticipantCount)
 $('#goalAddObjectSimple').onclick=()=>openObject()
 $('#goalAddCaseSimple').onclick=()=>$('#addCase').click()
 $('#goalQrSimple').onclick=()=>{setTab('cases');toast('Ouvre un contenant pour créer / imprimer ses étiquettes QR')}
@@ -1393,7 +1406,8 @@ async function runVibe(prompt){
   const value=(prompt??$('#vibePrompt').value).trim()
   if(!value){toast('Décris un univers');return}
   $('#vibePrompt').value=value
-  const result=proposeVibe(value,objects,cases,learnings)
+  lastParticipantCount=participantCount($('#vibePeople')?.value||lastParticipantCount)
+  const result=proposeVibe(value,objects,cases,learnings,{participants:lastParticipantCount})
   $('#vibeOut').innerHTML=vibeBlock(result,esc)
   $$('[data-vibe-useful]',$('#vibeOut')).forEach(button=>button.onclick=async()=>{
     await db.put('learnings',newLearning({kind:'vibe-feedback',objectId:button.dataset.object,universeId:button.dataset.universe,useful:button.dataset.vibeUseful==='1'}))
@@ -1401,16 +1415,18 @@ async function runVibe(prompt){
   })
 }
 function runExercise(){
+  lastParticipantCount=participantCount($('#exPeople')?.value||lastParticipantCount)
   const chosen=[...objects].sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'fr')).slice(0,6)
-  const pack=generateExercises({objects:chosen.map(o=>({name:o.name})),durationMin:Number($('#exDuration').value),participants:Number($('#exPeople').value)||1,level:$('#exLevel').value,mode:$('#exMode').value||undefined,universe:$('#exUniverse').value.trim(),count:4})
+  const pack=generateExercises({objects:chosen.map(o=>({name:o.name})),durationMin:Number($('#exDuration').value),participants:lastParticipantCount,level:$('#exLevel').value,mode:$('#exMode').value||undefined,universe:$('#exUniverse').value.trim(),count:4})
   $('#exerciseOut').innerHTML=(chosen.length?`<p class="hint">À partir de tes fiches : ${esc(chosen.map(o=>o.name).join(', '))}.</p>`:'')+exerciseBlock(pack,esc)
 }
 $('#runVibe').onclick=()=>runVibe()
 $$('[data-vibe-preset]').forEach(button=>button.onclick=()=>{setTab('vibe');runVibe(button.dataset.vibePreset)})
 $('#runExercise').onclick=()=>{setTab('exercises');runExercise()}
+$('#creatorGroupAmbience').onclick=()=>{lastParticipantCount=participantCount($('#creatorPeople')?.value||lastParticipantCount);setTab('exercises');$('#exPeople').value=String(lastParticipantCount);$('#exMode').value='ambiance';$('#exUniverse').value=$('#q').value.trim();runExercise()}
 $('#goalChallenge').onclick=openChallenge
 $('#goalPlay').onclick=()=>openPlayHub()
-$('#goalWorkshop').onclick=()=>openWorkshopFlow({},'tout l’inventaire')
+$('#goalWorkshop').onclick=()=>openWorkshopFlow({},'tout l’inventaire',lastParticipantCount)
 $('#goalMove').onclick=startMoveScans
 $('#goalShare').onclick=openShareDialog
 $('#goalBatchPrint').onclick=openBatchPrint
