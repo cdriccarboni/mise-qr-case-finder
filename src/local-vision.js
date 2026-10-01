@@ -30,7 +30,7 @@ function renderPass(image, pass) {
   return canvas
 }
 
-export async function detectMultipass(detector, image) {
+export async function detectMultipass(detector, image, options = {}) {
   const width = image.naturalWidth || image.width
   const height = image.naturalHeight || image.height
   if (!width || !height || !detector) return []
@@ -39,6 +39,7 @@ export async function detectMultipass(detector, image) {
   const fast = passes.filter(pass => pass.tier !== 'dense')
   const dense = passes.filter(pass => pass.tier === 'dense')
   const run = async pass => {
+    await new Promise(resolve => setTimeout(resolve, 0))
     try {
       const source = pass.name === 'entier' ? image : renderPass(image, pass)
       const boxes = await detector.detect(source, pass.max, pass.minScore)
@@ -50,7 +51,7 @@ export async function detectMultipass(detector, image) {
   }
   for (const pass of fast) await run(pass)
   let fused = fuseDetections(found)
-  if (fused.length < 18) {
+  if (options.dense !== false && fused.length < 18) {
     const densePasses = fused.length <= 3
       ? dense.filter(pass => ['tuile-00', 'tuile-11', 'tuile-22', 'rotation'].includes(pass.name))
       : dense
@@ -60,8 +61,8 @@ export async function detectMultipass(detector, image) {
   return fused
 }
 
-export async function detectLocal(image) {
+export async function detectLocal(image, options = {}) {
   if (Array.isArray(globalThis.__MISES_DETECTIONS)) return globalThis.__MISES_DETECTIONS.map(item => ({ ...item }))
   const detector = await loadLocalDetector()
-  return detectMultipass(detector, image)
+  return detectMultipass(detector, image, options)
 }
