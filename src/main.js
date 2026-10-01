@@ -1292,7 +1292,7 @@ function applyUiPreferences(){
   if(themeSelect)themeSelect.value=theme
   if(interfaceSelect)interfaceSelect.value=interfaceMode
   const categoryBox=$('#customCategories');if(categoryBox){let custom=[];try{custom=JSON.parse(localStorage.getItem(CUSTOM_CATEGORIES_KEY)||'[]')}catch{};categoryBox.value=(Array.isArray(custom)?custom:[]).join(', ')}
-  const q=$('#q');if(q)q.placeholder=interfaceMode==='inventory'?'Objet, catégorie, contenant, mise, kit…':'Objet, son, ambiance, contenant, mise, kit…'
+  const q=$('#q');if(q)q.placeholder=interfaceMode==='inventory'?'Objet, catégorie, contenant, mise, kit…':'Objet, son, ambiance, contenant, mise, kit… ex. tonnerre'
   const googleState=$('#preferencesGoogleState')
   if(googleState){
     if(androidGoogleSignInBlocked()){
