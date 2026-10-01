@@ -249,3 +249,7 @@ html[data-theme=light] .labelTools fieldset{border-color:#d8d8de}
 html[data-theme=light] .visionDialog .dialoghead,html[data-theme=light] .visionActions{background:#fff}
 html[data-theme=light] .visionProposal{background:#fff;border-color:#d8d8de}
 html[data-theme=light] .visionProposalBody{border-color:#d8d8de}
+
+.misesFooter{max-width:980px;margin:0 auto;padding:.55rem 1rem calc(.8rem + var(--safe-bottom));display:flex;justify-content:space-between;gap:.8rem;flex-wrap:wrap;border-top:1px solid #232329;color:#777;font-size:.64rem;line-height:1.35}
+.misesFooter b{color:#b8b8bd;letter-spacing:.04em}.misesFooter a{color:#9898a0;text-decoration:none}.misesFooter a:hover,.misesFooter a:focus-visible{color:#eee;text-decoration:underline}
+@media(max-width:620px){.misesFooter{padding-left:.75rem;padding-right:.75rem;display:grid;gap:.18rem;font-size:.6rem}}
