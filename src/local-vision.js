@@ -51,7 +51,10 @@ export async function detectMultipass(detector, image) {
   for (const pass of fast) await run(pass)
   let fused = fuseDetections(found)
   if (fused.length < 18) {
-    for (const pass of dense) await run(pass)
+    const densePasses = fused.length <= 3
+      ? dense.filter(pass => ['tuile-00', 'tuile-11', 'tuile-22', 'rotation'].includes(pass.name))
+      : dense
+    for (const pass of densePasses) await run(pass)
     fused = fuseDetections(found)
   }
   return fused
