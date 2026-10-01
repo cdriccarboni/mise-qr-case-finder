@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { DATA_STORES } from '../src/data-bruitage.js'
+import { APP_VERSION } from '../src/version.js'
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8')
 
@@ -12,7 +13,7 @@ test('manifest scope resolves to the GitHub Pages path and the Android asset pat
   assert.match(vite, /sizes:'192x192'/)
   assert.match(vite, /sizes:'512x512'/)
   assert.match(vite, /purpose:'any maskable'/)
-  assert.match(vite, /cacheId:'mises-0\.4\.0-beta\.3'/)
+  assert.ok(vite.includes(`cacheId:'mises-${APP_VERSION}'`))
   assert.match(vite, /cleanupOutdatedCaches:true/)
   assert.match(vite, /clientsClaim:true/)
   const pages = new URL('./', 'https://cdriccarboni.github.io/mise-qr-case-finder/manifest.webmanifest')
