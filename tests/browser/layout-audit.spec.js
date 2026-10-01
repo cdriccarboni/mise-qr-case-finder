@@ -46,6 +46,7 @@ async function geometryIssues(page, scope = '.tab.active') {
 test('chaque sous-onglet reste dans les bords sur un viewport Pixel 9', async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 })
   await page.goto('/')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.7')
   for (const id of tabIds) {
     await activateTab(page, id)
     expect(await geometryIssues(page), id).toEqual([])
@@ -55,6 +56,7 @@ test('chaque sous-onglet reste dans les bords sur un viewport Pixel 9', async ({
 test('Vibe garde ses dessins centrés, ses boutons propres et sa couleur globale', async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 })
   await page.goto('/')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.7')
   await page.locator('[data-tab="vibe"]').click()
   await page.locator('#vibePrompt').fill('forêt nocturne')
   await page.locator('#runVibe').click()
@@ -85,6 +87,7 @@ test('Vibe garde ses dessins centrés, ses boutons propres et sa couleur globale
 test('les cartouches seuls sur leur ligne centrent leur mot', async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 })
   await page.goto('/')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.7')
   const last = page.locator('.fieldShortcuts > button').last()
   const parent = page.locator('.fieldShortcuts')
   const [box, pbox, textAlign] = await Promise.all([

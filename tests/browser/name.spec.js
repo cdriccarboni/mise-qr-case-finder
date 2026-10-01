@@ -9,6 +9,7 @@ test('the screen says MISES! and the wordmark is mises !', async ({ page }) => {
   expect(dots).toBe(2)
   await page.locator('#preferencesBtn').click()
   await page.locator('#preferencesAbout').click()
-  await expect(page.locator('#aboutDlg')).toContainText('MISES! — Une création de Cédric Carboni pour Acousmatic Theatre')
+  await expect(page.locator('#aboutDlg')).toContainText('© Cédric Carboni')
+  await expect(page.locator('#aboutDlg')).not.toContainText('Une création de')
   await expect(page.locator('#aboutDlg .miseWordmark')).toHaveAttribute('aria-label', 'mises !')
 })
