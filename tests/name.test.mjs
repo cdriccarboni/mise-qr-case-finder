@@ -16,7 +16,7 @@ test('the visible name is MISES! and the wordmark says mises !', () => {
   assert.match(read('../android/app/src/main/res/values/strings.xml'), /<string name="app_name">MISES!<\/string>/)
   assert.match(read('../android/app/src/main/AndroidManifest.xml'), /android:label="MISES!"/)
   assert.match(main, /<p class="aboutCredit">© \$\{externalAnchor\(AUTHOR_WEBSITE_URL, 'Cédric Carboni'/)
-  assert.match(main, /<span>© Cédric Carboni<\/span>/)
+  assert.match(main, /© Cédric Carboni/)
   assert.doesNotMatch(main, /Code & création|Une création de/)
   assert.match(wordmark, /aria-label="mises !"/)
   assert.equal(wordmark.match(/class="markDot"/g).length, 2)

@@ -184,13 +184,16 @@ dialog{max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - 24px);mar
 
 
 /* 0.4.0-beta.7 · mobile panels, safe close bars and living ink */
+.miseWordmark{shape-rendering:geometricPrecision}
+.miseWordmark path,.miseWordmark circle,.miseWordmark polygon{shape-rendering:geometricPrecision}
 .miseWordmark .letters,
 .miseWordmark .stampGhost path,
 .miseWordmark .stampGhost circle,
 .miseWordmark .stampGhost polygon,
 .miseWordmark .markDot{
   stroke:var(--brand-outline);
-  stroke-width:.7px;
+  stroke-width:.5px;
+  stroke-linecap:round;
   stroke-linejoin:round;
   paint-order:stroke fill;
   vector-effect:non-scaling-stroke;

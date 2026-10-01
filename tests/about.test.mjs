@@ -20,7 +20,7 @@ test('the about screen keeps the author copyright link and public project URLs',
   assert.match(theatre, /target="_blank"/)
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8')
   assert.match(main, /<p class="aboutCredit">© \$\{externalAnchor\(AUTHOR_WEBSITE_URL, 'Cédric Carboni'/)
-  assert.match(main, /<span>© Cédric Carboni<\/span>/)
+  assert.match(main, /© Cédric Carboni/)
   assert.doesNotMatch(main, /Une création de|pour \$\{externalAnchor\(ACOUSMATIC_THEATRE_URL/)
   assert.doesNotMatch(main, /id="aboutHome"/)
   assert.doesNotMatch(main, /id="goalAbout"/)

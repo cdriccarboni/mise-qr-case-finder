@@ -70,7 +70,10 @@ export function applyInk(hex) {
   if (!root) return { ink, onInk }
   root.style.setProperty('--ink', ink)
   root.style.setProperty('--on-ink', onInk)
+  root.style.setProperty('--ink-soft', `color-mix(in srgb, ${ink} 12%, transparent)`)
+  root.style.setProperty('--ink-border', `color-mix(in srgb, ${ink} 62%, white)`)
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', ink)
   paintAppIcon(ink, onInk)
+  try { globalThis.MisesAndroid?.setAppColor?.(ink) } catch {}
   return { ink, onInk }
 }

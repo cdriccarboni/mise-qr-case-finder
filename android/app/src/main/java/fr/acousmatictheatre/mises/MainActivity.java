@@ -15,6 +15,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -64,7 +65,7 @@ public final class MainActivity extends Activity {
         setContentView(webView);
         printerBridge = new NativePrinterBridge(this, webView);
         webView.addJavascriptInterface(printerBridge, "MisesAndroidPrinter");
-        webView.addJavascriptInterface(new AndroidShellBridge(), "MisesAndroid");
+        webView.addJavascriptInterface(new AndroidShellBridge(this), "MisesAndroid");
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -150,6 +151,29 @@ public final class MainActivity extends Activity {
             webView.restoreState(state);
         }
         ViewCompat.requestApplyInsets(webView);
+    }
+
+    void applyAppColor(String hex) {
+        runOnUiThread(() -> {
+            if (hex == null || !hex.matches("^#[0-9A-Fa-f]{6}$")) return;
+            try {
+                int color = Color.parseColor(hex);
+                getWindow().setStatusBarColor(color);
+                getWindow().setNavigationBarColor(color);
+                if (webView != null) webView.setBackgroundColor(color);
+                setTaskDescription(new android.app.ActivityManager.TaskDescription(
+                        getString(R.string.app_name), null, color
+                ));
+                boolean light = (
+                        Color.red(color) * 0.299
+                                + Color.green(color) * 0.587
+                                + Color.blue(color) * 0.114
+                ) > 170;
+                WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), webView);
+                controller.setAppearanceLightStatusBars(light);
+                controller.setAppearanceLightNavigationBars(light);
+            } catch (IllegalArgumentException ignored) {}
+        });
     }
 
     private void publishNativeSafe() {

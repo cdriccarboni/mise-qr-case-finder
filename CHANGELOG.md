@@ -5,6 +5,8 @@
 - En-tête : le libellé « En ligne » disparaît ; l’état « Hors ligne » reste affiché uniquement lorsqu’il est utile.
 - Footer : informations regroupées sur une seule ligne très compacte pour récupérer de la hauteur.
 - Raccourcis terrain : espacement vertical légèrement réduit sur mobile, sans changer les cartouches ni leur hiérarchie.
+- Couleur : la préférence d’encre pilote aussi le thème natif Android (barres système/coque) et le thème navigateur, en plus des accents et du logo.
+- Logo : rendu SVG adouci à petite taille (précision géométrique, contour noir plus fin et jointures arrondies), sans modifier sa géométrie.
 - Version `0.4.0-beta.8`, Android `versionCode 20`, cache PWA `mises-0.4.0-beta.8`.
 
 ## 0.4.0-beta.7 — 2026-10-01 (audit mobile, Vibe, safe areas et identité)
