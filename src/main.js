@@ -677,7 +677,7 @@ $('#app').innerHTML=`
 <section id="projectContext" class="projectContext" aria-label="Contexte du projet" hidden></section>
 <section class="hero">
   <label class="searchLabel" for="q">Recherche globale MISES!</label>
-  <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance, contenant, mise, kit…"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
+  <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
   <div class="quick fieldShortcuts" aria-label="Raccourcis terrain">
     <button type="button" data-action="scan">Scanner un QR</button>
     <button type="button" data-action="photo">Ajouter une photo</button>
@@ -710,6 +710,11 @@ $('#app').innerHTML=`
   <div id="creatorResults"></div>
 </section>
 </main>
+<footer class="appFooter" aria-label="Informations MISES">
+  <span>MISES! · QR Case Finder</span>
+  <span>Version <b id="footerVersion">${APP_VERSION}</b></span>
+  <span>Code & création © Cédric Carboni</span>
+</footer>
 
 <input id="photoInput" type="file" accept="image/*" capture="environment" hidden>
 <input id="galleryInput" type="file" accept="image/*" hidden>
@@ -771,7 +776,7 @@ function renderSearch(target='#searchResults'){
   const intent=parseIntent(q)
   const answer=intent?answerIntent(intent,{objects,cases,mises,activeMise,learnings}):null
   if(!q){
-    $(target).innerHTML=isInventoryMode()?`<div class="empty"><b>Écris ce que tu cherches.</b><span>Objet, catégorie, contenant, mise ou kit.</span><small>Ex. « Où est le câble HDMI ? »</small></div>`:`<div class="empty"><b>Écris ce que tu cherches.</b><span>Objet, son, ambiance, contenant, mise, kit, ou une question.</span><small>Ex. « Où est mon truc pour faire le tonnerre ? »</small></div>`
+    $(target).innerHTML=''
     return
   }
   let h=answer?answerBlock(answer,esc):''
