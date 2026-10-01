@@ -203,7 +203,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
       saving = false
     }
   }
-  $('[data-manual]').onclick = () => { appendProposal({ label: '', quantity: 1, validated: false }); const row = $('[data-row]').at(-1); if (row) row.open = true }
+  $('[data-manual]').onclick = () => { appendProposal({ label: '', quantity: 1, validated: false }); const rows = $('[data-row]'); const row = rows[rows.length - 1]; if (row) row.open = true }
   $('[data-batch-all]').onclick = () => {
     const caseId = $('[data-batch-case]').value
     if (!caseId) { $('[data-error]').textContent = 'Choisis d’abord le contenant. Exemple : Caisse grise n°23.'; return }
