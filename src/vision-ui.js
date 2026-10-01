@@ -90,6 +90,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
       <label class="check"><input data-confirm type="checkbox"><span>${mise ? 'Confirmer et ajouter à la checklist' : 'Confirmer cet objet'}</span></label>
       <label class="check"><input data-learn type="checkbox" ${p.rawLabel ? '' : 'disabled'} ${mode === 'inventory' && p.rawLabel ? 'checked' : ''}><span>Mémoriser cette correction pour la prochaine photo</span></label></div>`
     $('[data-proposals]').append(row)
+    if (proposals.length === 1) row.open = true
     const choose = async objectId => {
       const object = catalogue.find(item => item.id === objectId)
       if (!object) return
@@ -218,7 +219,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
   const image = $('[data-photo]'); image.src = photo
   try {
     await image.decode()
-    const detections = await detectLocal(image)
+    const detections = await detectLocal(image, { dense: mode === 'inventory' || mode === 'group' })
     if (closed || saving) return
     analysisState = 'available'
     const matches = matchDetections(detections, data, context, learnings)
