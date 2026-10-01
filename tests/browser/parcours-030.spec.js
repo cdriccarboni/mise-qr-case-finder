@@ -96,7 +96,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
     return canvas.toDataURL('image/png').split(',')[1]
   }), 'base64')
   await page.locator('#groupPhotoInput').setInputFiles({ name: 'groupe.png', mimeType: 'image/png', buffer: image })
-  const dialog = page.locator('.visionDialog')
+  const dialog = page.locator('.visionDialog[open]')
   await expect(dialog).toBeVisible()
   await expect(dialog.locator('[data-status]')).toContainText('3 zone(s) proposée(s)', { timeout: 20000 })
   await expect(dialog.locator('[data-row]')).toHaveCount(3)
