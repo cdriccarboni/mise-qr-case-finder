@@ -10,7 +10,7 @@
   --on-ink:#fff;
   --text:#f4f1ea;--muted:#d4cfc6;--accent:#f4f1ea;--dot:var(--ink);--button:var(--ink);--button-text:var(--on-ink);
   --active-bg:#f4f1ea;--active-text:#161513;
-  --chip:#2a2723;--shadow:#0008;--radius:18px;
+  --chip:#2a2723;--shadow:#0008;--radius:18px;--brand-outline:#080808;
   --font:ui-rounded,"Segoe UI",ui-sans-serif,system-ui,sans-serif;
   color-scheme:dark;
 }
@@ -88,7 +88,7 @@ dialog{background:var(--surface);color:var(--text);border-color:var(--line);bord
 @media(orientation:landscape){#scanVideo{max-height:70dvh;object-fit:contain}}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .link{color:var(--paper)}
-.check input{accent-color:var(--paper)}
+.check input{accent-color:var(--ink)}
 .searchbox button.listening{background:var(--ink)}
 .activeMise{border-color:var(--ink)}
 @keyframes pulse{50%{box-shadow:0 0 0 9px color-mix(in srgb, var(--ink) 28%, transparent)}}
@@ -181,3 +181,39 @@ dialog{max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - 24px);mar
 .aboutCredit .aboutLink:hover,.aboutCredit .aboutLink:focus-visible{opacity:1;color:var(--text);border-bottom-color:currentColor}
 .aboutVersion{font-size:.61rem;margin:.25rem 0 0;opacity:.55}
 @media(max-width:620px){.playful .grid2{grid-template-columns:1fr}.playful .row>button{flex:1 1 46%}}
+
+
+/* 0.4.0-beta.7 · mobile panels, safe close bars and living ink */
+.miseWordmark .letters,
+.miseWordmark .stampGhost path,
+.miseWordmark .stampGhost circle,
+.miseWordmark .stampGhost polygon,
+.miseWordmark .markDot{
+  stroke:var(--brand-outline);
+  stroke-width:.7px;
+  stroke-linejoin:round;
+  paint-order:stroke fill;
+  vector-effect:non-scaling-stroke;
+}
+.miseSectionHead small{color:var(--ink)}
+.miseSectionHead #addMise{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.labelBlock.selected{border-color:var(--ink);background:color-mix(in srgb,var(--ink) 10%,transparent)}
+.labelResizeHandle{background:var(--ink);color:var(--on-ink)}
+html[data-theme=regie] .check input{accent-color:#fff}
+dialog{max-width:calc(100vw - var(--safe-left) - var(--safe-right) - 24px);scroll-padding-top:76px}
+.dialoghead{position:sticky;top:0;z-index:6;min-height:64px;padding:.4rem .2rem .65rem;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.dialoghead>div,.dialoghead>strong{min-width:0;overflow-wrap:anywhere}
+.dialoghead>button{flex:0 0 auto;min-width:48px;min-height:48px;padding:.45rem .75rem;display:grid;place-items:center;touch-action:manipulation}
+.playful{display:grid;gap:.85rem;padding:1rem;isolation:isolate}
+.playful>h2,.playful>p{margin:0}
+.tokenStrip{width:100%;display:grid;place-items:center;margin:0 auto .15rem;opacity:.86}
+.tokenStrip svg{width:min(320px,100%);max-width:100%;height:auto;aspect-ratio:320/52;margin-inline:auto}
+.tokenStrip polygon:nth-of-type(2){transform:none}
+.playful .grid2{align-items:start}
+.playful label{min-width:0}
+.playful .row{width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.55rem}
+.playful .row>button{width:100%;min-width:0}
+.playful #vibeOut,.playful #exerciseOut{display:grid;gap:.7rem;min-width:0}
+.playful .challenge,.playful .ownedCard,.playful .suggestCard,.playful .uncertain,.playful .assistant{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.playful .challenge>button{margin:.2rem .35rem .2rem 0}
+@media(max-width:620px){dialog{padding:.8rem}.dialoghead{min-height:68px;gap:.75rem}.playful{padding:.9rem;gap:.75rem}.playful .row{grid-template-columns:repeat(2,minmax(0,1fr))}.playful .row>button:last-child:nth-child(odd){grid-column:1/-1;text-align:center}}

@@ -59,6 +59,8 @@ test('grille 2 colonnes : dernier cartouche impair en pleine largeur (360 et Pix
     if (size[0] <= 620) {
       // 5 buttons → last alone spans full width of parent
       expect(box.width).toBeGreaterThan(parent.width * 0.85)
+      const style = await last.evaluate(node => getComputedStyle(node).textAlign)
+      expect(style).toBe('center')
     }
   }
 })

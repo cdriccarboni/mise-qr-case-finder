@@ -1,3 +1,14 @@
+## 0.4.0-beta.7 — 2026-10-01 (audit mobile, Vibe, safe areas et identité)
+
+- Fermeture des Préférences et de tous les dialogues renforcée : bandeau supérieur sticky, cible tactile ≥ 48 px et respect des safe areas/encoches Pixel.
+- Audit géométrique mobile ajouté : débordements, collisions de cartouches, cibles tactiles et bords du viewport sont contrôlés automatiquement.
+- Vibe / Exercice : motifs décoratifs recentrés et équilibrés, grilles et boutons normalisés, textes longs protégés contre les chevauchements.
+- Les cartouches seules qui occupent toute une ligne centrent désormais leur libellé partout où la règle s’applique.
+- La couleur choisie dans Préférences reste l’encre globale de l’interface ; anciens accents fixes remplacés par la variable d’encre quand ils faisaient partie de l’identité.
+- Logo inchangé dans sa géométrie, avec un très léger liseré noir pour distinguer lettres, ombre et points.
+- Crédit simplifié en « © Cédric Carboni ».
+- Version `0.4.0-beta.7`, Android `versionCode 19`, cache PWA `mises-0.4.0-beta.7`.
+
 ## 0.4.0-beta.3 — 2026-09-30 (groupes, jeux et ambiances multi-participant·es)
 
 - Sélecteur **Participant·es** dans Jouer, ateliers, jeux publics, Vibe, exercices et création d’ambiance.

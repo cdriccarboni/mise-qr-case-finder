@@ -243,3 +243,21 @@ html[data-theme=light] .labelTools fieldset{border-color:#d8d8de}
 @media (max-width:640px){
   .appFooter{font-size:.7rem;margin-top:.8rem;padding:.55rem .75rem}
 }
+
+
+/* 0.4.0-beta.7 · global mobile geometry contract */
+button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+input,select,textarea{max-width:100%;min-width:0}
+.panel,.card,.result,.empty,.challenge,.participantPlan,.preferenceActionBlock{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.cards,.grid2,.row,.publicStats,.playCtas,.sectionhead{min-width:0}
+.row>*{min-width:0;max-width:100%}
+.sectionhead{gap:.75rem}.sectionhead>*{min-width:0}
+@media(max-width:620px){
+  .goalNav details>div>:last-child:nth-child(odd),
+  .quick>:last-child:nth-child(odd),
+  .playCtas>:last-child:nth-child(odd){justify-content:center;text-align:center}
+}
+html[data-display=mobile] .goalNav details>div>:last-child:nth-child(odd),
+html[data-display=mobile] .quick>:last-child:nth-child(odd){justify-content:center;text-align:center}
+html[data-interface="inventory"] #goalQrSimple,
+html:not([data-interface="inventory"]) .goalNav .createGoals>div>button:last-child{justify-content:center;text-align:center}
