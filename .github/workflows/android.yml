@@ -92,6 +92,31 @@ jobs:
         with:
           gradle-version: "8.13"
 
+      - name: Restore stable MISES ! test signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: mises-test-signing-v1
+
+      - name: Ensure stable MISES ! test signing key exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair \
+              -keystore "$HOME/.android/debug.keystore" \
+              -storepass android \
+              -keypass android \
+              -alias androiddebugkey \
+              -dname "CN=MISES Test,O=Acousmatic Theatre,C=FR" \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000
+          fi
+          keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey \
+            | grep -E 'Alias name:|SHA256:|Valid from:' || true
+
       - name: Build test APK (debug)
         run: gradle -p android :app:assembleDebug --stacktrace
 
@@ -237,7 +262,7 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "/tmp/$ASSET" --clobber
           else
-            gh release create "$TAG" "/tmp/$ASSET"               --prerelease               --title "MISES ! ${VERSION} — APK TEST"               --notes "APK Android de test validé par la recette GitHub (unitaires, build PWA, Playwright, assembleDebug). Test uniquement."
+            gh release create "$TAG" "/tmp/$ASSET"               --prerelease               --title "MISES ! ${VERSION} — APK TEST"               --notes "APK Android de test validé par la recette GitHub (unitaires, build PWA, Playwright, assembleDebug) avec signature de test persistante. Test uniquement."
           fi
 
       - name: Attach signed Play AAB to the pre-release
