@@ -35,7 +35,10 @@ export async function detectMultipass(detector, image) {
   const height = image.naturalHeight || image.height
   if (!width || !height || !detector) return []
   const found = []
-  for (const pass of planPasses(width, height)) {
+  const passes = planPasses(width, height)
+  const fast = passes.filter(pass => pass.tier !== 'dense')
+  const dense = passes.filter(pass => pass.tier === 'dense')
+  const run = async pass => {
     try {
       const source = pass.name === 'entier' ? image : renderPass(image, pass)
       const boxes = await detector.detect(source, pass.max, pass.minScore)
@@ -45,7 +48,13 @@ export async function detectMultipass(detector, image) {
       }
     } catch { /* une passe ratée ne bloque pas les autres */ }
   }
-  return fuseDetections(found)
+  for (const pass of fast) await run(pass)
+  let fused = fuseDetections(found)
+  if (fused.length < 18) {
+    for (const pass of dense) await run(pass)
+    fused = fuseDetections(found)
+  }
+  return fused
 }
 
 export async function detectLocal(image) {
