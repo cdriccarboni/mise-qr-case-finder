@@ -8,8 +8,9 @@ test('passes cover the whole frame, a closer crop and a quarter turn', () => {
   const passes = planPasses(400, 300)
   assert.equal(passes[0].name, 'entier')
   assert.ok(passes.some(item => item.name === 'zoom' && item.scale > 1))
-  assert.equal(passes.filter(item => item.name.startsWith('tuile-')).length, 4)
+  assert.equal(passes.filter(item => item.name.startsWith('tuile-')).length, 9)
   assert.equal(passes.at(-1).rotation, 90)
+  assert.ok(passes.some(item => item.tier === 'dense'))
   const tiles = passes.filter(item => item.name.startsWith('tuile-'))
   for (const tile of tiles) {
     assert.ok(tile.x >= -0.01 && tile.y >= -0.01)
