@@ -1,3 +1,10 @@
+## 0.4.0-beta.7 — Mobile : recherche évidente et menus refermables
+- Ajoute une flèche → explicite au champ de recherche global.
+- Entrée ou → affiche la recherche et ramène automatiquement les résultats à l’écran sur mobile.
+- Referme les menus de navigation ouverts sur mobile avant d’afficher les résultats.
+- Un seul menu objectif reste ouvert à la fois sur petit écran ; toucher hors navigation les referme.
+- Version Android 19.
+
 ## 0.4.0-beta.3 — 2026-09-30 (groupes, jeux et ambiances multi-participant·es)
 
 - Sélecteur **Participant·es** dans Jouer, ateliers, jeux publics, Vibe, exercices et création d’ambiance.
