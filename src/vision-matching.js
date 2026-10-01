@@ -2,7 +2,7 @@ import { enrichObjects, normalize } from './data-bruitage.js'
 import { labelPreference } from './learning.js'
 
 // COCO labels are generic visual clues, never proof of a specific prop or sound.
-const FRENCH = { bottle: 'bouteille', cup: 'tasse', 'wine glass': 'verre', bowl: 'bol', spoon: 'cuillère', fork: 'fourchette', knife: 'couteau', chair: 'chaise', 'dining table': 'table', book: 'livre', suitcase: 'valise', backpack: 'sac à dos', handbag: 'sac à main', umbrella: 'parapluie', scissors: 'ciseaux', clock: 'horloge', vase: 'vase', bench: 'banc', keyboard: 'clavier', laptop: 'ordinateur portable', 'cell phone': 'téléphone', remote: 'télécommande', tv: 'téléviseur', 'teddy bear': 'peluche', 'sports ball': 'ballon', bicycle: 'vélo', car: 'voiture', boat: 'bateau', bird: 'oiseau', cat: 'chat', dog: 'chien', 'potted plant': 'plante', couch: 'canapé', bed: 'lit', toothbrush: 'brosse à dents' }
+const FRENCH = { bottle: 'bouteille', cup: 'tasse', 'wine glass': 'verre', bowl: 'bol', spoon: 'cuillère', fork: 'fourchette', knife: 'couteau', chair: 'chaise', 'dining table': 'table', book: 'livre', suitcase: 'contenant', backpack: 'sac à dos', handbag: 'sac à main', umbrella: 'parapluie', scissors: 'ciseaux', clock: 'horloge', vase: 'vase', bench: 'banc', keyboard: 'clavier', laptop: 'ordinateur portable', 'cell phone': 'téléphone', remote: 'télécommande', tv: 'téléviseur', 'teddy bear': 'peluche', 'sports ball': 'ballon', bicycle: 'vélo', car: 'voiture', boat: 'bateau', bird: 'oiseau', cat: 'chat', dog: 'chien', 'potted plant': 'plante', couch: 'canapé', bed: 'lit', toothbrush: 'brosse à dents' }
 // French and English words a fiche may use for the same visual class, plus nearby props.
 export const VISUAL_TERMS = {
   bottle: ['bouteille', 'gourde', 'flacon', 'bidon', 'thermos', 'canette'],
@@ -15,7 +15,7 @@ export const VISUAL_TERMS = {
   chair: ['chaise', 'siege', 'fauteuil', 'tabouret'],
   'dining table': ['table'],
   book: ['livre', 'carnet', 'bouquin'],
-  suitcase: ['valise', 'malle'],
+  suitcase: ['contenant', 'caisse', 'boite', 'boîte', 'bac', 'valise', 'malle'],
   backpack: ['sac a dos'],
   handbag: ['sac a main'],
   umbrella: ['parapluie'],
