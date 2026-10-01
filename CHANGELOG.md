@@ -1,3 +1,12 @@
+## 0.4.0-beta.8 — 2026-10-01 (premier écran compact et réponse immédiate)
+
+- Recherche : les réponses apparaissent désormais immédiatement sous le champ, avant les raccourcis, sans changer la logique de recherche.
+- Mobile Android : le logo est légèrement redescendu dans la coque native pour mieux dégager l’heure et le poinçon caméra.
+- En-tête : le libellé « En ligne » disparaît ; l’état « Hors ligne » reste affiché uniquement lorsqu’il est utile.
+- Footer : informations regroupées sur une seule ligne très compacte pour récupérer de la hauteur.
+- Raccourcis terrain : espacement vertical légèrement réduit sur mobile, sans changer les cartouches ni leur hiérarchie.
+- Version `0.4.0-beta.8`, Android `versionCode 20`, cache PWA `mises-0.4.0-beta.8`.
+
 ## 0.4.0-beta.7 — 2026-10-01 (audit mobile, Vibe, safe areas et identité)
 
 - Fermeture des Préférences et de tous les dialogues renforcée : bandeau supérieur sticky, cible tactile ≥ 48 px et respect des safe areas/encoches Pixel.

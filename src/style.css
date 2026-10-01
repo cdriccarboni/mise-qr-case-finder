@@ -245,7 +245,7 @@ html[data-theme=light] .labelTools fieldset{border-color:#d8d8de}
 }
 
 
-/* 0.4.0-beta.7 · global mobile geometry contract */
+/* 0.4.0-beta.8 · global mobile geometry contract */
 button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 input,select,textarea{max-width:100%;min-width:0}
 .panel,.card,.result,.empty,.challenge,.participantPlan,.preferenceActionBlock{min-width:0;max-width:100%;overflow-wrap:anywhere}
@@ -261,3 +261,30 @@ html[data-display=mobile] .goalNav details>div>:last-child:nth-child(odd),
 html[data-display=mobile] .quick>:last-child:nth-child(odd){justify-content:center;text-align:center}
 html[data-interface="inventory"] #goalQrSimple,
 html:not([data-interface="inventory"]) .goalNav .createGoals>div>button:last-child{justify-content:center;text-align:center}
+
+
+/* 0.4.0-beta.8 · first-screen polish */
+#networkStatus:empty{display:none}
+.searchImmediate{margin:.35rem 0 0}
+.searchImmediate #searchResults:empty{display:none}
+.hero .fieldShortcuts{margin-top:.55rem}
+.appFooter{
+  display:block;
+  max-width:100%;
+  margin:.35rem auto calc(.25rem + env(safe-area-inset-bottom));
+  padding:.28rem .45rem;
+  font-size:.64rem;
+  line-height:1.1;
+  white-space:nowrap;
+  text-align:center;
+  opacity:.76;
+}
+@media(max-width:620px){
+  html[data-native-safe] .miseBrand{margin-top:.5rem}
+  .fieldShortcuts{gap:.45rem}
+  .fieldShortcuts button{min-height:62px;padding:.62rem .35rem}
+  main{padding-bottom:.35rem}
+  .appFooter{font-size:.58rem;margin-top:.25rem;padding:.22rem .25rem}
+}
+html[data-display=mobile][data-native-safe] .miseBrand{margin-top:.5rem}
+html[data-display=mobile] main{padding-bottom:.35rem}

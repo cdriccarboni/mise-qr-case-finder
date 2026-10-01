@@ -5,7 +5,7 @@ const backup = JSON.parse(readFileSync(new URL('../fixtures/beta2-backup.json', 
 
 test('the new app reimports a complete beta.2 backup file', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.7')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.8')
   page.once('dialog', dialog => dialog.accept())
   await page.locator('#restoreInput').setInputFiles({
     name: 'MISE-backup.json',

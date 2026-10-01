@@ -1,15 +1,35 @@
 import { test, expect } from '@playwright/test'
 
-test('search home stays compact and footer identifies the build', async ({ page }) => {
+test('search answers are immediate and the first screen stays compact', async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 915 })
   await page.goto('/')
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.7')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.8')
   await expect(page.locator('#q')).toHaveAttribute('placeholder', /tonnerre/i)
   await expect(page.locator('#searchResults')).toBeEmpty()
   await expect(page.locator('#searchResults .empty')).toHaveCount(0)
+  await expect(page.locator('#networkStatus')).toBeHidden()
+
+  const order = await page.evaluate(() => {
+    const search = document.querySelector('#search')
+    const shortcuts = document.querySelector('.fieldShortcuts')
+    return Boolean(search && shortcuts && (search.compareDocumentPosition(shortcuts) & Node.DOCUMENT_POSITION_FOLLOWING))
+  })
+  expect(order).toBe(true)
+
+  await page.locator('#q').fill('pluie')
+  await expect(page.locator('#searchResults')).not.toBeEmpty()
+  const resultBox = await page.locator('#searchResults').boundingBox()
+  const shortcutBox = await page.locator('.fieldShortcuts').boundingBox()
+  expect(resultBox).toBeTruthy()
+  expect(shortcutBox).toBeTruthy()
+  expect(resultBox.y).toBeLessThan(shortcutBox.y)
+
   const footer = page.locator('.appFooter')
   await expect(footer).toBeVisible()
   await expect(footer).toContainText('MISES! · QR Case Finder')
-  await expect(footer.locator('#footerVersion')).toHaveText('0.4.0-beta.7')
+  await expect(footer.locator('#footerVersion')).toHaveText('0.4.0-beta.8')
   await expect(footer).toContainText('© Cédric Carboni')
   await expect(footer).not.toContainText('Code & création')
+  const footerBox = await footer.boundingBox()
+  expect(footerBox.height).toBeLessThanOrEqual(28)
 })

@@ -678,6 +678,7 @@ $('#app').innerHTML=`
 <section class="hero">
   <label class="searchLabel" for="q">Recherche globale MISES!</label>
   <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
+  <section id="search" class="tab active searchImmediate" aria-label="Réponse à la recherche"><div id="searchResults"></div></section>
   <div class="quick fieldShortcuts" aria-label="Raccourcis terrain">
     <button type="button" data-action="scan">Scanner un QR</button>
     <button type="button" data-action="photo">Ajouter une photo</button>
@@ -693,7 +694,6 @@ $('#app').innerHTML=`
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
  <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
-<section id="search" class="tab active"><div id="searchResults"></div></section>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
 <section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Crée une valise ou une caisse, puis ouvre-la pour créer / imprimer son QR code. Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
 <section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation : spectacle, atelier, tournée ou besoin ponctuel.</p><div id="kitCards" class="cards"></div></section>
@@ -710,11 +710,7 @@ $('#app').innerHTML=`
   <div id="creatorResults"></div>
 </section>
 </main>
-<footer class="appFooter" aria-label="Informations MISES">
-  <span>MISES! · QR Case Finder</span>
-  <span>Version <b id="footerVersion">${APP_VERSION}</b></span>
-  <span>© Cédric Carboni</span>
-</footer>
+<footer class="appFooter" aria-label="Informations MISES"><span>MISES! · QR Case Finder · <b id="footerVersion">${APP_VERSION}</b> · © Cédric Carboni</span></footer>
 
 <input id="photoInput" type="file" accept="image/*" capture="environment" hidden>
 <input id="galleryInput" type="file" accept="image/*" hidden>
@@ -757,7 +753,7 @@ $('#app').innerHTML=`
 <div id="toast" role="status"></div>`
 
 function renderNetworkStatus(){
-  $('#networkStatus').textContent=navigator.onLine?'En ligne':'Hors ligne · données locales'
+  $('#networkStatus').textContent=navigator.onLine?'':'Hors ligne · données locales'
 }
 renderNetworkStatus()
 window.addEventListener('online',renderNetworkStatus)
