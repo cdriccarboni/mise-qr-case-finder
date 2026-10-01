@@ -677,7 +677,7 @@ $('#app').innerHTML=`
 <section id="projectContext" class="projectContext" aria-label="Contexte du projet" hidden></section>
 <section class="hero">
   <label class="searchLabel" for="q">Recherche globale MISES!</label>
-  <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
+  <div class="searchbox"><input id="q" autocomplete="off" enterkeyhint="search" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="searchGo" class="searchGo" type="button" title="Lancer la recherche" aria-label="Lancer la recherche">→</button><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div><p class="searchHint">Écris un mot puis appuie sur → pour afficher les résultats.</p>
   <div class="quick fieldShortcuts" aria-label="Raccourcis terrain">
     <button type="button" data-action="scan">Scanner un QR</button>
     <button type="button" data-action="photo">Ajouter une photo</button>
@@ -809,8 +809,26 @@ function renderSearch(target='#searchResults'){
   const scanExercise=$('#doScanExercise',$(target))
   if(scanExercise) scanExercise.onclick=()=>{pendingExerciseMinutes=answer?.minutes||5;$('#handsPhotoInput').click()}
 }
+function revealSearchResults(){
+  setTab('search')
+  renderSearch()
+  if(matchMedia('(max-width: 620px)').matches){
+    $('.goalNav details[open]').forEach(details=>{details.open=false})
+    requestAnimationFrame(()=>$('#search')?.scrollIntoView({behavior:'smooth',block:'start'}))
+  }
+}
 $('#q').addEventListener('input',()=>{setTab('search');renderSearch()})
-$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){setTab('search');renderSearch()}})
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();revealSearchResults()}})
+$('#searchGo').addEventListener('click',revealSearchResults)
+document.addEventListener('click',e=>{
+  if(!matchMedia('(max-width: 620px)').matches)return
+  const nav=e.target.closest('.goalNav')
+  if(!nav) $('.goalNav details[open]').forEach(details=>{details.open=false})
+})
+$('.goalNav details').forEach(details=>details.addEventListener('toggle',()=>{
+  if(!details.open||!matchMedia('(max-width: 620px)').matches)return
+  $('.goalNav details[open]').forEach(other=>{if(other!==details)other.open=false})
+}))
 
 async function resizePhoto(file){
   return new Promise((resolve,reject)=>{
