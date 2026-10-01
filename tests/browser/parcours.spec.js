@@ -139,5 +139,5 @@ test('bad audio, refused microphone, container QR and unconfirmed photo stay exp
   await dialog.locator('[data-manual]').click()
   await dialog.locator('[data-save]').click()
   await expect(dialog.locator('[data-error]')).toContainText('Confirmez')
-  await dialog.locator('[data-close]').click()
+  await dialog.locator('.visionCloseTop').click()
 })

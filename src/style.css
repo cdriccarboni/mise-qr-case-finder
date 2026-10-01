@@ -223,3 +223,33 @@ html[data-theme=light] .labelTools fieldset{border-color:#d8d8de}
 .participantPlan summary{cursor:pointer;font-weight:700}
 .participantPlan ol{margin:.65rem 0 0;padding-left:1.4rem;display:grid;gap:.35rem}
 .participantPlan li{line-height:1.35}
+
+
+/* 0.4.0-beta.5 · crowded photo inventory review */
+.visionDialog .dialoghead{position:sticky;top:-1rem;z-index:4;background:#101014;padding:.7rem 0;border-bottom:1px solid #2b2b31}
+.visionCloseTop{width:44px;height:44px;padding:0;font-size:1.4rem;display:grid;place-items:center;flex:none}
+.visionProposalList{max-height:min(52dvh,620px);overflow:auto;padding-right:.25rem;scrollbar-gutter:stable}
+.visionProposal{display:block;min-width:0;border:1px solid #7776;border-radius:10px;margin:.45rem 0;padding:0;background:#141418;overflow:hidden}
+.visionProposal>summary{cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.7rem;align-items:center;padding:.8rem .9rem;list-style:none}
+.visionProposal>summary::-webkit-details-marker{display:none}
+.visionProposal>summary::before{content:'▸';color:#999;margin-right:.15rem}
+.visionProposal[open]>summary::before{content:'▾'}
+.visionProposal>summary span{grid-column:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800}
+.visionProposal>summary small{grid-column:2;grid-row:1;color:#999;text-align:right}
+.visionProposalBody{padding:.25rem .9rem .9rem;border-top:1px solid #2b2b31}
+.visionActions{position:sticky;bottom:-1rem;z-index:5;display:grid;grid-template-columns:1fr 1fr;gap:.55rem;padding:.75rem 0 calc(.75rem + var(--safe-bottom));background:linear-gradient(180deg,transparent,#101014 22%)}
+.visionActions button{min-height:48px}
+@media(max-width:620px){
+  .visionDialog{width:calc(100vw - var(--safe-left) - var(--safe-right) - 10px);max-width:none;max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - 10px);padding:.65rem}
+  .visionDialog .form{width:100%}
+  .visionProposalList{max-height:48dvh}
+  .visionProposal>summary{grid-template-columns:minmax(0,1fr)}
+  .visionProposal>summary small{grid-column:1;grid-row:2;text-align:left;padding-left:1.15rem}
+}
+html[data-theme=light] .visionDialog .dialoghead,html[data-theme=light] .visionActions{background:#fff}
+html[data-theme=light] .visionProposal{background:#fff;border-color:#d8d8de}
+html[data-theme=light] .visionProposalBody{border-color:#d8d8de}
+
+.misesFooter{max-width:980px;margin:0 auto;padding:.55rem 1rem calc(.8rem + var(--safe-bottom));display:flex;justify-content:space-between;gap:.8rem;flex-wrap:wrap;border-top:1px solid #232329;color:#777;font-size:.64rem;line-height:1.35}
+.misesFooter b{color:#b8b8bd;letter-spacing:.04em}.misesFooter a{color:#9898a0;text-decoration:none}.misesFooter a:hover,.misesFooter a:focus-visible{color:#eee;text-decoration:underline}
+@media(max-width:620px){.misesFooter{padding-left:.75rem;padding-right:.75rem;display:grid;gap:.18rem;font-size:.6rem}}

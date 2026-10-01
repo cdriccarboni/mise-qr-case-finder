@@ -27,7 +27,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
   const context = mise?.name || (mode === 'inventory' ? 'inventaire' : '')
   const heading = TITLES[mode] || TITLES.control
   const creative = mode === 'hands' || mode === 'universe' || mode === 'group'
-  dialog.innerHTML = `<div class="form ${creative ? 'playful' : ''}"><div class="dialoghead"><div><b>${mise && mode === 'control' ? 'Contrôle photo de mise' : esc(heading[0])}</b><small>${esc(mise?.name || heading[1])}</small></div><button data-close class="ghost">Fermer</button></div>
+  dialog.innerHTML = `<div class="form ${creative ? 'playful' : ''}"><div class="dialoghead"><div><b>${mise && mode === 'control' ? 'Contrôle photo de mise' : esc(heading[0])}</b><small>${esc(mise?.name || heading[1])}</small></div><button type="button" data-close class="ghost visionCloseTop" aria-label="Fermer">×</button></div>
     <div class="visionFrame"><img data-photo class="photoPreview" alt="Photo à analyser"><div data-boxes></div></div>
     <p class="hint">Analyse sur cet appareil, hors ligne. La catégorie est un nom générique (une bouteille d’eau, une tasse…). Les boutons proposent les fiches les plus proches de ta base, et la recherche trouve le nom exact. Un geste remplace la catégorie par ta fiche et mémorise la correction : la prochaine photo de la même catégorie propose d’abord ton objet. Le modèle n’est pas réentraîné. Les personnes sont ignorées.</p>
     <p data-status role="status">Chargement du modèle local… Vous pouvez déjà saisir un objet.</p>
@@ -35,13 +35,13 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
     <div class="batchBar"><label>Tout est dans<select data-batch-case><option value="">Choisir un contenant</option>${(data.cases || []).map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></label>
     <label>Ajouter à la mise<select data-batch-mise><option value="">Aucune</option>${mises.map(item => `<option value="${esc(item.id)}">${esc(item.name)}</option>`).join('')}</select></label>
     <button type="button" data-batch-all class="ghost">Créer les fiches dans ce contenant</button></div>
-    <div data-proposals></div><button data-manual class="ghost">+ Objet omis / saisie manuelle</button>
+    <div data-proposals class="visionProposalList"></div><button type="button" data-manual class="ghost">+ Objet omis / saisie manuelle</button>
     ${mise ? `<h3>Checklist humaine</h3><div data-checklist>${(mise.objectIds || []).map(id => `<label class="check"><input data-expected type="checkbox" value="${esc(id)}" ${(mise.checked || []).includes(id) ? 'checked' : ''}><span>${esc(catalogue.find(o => o.id === id)?.name || id)}</span></label>`).join('')}</div><p data-summary role="status"></p>` : ''}
-    <p data-error role="alert"></p><button data-save>Enregistrer les validations</button></div>`
+    <p data-error role="alert"></p><div class="visionActions"><button type="button" data-close class="ghost">Fermer</button><button type="button" data-save>Enregistrer les validations</button></div></div>`
   const $ = selector => dialog.querySelector(selector)
   const $$ = selector => [...dialog.querySelectorAll(selector)]
   dialog.addEventListener('close', () => { closed = true; dialog.remove() }, { once: true })
-  $('[data-close]').onclick = () => dialog.close()
+  dialog.querySelectorAll('[data-close]').forEach(button => { button.onclick = event => { event.preventDefault(); if (dialog.open) dialog.close() } })
   const checked = () => $$('[data-expected]:checked').map(input => input.value)
   function collect() {
     return proposals.map((p, i) => {
@@ -72,9 +72,10 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
     const index = proposals.push(p) - 1
     const object = catalogue.find(o => o.id === p.objectId)
     const unknown = !p.objectId && !p.rejected
-    const row = document.createElement('fieldset'); row.dataset.row = index; row.className = 'visionProposal'
+    const row = document.createElement('details'); row.dataset.row = index; row.className = 'visionProposal'
     const level=confidenceLevel(p.score ?? p.confidence ?? 0)
-    row.innerHTML = `<legend>Objet ${index + 1} · ${level.label}${p.confidence === undefined ? '' : ` · ${Math.round(p.confidence * 100)} %`}</legend>
+    const stateLabel = p.objectId ? 'Connu' : 'À vérifier'
+    row.innerHTML = `<summary><span>Objet ${index + 1} · ${esc(p.label || translateLabel(p.rawLabel) || 'Objet')}</span><small>${stateLabel} · ${level.label}${p.confidence === undefined ? '' : ` · ${Math.round(p.confidence * 100)} %`}</small></summary><div class="visionProposalBody">
       <p class="hint">${esc(p.rawLabel ? `Catégorie : ${p.category || translateLabel(p.rawLabel)} · ${p.evidence}` : 'Saisie humaine')}${p.ambiguous ? ' · Correspondance ambiguë' : ''}${unknown ? ' · Inconnu, à nommer' : ''}${p.objectId ? ' · Déjà dans la base' : ''}</p>
       <div class="fichePicks" data-picks></div>
       <label>Chercher dans ta base<input data-fiche-search type="search" placeholder="Le nom de ta fiche" ${p.rawLabel ? '' : 'hidden'}></label>
@@ -87,8 +88,9 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
       <label>Contenant<select data-case><option value="">Sans contenant</option>${(data.cases || []).map(c => `<option value="${esc(c.id)}" ${(object?.caseId || object?.container_id) === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label></div>
       <label>Notes<textarea data-notes rows="2">${esc(object?.notes || '')}</textarea></label>
       <label class="check"><input data-confirm type="checkbox"><span>${mise ? 'Confirmer et ajouter à la checklist' : 'Confirmer cet objet'}</span></label>
-      <label class="check"><input data-learn type="checkbox" ${p.rawLabel ? '' : 'disabled'} ${mode === 'inventory' && p.rawLabel ? 'checked' : ''}><span>Mémoriser cette correction pour la prochaine photo</span></label>`
+      <label class="check"><input data-learn type="checkbox" ${p.rawLabel ? '' : 'disabled'} ${mode === 'inventory' && p.rawLabel ? 'checked' : ''}><span>Mémoriser cette correction pour la prochaine photo</span></label></div>`
     $('[data-proposals]').append(row)
+    if (proposals.length === 1) row.open = true
     const choose = async objectId => {
       const object = catalogue.find(item => item.id === objectId)
       if (!object) return
@@ -201,7 +203,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
       saving = false
     }
   }
-  $('[data-manual]').onclick = () => appendProposal({ label: '', quantity: 1, validated: false })
+  $('[data-manual]').onclick = () => { appendProposal({ label: '', quantity: 1, validated: false }); const rows = $('[data-row]'); const row = rows[rows.length - 1]; if (row) row.open = true }
   $('[data-batch-all]').onclick = () => {
     const caseId = $('[data-batch-case]').value
     if (!caseId) { $('[data-error]').textContent = 'Choisis d’abord le contenant. Exemple : Caisse grise n°23.'; return }
@@ -217,7 +219,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
   const image = $('[data-photo]'); image.src = photo
   try {
     await image.decode()
-    const detections = await detectLocal(image)
+    const detections = await detectLocal(image, { dense: mode === 'inventory' || mode === 'group' })
     if (closed || saving) return
     analysisState = 'available'
     const matches = matchDetections(detections, data, context, learnings)

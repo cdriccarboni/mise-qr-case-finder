@@ -20,7 +20,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await page.goto('/')
   await page.evaluate(async () => { await navigator.serviceWorker.ready })
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true)
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.4')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.5')
   await expect(page.locator('#projectContext')).toBeHidden()
   await expect(page.locator('#aboutHome')).toHaveCount(0)
   await expect(page.locator('#goalAbout')).toHaveCount(0)
@@ -32,7 +32,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await expect(about).toContainText('MISES! — Une création de')
   await expect(about.locator('a[href="https://www.acousmatic-theatre.fr/"]')).toHaveText('Acousmatic Theatre')
   await expect(about.locator('a[href="https://www.acousmatic-theatre.fr/"]')).toHaveAttribute('target', '_blank')
-  await expect(about.locator('#aboutVersion')).toHaveText('0.4.0-beta.4')
+  await expect(about.locator('#aboutVersion')).toHaveText('0.4.0-beta.5')
   const author = about.locator('[data-author]')
   await expect(author).toHaveCount(1)
   await expect(author).toHaveAttribute('href', 'https://carboni-cedric.pages-perso.free.fr/')
@@ -151,7 +151,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await expect(dialog.locator('[data-creative]')).toContainText(/cuillère/i)
   await expect(dialog.locator('[data-creative]')).toContainText(/Tempête miniature|Cuisine inquiétante|créature|Même objet|Entrée en scène|Machine capricieuse/)
   await expect(dialog.locator('[data-creative]')).not.toContainText('violon')
-  await dialog.locator('[data-close]').click()
+  await dialog.locator('.visionCloseTop').click()
 
   await page.evaluate(() => {
     window.__MISES_DETECTIONS = [{ class: 'chair', score: 0.93, bbox: [30, 20, 100, 120] }]
@@ -167,7 +167,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await page.locator('#photoInput').setInputFiles({ name: 'chaise-2.png', mimeType: 'image/png', buffer: image })
   await expect(dialog.locator('[data-name]')).toHaveValue('Chaise froissable fictive')
   await expect(dialog).toContainText('Correction humaine mémorisée')
-  await dialog.locator('[data-close]').click()
+  await dialog.locator('.visionCloseTop').click()
 
   await page.setViewportSize({ width: 390, height: 844 })
   for (const theme of ['dark', 'light', 'regie']) {
