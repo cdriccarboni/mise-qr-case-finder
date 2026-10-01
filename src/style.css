@@ -243,3 +243,7 @@ html[data-theme=light] .labelTools fieldset{border-color:#d8d8de}
 @media (max-width:640px){
   .appFooter{font-size:.7rem;margin-top:.8rem;padding:.55rem .75rem}
 }
+
+/* MISES 0.4.0-beta.7 · mobile search affordance */
+.searchbox{grid-template-columns:minmax(0,1fr) auto auto}.searchGo{min-width:46px;font-size:1.35rem;font-weight:900}.searchHint{margin:.35rem 0 0;font-size:.72rem;color:#8f8f98}.searchGo:active{transform:translateY(1px)}
+@media(max-width:620px){.searchbox{position:sticky;top:var(--safe-top);z-index:14;background:var(--bg,#0b0b0d);padding:.35rem 0}.searchGo{min-width:48px}.goalNav details[open]{position:relative}.goalNav details>div{max-height:min(46dvh,360px);overflow:auto}.goalNav{scroll-margin-top:calc(var(--safe-top) + 64px)}#search{scroll-margin-top:calc(var(--safe-top) + 72px)}}
