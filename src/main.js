@@ -441,7 +441,7 @@ function openPublicTechnique(refKey){
       device:(recipe.objects||[]).join(', '),
       notes:recipe.technique,
       source:recipe.source||'recette publique',
-      owned:false,
+      owned:true,
       provenance:'external'
     })
   }
@@ -863,7 +863,7 @@ function renderSearch(target='#searchResults'){
       device:(idea?.objects||[]).join(', '),
       notes:idea?.technique||'',
       source:idea?.source||'suggestion externe',
-      owned:false,
+      owned:true,
       provenance:'external'
     })
   })
