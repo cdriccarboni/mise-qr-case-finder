@@ -75,7 +75,7 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " MISES-Android/0.4.0-beta.8");
+        settings.setUserAgentString(settings.getUserAgentString() + " MISES-Android/0.4.0-beta.9");
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -231,10 +231,23 @@ public final class MainActivity extends Activity {
         } catch (ActivityNotFoundException ignored) {}
     }
 
-    @Override
-    public void onBackPressed() {
+    private void performBrowserBackOrExit() {
         if (webView != null && webView.canGoBack()) webView.goBack();
         else super.onBackPressed();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (webView == null) {
+            super.onBackPressed();
+            return;
+        }
+        webView.evaluateJavascript(
+                "(function(){try{return !!(window.__mise&&window.__mise.handleBack&&window.__mise.handleBack())}catch(e){return false}})()",
+                handled -> {
+                    if (!"true".equals(handled)) performBrowserBackOrExit();
+                }
+        );
     }
 
     @Override
