@@ -1,2 +1,2 @@
-export const APP_VERSION = '0.4.0-beta.8'
-export const APP_VERSION_CODE = 20
+export const APP_VERSION = '0.4.0-beta.9'
+export const APP_VERSION_CODE = 21
