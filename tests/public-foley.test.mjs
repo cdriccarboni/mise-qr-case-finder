@@ -30,6 +30,8 @@ test('public references retain source URLs', () => {
   assert.equal(refs.length, library.records.length)
   assert.ok(refs.every(ref => ref.publicationScope === 'PUBLIC_WEB'))
   assert.ok(refs.every(ref => /^https?:\/\//.test(ref.sourceUrl)))
+  assert.ok(refs.every(ref => ref.id && ref.technique === ref.summary))
+  assert.ok(refs.some(ref => ref.technique && ref.objects.length))
 })
 
 test('owned matching never marks a public reference as owned by itself', () => {
@@ -71,6 +73,9 @@ test('main exposes the two interface modes and custom categories', () => {
   assert.match(main, /Bibliothèque publique/)
   assert.match(main, /Fabrications/)
   assert.match(main, /Activités pédagogiques/)
+  assert.match(main, /function openPublicTechnique\(refKey\)/)
+  assert.match(main, /Comment faire ce son/)
+  assert.match(main, /data-public-technique/)
 })
 
 

@@ -3,7 +3,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   base:'./',
   plugins:[VitePWA({
-    registerType:'prompt',
+    registerType:'autoUpdate',
     includeAssets:['favicon.svg','icon.svg','icon-maskable.svg','apple-touch-icon.png','icon-192.png','icon-512.png'],
     manifest:{
       name:'MISES! — QR Case Finder', short_name:'MISES!',
@@ -19,12 +19,13 @@ export default defineConfig({
       ]
     },
     workbox:{
-      cacheId:'mises-0.4.0-beta.9',
+      cacheId:'mises-0.4.0-beta.10',
       navigateFallback:'index.html',
       globPatterns:['**/*.{js,mjs,css,html,svg,json,bin,png,ttf}','models/coco-ssd/*'],
       maximumFileSizeToCacheInBytes:8*1024*1024,
       cleanupOutdatedCaches:true,
-      clientsClaim:true
+      clientsClaim:true,
+      skipWaiting:true
     }
   })]
 })

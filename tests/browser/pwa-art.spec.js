@@ -33,7 +33,7 @@ test('installability criteria, standalone launch, offline reload, restore and ca
   })
   await page.waitForFunction(async () => !(await caches.keys()).includes('workbox-precache-v2-mises-old'))
   const names = await page.evaluate(() => caches.keys())
-  expect(names.some(name => name.includes('mises-0.4.0-beta.9'))).toBeTruthy()
+  expect(names.some(name => name.includes('mises-0.4.0-beta.10'))).toBeTruthy()
 
   await page.evaluate(async () => {
     const db = await new Promise((resolve, reject) => {
@@ -81,24 +81,16 @@ test('emulated standalone display mode still opens the app', async ({ browser })
   await context.close()
 })
 
-test('a new service worker says a new version is available', async ({ page }) => {
-  let served = 0
-  await page.context().route('**/sw.js*', async route => {
-    served += 1
-    const response = await route.fetch()
-    const headers = { ...response.headers() }
-    delete headers['content-length']
-    delete headers['content-encoding']
-    const body = served === 1 ? `${await response.text()}\n// mises-installed-revision\n` : await response.text()
-    await route.fulfill({ status: response.status(), headers, body })
-  })
+test('service worker update checks stay automatic and do not block the app', async ({ page }) => {
   await page.goto('/')
   await controlled(page)
-  await page.evaluate(async () => {
+  const state = await page.evaluate(async () => {
     const reg = await navigator.serviceWorker.getRegistration()
     await reg.update()
+    return { active: Boolean(reg.active), waiting: Boolean(reg.waiting) }
   })
-  await expect(page.locator('#toast')).toContainText('Nouvelle version disponible')
+  expect(state.active).toBe(true)
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.10')
 })
 
 test('projectId opens, restores, attaches an old mise, and ignores a bad return address', async ({ page }) => {

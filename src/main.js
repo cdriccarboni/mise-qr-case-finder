@@ -40,13 +40,38 @@ migrateSessionKeys()
 applyInk(localStorage.getItem(LOCAL_KEYS.ink))
 
 let applySwUpdate=()=>{}
+let swRegistration=null
+let pwaRefreshInFlight=false
 applySwUpdate=registerSW({
   immediate:true,
+  onRegisteredSW(_swUrl,registration){swRegistration=registration||null},
   onNeedRefresh(){
-    toast('Nouvelle version disponible')
-    setTimeout(()=>applySwUpdate(true),1600)
+    toast('Nouvelle version disponible · mise à jour…')
+    setTimeout(()=>applySwUpdate(true),300)
   }
 })
+async function checkPublishedVersion(){
+  if(pwaRefreshInFlight||!navigator.onLine)return
+  try{
+    const response=await fetch(`./version.json?check=${Date.now()}`,{cache:'no-store',headers:{accept:'application/json'}})
+    if(!response.ok)return
+    const remote=String((await response.json())?.version||'').trim()
+    if(!remote||remote===APP_VERSION)return
+    pwaRefreshInFlight=true
+    toast(`MISES! ${remote} disponible · actualisation…`)
+    const registration=swRegistration||await navigator.serviceWorker?.getRegistration()
+    await registration?.update()
+    applySwUpdate(true)
+    setTimeout(()=>location.reload(),900)
+  }catch{}
+}
+const PUBLIC_PWA_HOST='cdriccarboni.github.io'
+if(location.hostname===PUBLIC_PWA_HOST){
+  window.addEventListener('focus',()=>void checkPublishedVersion())
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void checkPublishedVersion()})
+  setInterval(()=>void checkPublishedVersion(),60_000)
+  setTimeout(()=>void checkPublishedVersion(),1200)
+}
 
 const $=(s,r=document)=>r.querySelector(s)
 const $$=(s,r=document)=>[...r.querySelectorAll(s)]
@@ -394,6 +419,37 @@ function findAlternatives(o){
   const pool=objects.filter(x=>x.id!==o.id).map(x=>({...x,altText:[x.name,...(x.sounds||[]),...(x.tags||[]),...(x.contexts||[])].join(' ')}))
   return new Fuse(pool,{keys:['sounds','tags','contexts','name','altText'],threshold:.48,ignoreLocation:true}).search(queries).slice(0,8).map(x=>x.item)
 }
+function openPublicTechnique(refKey){
+  const recipe=external.find(item=>item.id===refKey||item.name===refKey)
+  if(!recipe?.technique)return
+  const d=$('#modal')
+  d.innerHTML=`<div class="form publicTechniqueSheet">
+    <div class="dialoghead"><div><b>Comment faire ce son</b><small>${esc(recipe.name)}</small></div><button id="closePublicTechnique" class="ghost" type="button" aria-label="Fermer">×</button></div>
+    <div class="techniqueTarget"><span class="chip">Son visé</span><strong>${esc(recipe.name)}</strong></div>
+    <p class="techniqueText">${esc(recipe.technique)}</p>
+    ${(recipe.objects||[]).length?`<div><b>Objets / matières</b><p>${recipe.objects.map(chip).join(' ')}</p></div>`:''}
+    ${recipe.fabrication?`<p class="hint">Dispositif lié : ${esc(recipe.fabrication)}</p>`:''}
+    <div class="row">
+      <button id="addPublicTechnique" type="button">Ajouter à mon stock</button>
+      ${recipe.sourceUrl?`<a class="buttonLink ghost" href="${esc(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">Source ↗</a>`:''}
+    </div>
+  </div>`
+  d.showModal()
+  $('#closePublicTechnique').onclick=()=>d.close()
+  $('#addPublicTechnique').onclick=()=>{
+    d.close()
+    openObject({
+      name:recipe.name,
+      sounds:[recipe.name],
+      device:(recipe.objects||[]).join(', '),
+      notes:recipe.technique,
+      source:recipe.source||'recette publique',
+      owned:true,
+      provenance:'external'
+    })
+  }
+}
+
 function openAlternatives(id){
   const o=objectBy(id);if(!o)return
   const alts=findAlternatives(o),d=$('#modal')
@@ -789,15 +845,31 @@ function renderSearch(target='#searchResults'){
     <div><h3>${esc(o.name)}</h3><p>${soundSummary(o)?esc(soundSummary(o)):'<span class="muted">Son à préciser</span>'}</p>
     <small>${esc(caseName(caseBy(o.caseId||o.container_id)))} · ${esc(o.family||'À classer')} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></div>
     <div class="resultActions"><button data-open="${o.id}" class="miniAction" title="Ouvrir la fiche">↗</button><button data-fav="${o.id}" class="miniAction" title="Favori">${o.favorite?'★':'☆'}</button><button data-alt="${o.id}" class="miniAction" title="Alternatives">≈</button><button data-add="${o.id}" class="plus">+</button></div></article>`).join('')
-  if(ideas.length) h+=`<h3 class="ideaTitle">Idées à ajouter à ton parc</h3>`+ideas.map(i=>`<article class="result idea">
+  if(ideas.length) h+=`<h3 class="ideaTitle">Idées à ajouter à ton parc</h3>`+ideas.map(i=>`<article class="result idea ${i.technique?'recipeClickable':''}" ${i.technique?`data-public-technique="${esc(i.id||i.name)}" tabindex="0" role="button" aria-label="Voir comment faire : ${esc(i.name)}"`:''}>
     <div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p>
-    <small>Source externe · ${esc(i.source||'base de référence')} · pas un document de l’utilisateur</small></div><button class="plus" data-idea="${esc(i.name)}">+</button></article>`).join('')
+    <small>Source externe · ${esc(i.source||'base de référence')} · pas un document de l’utilisateur${i.technique?' · toucher pour voir la technique':''}</small></div><div class="resultActions">${i.technique?`<button class="miniAction" type="button" data-technique-button="${esc(i.id||i.name)}" title="Comment faire">?</button>`:''}<button class="plus" data-idea="${esc(i.id||i.name)}">+</button></div></article>`).join('')
   $(target).innerHTML=h
   $$('[data-open]',$(target)).forEach(b=>b.onclick=()=>openObject(objectBy(b.dataset.open)||{id:b.dataset.open}))
   $$('[data-add]',$(target)).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.add))
   $$('[data-fav]',$(target)).forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.fav))
   $$('[data-alt]',$(target)).forEach(b=>b.onclick=()=>openAlternatives(b.dataset.alt))
-  $$('[data-idea]',$(target)).forEach(b=>b.onclick=()=>openObject({name:b.dataset.idea,source:'suggestion externe',owned:false}))
+  $$('[data-public-technique]',$(target)).forEach(card=>{
+    card.onclick=event=>{if(event.target.closest('button,a'))return;openPublicTechnique(card.dataset.publicTechnique)}
+    card.onkeydown=event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button,a')){event.preventDefault();openPublicTechnique(card.dataset.publicTechnique)}}
+  })
+  $$('[data-technique-button]',$(target)).forEach(b=>b.onclick=()=>openPublicTechnique(b.dataset.techniqueButton))
+  $$('[data-idea]',$(target)).forEach(b=>b.onclick=()=>{
+    const idea=external.find(item=>item.id===b.dataset.idea||item.name===b.dataset.idea)
+    openObject({
+      name:idea?.name||b.dataset.idea,
+      sounds:idea?.name?[idea.name]:[],
+      device:(idea?.objects||[]).join(', '),
+      notes:idea?.technique||'',
+      source:idea?.source||'suggestion externe',
+      owned:true,
+      provenance:'external'
+    })
+  })
   $$('[data-open-case]',$(target)).forEach(b=>b.onclick=()=>showCase(b.dataset.openCase))
   $$('[data-open-kit]',$(target)).forEach(b=>b.onclick=()=>showKit(b.dataset.openKit))
   $$('[data-open-mise]',$(target)).forEach(b=>b.onclick=()=>{const m=miseBy(b.dataset.openMise);if(m){activeMise=m.id;setTab('mises');openMise(m)}})
