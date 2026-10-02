@@ -1,3 +1,17 @@
+## 0.4.0-beta.9 — 2026-10-02 (navigation mobile, partage PWA et Google)
+
+- Accueil : suppression du libellé « Recherche globale MISES! » ; un espace visuel reste entre l’identité et le champ.
+- Recherche tactile : ajout d’une flèche de validation en plus d’Entrée et de la dictée ; les réponses restent directement sous le champ.
+- Navigation mobile : les rubriques fonctionnent en accordéon sur téléphone et se replient après un choix.
+- Fenêtres : bandeau de fermeture réellement sticky et cible de fermeture ≥ 48 px ; largeur mobile sécurisée.
+- Android : le bouton Retour ferme d’abord la fenêtre ou le menu MISES! ouvert avant de revenir/quitter.
+- Préférences : « À propos » est supprimé et remplacé par « Partager ».
+- Partager : QR code vers la PWA publique, partage/copie de l’adresse, ouverture PWA et proposition d’installation.
+- Google : la connexion Google Drive reste directe dans la PWA ; dans la coque Android, l’interface propose explicitement d’ouvrir la PWA dans Chrome au lieu d’afficher un cul-de-sac « indisponible ».
+- Inventaire photo : fermeture et catalogue complet déjà présents ont été revérifiés ; aucune régression volontaire.
+- Jeux / ateliers : sélection du nombre de participant·es déjà présente et conservée.
+- Version `0.4.0-beta.9`, Android `versionCode 21`, cache PWA `mises-0.4.0-beta.9`.
+
 ## 0.4.0-beta.8 — 2026-10-01 (premier écran compact et réponse immédiate)
 
 - Recherche : les réponses apparaissent désormais immédiatement sous le champ, avant les raccourcis, sans changer la logique de recherche.
