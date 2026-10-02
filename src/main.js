@@ -681,7 +681,7 @@ $('#app').innerHTML=`
 <main>
 <section id="projectContext" class="projectContext" aria-label="Contexte du projet" hidden></section>
 <section class="hero">
-  <div class="searchbox"><input id="q" autocomplete="off" aria-label="Recherche MISES!" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
+  <div class="searchbox"><input id="q" autocomplete="off" aria-label="Recherche MISES!" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="searchGo" class="searchGo" type="button" title="Lancer la recherche" aria-label="Lancer la recherche">→</button><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
   <section id="search" class="tab active searchImmediate" aria-label="Réponse à la recherche"><div id="searchResults"></div></section>
   <div class="quick fieldShortcuts" aria-label="Raccourcis terrain">
     <button type="button" data-action="scan">Scanner un QR</button>
@@ -805,7 +805,8 @@ function renderSearch(target='#searchResults'){
   if(scanExercise) scanExercise.onclick=()=>{pendingExerciseMinutes=answer?.minutes||5;$('#handsPhotoInput').click()}
 }
 $('#q').addEventListener('input',()=>{setTab('search');renderSearch()})
-$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){setTab('search');renderSearch()}})
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){setTab('search');renderSearch();$('#q').blur()}})
+$('#searchGo').onclick=()=>{setTab('search');renderSearch();$('#q').blur();$('#searchResults')?.scrollIntoView({block:'nearest',behavior:'smooth'})}
 
 async function resizePhoto(file){
   return new Promise((resolve,reject)=>{
@@ -1317,8 +1318,8 @@ function applyUiPreferences(){
   const googleState=$('#preferencesGoogleState')
   if(googleState){
     if(androidGoogleSignInBlocked()){
-      googleState.innerHTML='<b>Google Drive</b><span>Indisponible dans l’application Android</span>'
-      $('#preferencesGoogle').textContent='Pourquoi la connexion est indisponible'
+      googleState.innerHTML='<b>Google Drive</b><span>Connexion via la PWA</span>'
+      $('#preferencesGoogle').textContent='Ouvrir la connexion Google'
     }else{
       const account=$('#accountBtn')?.textContent||''
       const connected=/connecté|reconnecter/i.test(account)&&!/non connecté/i.test(account)
@@ -1379,29 +1380,29 @@ function closeDialogFromBackdrop(dialog){
   }
   if(dialog.open)dialog.close()
 }
-$('dialog').forEach(dialog=>{
+$$('dialog').forEach(dialog=>{
   dialog.addEventListener('click',event=>{
     if(isDialogBackdropClick(dialog,event))closeDialogFromBackdrop(dialog)
   })
 })
 const mobileNavigation=()=>window.matchMedia?.('(max-width:620px)').matches||document.documentElement.dataset.display==='mobile'
-$('.goalNav details').forEach(detail=>detail.addEventListener('toggle',()=>{
+$$('.goalNav details').forEach(detail=>detail.addEventListener('toggle',()=>{
   if(!detail.open||!mobileNavigation())return
-  $('.goalNav details').forEach(other=>{if(other!==detail)other.open=false})
+  $$('.goalNav details').forEach(other=>{if(other!==detail)other.open=false})
 }))
 $('.goalNav')?.addEventListener('click',event=>{
   if(!event.target.closest?.('button')||!mobileNavigation())return
-  queueMicrotask(()=>$('.goalNav details').forEach(detail=>{detail.open=false}))
+  queueMicrotask(()=>$$('.goalNav details').forEach(detail=>{detail.open=false}))
 })
 function handleBackNavigation(){
-  const openDialogs=$('dialog[open]')
+  const openDialogs=$$('dialog[open]')
   if(openDialogs.length){
     const dialog=openDialogs[openDialogs.length-1]
     if(dialog.id==='scanDlg')$('#stopScan')?.click()
     else dialog.close()
     return true
   }
-  const openMenus=$('.goalNav details[open]')
+  const openMenus=$$('.goalNav details[open]')
   if(openMenus.length){openMenus.forEach(detail=>{detail.open=false});return true}
   return false
 }
