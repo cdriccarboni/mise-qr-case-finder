@@ -4,7 +4,7 @@ import { emptyData } from '../../src/data-bruitage.js'
 import { syntheticDocx, syntheticPdf } from '../synthetic-documents.mjs'
 
 async function openCatalogue(page) {
-  await page.getByText('Partager', { exact: true }).click()
+  await page.getByLabel('Navigation MISES').getByText('Partager', { exact: true }).click()
   await page.locator('#goalDataBruitage').click()
   await expect(page.locator('.dataDialog')).toBeVisible()
 }

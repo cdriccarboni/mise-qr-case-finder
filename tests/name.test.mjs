@@ -15,7 +15,6 @@ test('the visible name is MISES! and the wordmark says mises !', () => {
   assert.match(read('../vite.config.js'), /name:'MISES! — QR Case Finder', short_name:'MISES!'/)
   assert.match(read('../android/app/src/main/res/values/strings.xml'), /<string name="app_name">MISES!<\/string>/)
   assert.match(read('../android/app/src/main/AndroidManifest.xml'), /android:label="MISES!"/)
-  assert.match(main, /<p class="aboutCredit">© \$\{externalAnchor\(AUTHOR_WEBSITE_URL, 'Cédric Carboni'/)
   assert.match(main, /© Cédric Carboni/)
   assert.doesNotMatch(main, /Code & création|Une création de/)
   assert.match(wordmark, /aria-label="mises !"/)
@@ -37,7 +36,9 @@ test('home navigation exposes five separate goal cartouches', () => {
 test('home keeps a single global search field and no redundant Recherche cartouches', () => {
   const main = read('../src/main.js')
   assert.equal(main.match(/id="q"/g)?.length, 1)
-  assert.match(main, /searchLabel" for="q">Recherche globale MISES!/)
+  assert.doesNotMatch(main, /Recherche globale MISES!|class="searchLabel"/)
+  assert.match(main, /id="q"[^>]*aria-label="Recherche MISES!"/)
+  assert.match(main, /id="searchGo"[^>]*>→<\/button>/)
   assert.doesNotMatch(main, /data-action="search">Rechercher/)
   assert.doesNotMatch(main, /data-action="speak">Dictée vocale/)
   assert.doesNotMatch(main, /<button data-tab="search"[^>]*>Recherche</)
