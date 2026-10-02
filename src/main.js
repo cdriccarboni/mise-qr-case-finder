@@ -12,7 +12,6 @@ import { readData, enrichObjects, assignSoundFields, soundFields, PROVENANCE, pr
 import { openDataBruitage } from './data-ui.js'
 import { openLocalPhoto } from './vision-ui.js'
 import { APP_VERSION } from './version.js'
-import { AUTHOR_WEBSITE_URL, externalAnchor } from './about.js'
 import wordmarkSvg from './brand/wordmark.svg?raw'
 import { FAMILIES } from './constants.js'
 import { entityUrl, shortId, readEntityUrl } from './qr-link.js'
@@ -50,7 +49,11 @@ applySwUpdate=registerSW({
 })
 
 const $=(s,r=document)=>r.querySelector(s)
-const $$=(s,r=document)=>[...r.querySelectorAll(s)]
+const $=(s,r=document)=>[...r.querySelectorAll(s)]
+const PUBLIC_PWA_URL='https://cdriccarboni.github.io/mise-qr-case-finder/'
+let deferredInstallPrompt=null
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event})
+window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null})
 const uid=p=>`${p}-${crypto.randomUUID()}`
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))
 const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[’']/g,' ').replace(/[-_/]+/g,' ').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim()
@@ -161,17 +164,19 @@ async function updateAccountStatus(){
   const saved=await db.get('settings','google-account'),session=artGoogleSession(),button=$('#accountBtn')
   const blocked=androidGoogleSignInBlocked(),fromArt=project.source==='art'
   if(button){
-    button.textContent=blocked?'Google · Indisponible dans l’app':saved?.email?(session?`Google · ${saved.email}`:'Google · Reconnecter'):(fromArt?'Google · Continuer depuis ART':'Google · À connecter')
+    button.textContent=blocked?'Google · via la PWA':saved?.email?(session?`Google · ${saved.email}`:'Google · Reconnecter'):(fromArt?'Google · Continuer depuis ART':'Google · À connecter')
     button.classList.toggle('connected',Boolean(!blocked&&saved&&session))
   }
   const goal=$('#goalGoogle')
-  if(goal)goal.textContent=blocked?'Connexion Google indisponible':fromArt?'Continuer Google depuis ART':'Connexion Google'
+  if(goal)goal.textContent=blocked?'Connexion Google via la PWA':fromArt?'Continuer Google depuis ART':'Connexion Google'
 }
 function explainAndroidGoogle(){
   const d=$('#modal')
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Connexion Google indisponible</b><small>Application Android</small></div><button id="closeAndroidGoogle" class="ghost" type="button">×</button></div><p>${esc(googleSignInUnavailableMessage())}</p><p class="hint">La recherche, les QR, les photos, les mémos sonores, l’import et la sauvegarde JSON restent disponibles sur cet appareil.</p></div>`
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Connexion Google via la PWA</b><small>Application Android</small></div><button id="closeAndroidGoogle" class="ghost" type="button">×</button></div><p>${esc(googleSignInUnavailableMessage())}</p><p class="hint">La PWA peut se connecter à Google Drive dans Chrome. L’application Android garde ses données locales tant que l’authentification Google native n’est pas configurée.</p><div class="row"><button id="openAndroidGooglePwa" type="button">Ouvrir la PWA pour Google</button><button id="closeAndroidGoogleAlt" class="ghost" type="button">Rester dans l’application</button></div></div>`
   d.showModal()
   $('#closeAndroidGoogle').onclick=()=>d.close()
+  $('#closeAndroidGoogleAlt').onclick=()=>d.close()
+  $('#openAndroidGooglePwa').onclick=()=>window.location.assign(PUBLIC_PWA_URL)
 }
 async function connectGoogle(){
   if(androidGoogleSignInBlocked()){explainAndroidGoogle();return}
@@ -676,8 +681,7 @@ $('#app').innerHTML=`
 <main>
 <section id="projectContext" class="projectContext" aria-label="Contexte du projet" hidden></section>
 <section class="hero">
-  <label class="searchLabel" for="q">Recherche globale MISES!</label>
-  <div class="searchbox"><input id="q" autocomplete="off" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
+  <div class="searchbox"><input id="q" autocomplete="off" aria-label="Recherche MISES!" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
   <section id="search" class="tab active searchImmediate" aria-label="Réponse à la recherche"><div id="searchResults"></div></section>
   <div class="quick fieldShortcuts" aria-label="Raccourcis terrain">
     <button type="button" data-action="scan">Scanner un QR</button>
@@ -731,12 +735,7 @@ $('#app').innerHTML=`
   <div class="preferenceActionBlock"><b>Données locales</b><small>La sauvegarde contient la base privée, les mises, kits, réglages et apprentissages de cet appareil.</small><div class="row"><button id="preferencesBackup" type="button">SAUVEGARDER</button><button id="preferencesRestore" type="button" class="ghost">IMPORTER UNE SAUVEGARDE</button></div></div>
   <div class="preferenceActionBlock"><b>Index global</b><div id="indexState" class="hint">Calcul de l’index…</div><div class="row"><button id="preferencesIndexState" type="button" class="ghost">ÉTAT DE L’INDEX</button><button id="preferencesRebuildIndex" type="button" class="ghost">RECONSTRUIRE L’INDEX</button></div></div>
   <div class="preferenceActionBlock"><b>MISES Vision</b><div id="visionState" class="hint">Vision standard disponible · Vision avancée non installée</div></div>
-  <button id="preferencesAbout" type="button" class="ghost">À propos</button>
-</div></dialog>
-<dialog id="aboutDlg"><div class="form aboutSheet"><div class="dialoghead"><div><b>À propos</b></div><button id="closeAbout" class="ghost" type="button">×</button></div>
-<div class="wordmark aboutMark">${wordmarkSvg}</div>
-<p class="aboutCredit">© ${externalAnchor(AUTHOR_WEBSITE_URL, 'Cédric Carboni', 'data-author')}</p>
-<p class="aboutVersion muted">Version <span id="aboutVersion">${APP_VERSION}</span></p>
+  <button id="preferencesShare" type="button" class="ghost">Partager</button>
 </div></dialog>
 <dialog id="manualDlg"><div class="manual"><div class="dialoghead"><div><b>MISES! · Mini-manuel</b><small>QR Case Finder · prise en main rapide</small></div><button id="closeManual" class="ghost" type="button">×</button></div>
 <div class="manualSteps">
@@ -1277,6 +1276,32 @@ function paintInkSwatches(current = parseInk(localStorage.getItem(LOCAL_KEYS.ink
   const custom = $('#inkCustom')
   if(custom) custom.value = current.toLowerCase()
 }
+async function openAppShareDialog(){
+  const d=$('#modal')
+  const qr=await QRCode.toDataURL(PUBLIC_PWA_URL,{width:420,margin:2,errorCorrectionLevel:'M'})
+  const standalone=Boolean(window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true)
+  const nativeApp=Boolean(globalThis.MisesAndroid)
+  d.innerHTML=`<div class="form shareAppSheet"><div class="dialoghead"><div><b>Partager MISES!</b><small>PWA · application</small></div><button id="closeAppShare" class="ghost" type="button" aria-label="Fermer">×</button></div><img class="qr shareAppQr" src="${qr}" alt="QR code pour ouvrir MISES!"><p class="hint">Scanne ce QR pour ouvrir MISES! directement dans le navigateur.</p><code class="shareAppUrl">${esc(PUBLIC_PWA_URL)}</code><div class="row shareAppActions"><button id="sharePwaLink" type="button">Partager l’adresse</button><button id="copyPwaLink" type="button" class="ghost">Copier le lien</button><button id="openPwaLink" type="button" class="ghost">Ouvrir la PWA</button><button id="installPwa" type="button">Installer l’application</button></div><p class="hint">Google Drive se raccorde directement dans la PWA. Sur Android natif, ce bouton ouvre la PWA dans le navigateur pour l’identification Google.</p></div>`
+  d.showModal()
+  $('#closeAppShare').onclick=()=>d.close()
+  $('#copyPwaLink').onclick=async()=>{try{await navigator.clipboard.writeText(PUBLIC_PWA_URL);toast('Adresse MISES! copiée')}catch{toast(PUBLIC_PWA_URL)}}
+  $('#sharePwaLink').onclick=async()=>{try{if(navigator.share)await navigator.share({title:'MISES!',text:'MISES! · QR Case Finder',url:PUBLIC_PWA_URL});else{await navigator.clipboard.writeText(PUBLIC_PWA_URL);toast('Adresse MISES! copiée')}}catch{}}
+  $('#openPwaLink').onclick=()=>{if(nativeApp)window.location.assign(PUBLIC_PWA_URL);else window.open(PUBLIC_PWA_URL,'_blank','noopener')}
+  const install=$('#installPwa')
+  if(standalone||nativeApp){install.textContent=nativeApp?'Application Android ouverte':'Application déjà installée';install.disabled=true}
+  else install.onclick=async()=>{
+    if(deferredInstallPrompt){
+      await deferredInstallPrompt.prompt()
+      await deferredInstallPrompt.userChoice.catch(()=>null)
+      deferredInstallPrompt=null
+      return
+    }
+    const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)
+    if(ios){d.close();$('#manualDlg').showModal();setTimeout(()=>$('#manualIos')?.scrollIntoView({block:'center',behavior:'smooth'}),80);return}
+    toast('Dans le menu du navigateur, choisis « Installer l’application » ou « Ajouter à l’écran d’accueil ».')
+  }
+}
+
 function applyUiPreferences(){
   paintInkSwatches(parseInk(localStorage.getItem(LOCAL_KEYS.ink)) || DEFAULT_INK)
   const display=localStorage.getItem(LOCAL_KEYS.display)||'auto',theme=localStorage.getItem(LOCAL_KEYS.theme)||'system',interfaceMode=localStorage.getItem(INTERFACE_MODE_KEY)||'foley'
@@ -1339,26 +1364,8 @@ $('#manualBtn').onclick=()=>$('#manualDlg').showModal()
 $('#goalManual').onclick=()=>$('#manualDlg').showModal()
 $('#closeManual').onclick=()=>$('#manualDlg').close()
 
-let aboutReturnsToPreferences=false
-function closeAbout(){
-  const about=$('#aboutDlg')
-  if(about?.open)about.close()
-  if(aboutReturnsToPreferences){
-    aboutReturnsToPreferences=false
-    applyUiPreferences()
-    const prefs=$('#preferencesDlg')
-    if(prefs&&!prefs.open)prefs.showModal()
-  }
-}
-function openAbout(){
-  const prefs=$('#preferencesDlg')
-  aboutReturnsToPreferences=Boolean(prefs?.open)
-  if(aboutReturnsToPreferences)prefs.close()
-  $('#aboutDlg').showModal()
-}
-$('#preferencesAbout').onclick=openAbout
-$('#closeAbout').onclick=closeAbout
-$('#aboutDlg').addEventListener('cancel',event=>{event.preventDefault();closeAbout()})
+$('#preferencesShare').onclick=()=>{$('#preferencesDlg').close();void openAppShareDialog()}
+
 
 function isDialogBackdropClick(dialog,event){
   if(event.target!==dialog)return false
@@ -1370,17 +1377,34 @@ function closeDialogFromBackdrop(dialog){
     $('#stopScan')?.click()
     return
   }
-  if(dialog.id==='aboutDlg'){
-    closeAbout()
-    return
-  }
   if(dialog.open)dialog.close()
 }
-$$('dialog').forEach(dialog=>{
+$('dialog').forEach(dialog=>{
   dialog.addEventListener('click',event=>{
     if(isDialogBackdropClick(dialog,event))closeDialogFromBackdrop(dialog)
   })
 })
+const mobileNavigation=()=>window.matchMedia?.('(max-width:620px)').matches||document.documentElement.dataset.display==='mobile'
+$('.goalNav details').forEach(detail=>detail.addEventListener('toggle',()=>{
+  if(!detail.open||!mobileNavigation())return
+  $('.goalNav details').forEach(other=>{if(other!==detail)other.open=false})
+}))
+$('.goalNav')?.addEventListener('click',event=>{
+  if(!event.target.closest?.('button')||!mobileNavigation())return
+  queueMicrotask(()=>$('.goalNav details').forEach(detail=>{detail.open=false}))
+})
+function handleBackNavigation(){
+  const openDialogs=$('dialog[open]')
+  if(openDialogs.length){
+    const dialog=openDialogs[openDialogs.length-1]
+    if(dialog.id==='scanDlg')$('#stopScan')?.click()
+    else dialog.close()
+    return true
+  }
+  const openMenus=$('.goalNav details[open]')
+  if(openMenus.length){openMenus.forEach(detail=>{detail.open=false});return true}
+  return false
+}
 $('#scanDlg').addEventListener('cancel',event=>{event.preventDefault();$('#stopScan')?.click()})
 
 document.addEventListener('click',event=>{
@@ -1510,4 +1534,4 @@ else if(params.get('case'))setTimeout(()=>showCase(params.get('case')),250)
 else if(params.get('kit'))setTimeout(()=>showKit(params.get('kit')),250)
 else if(params.get('mise'))setTimeout(()=>{const found=miseBy(params.get('mise'));if(found)openMise(found)},250)
 else if(params.get('object'))setTimeout(()=>{const o=objectBy(params.get('object'));if(o)openObject(o)},250)
-window.__mise={version:APP_VERSION,ingestQrImage,parseScannedTarget}
+window.__mise={version:APP_VERSION,ingestQrImage,parseScannedTarget,handleBack:handleBackNavigation}
