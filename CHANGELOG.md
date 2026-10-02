@@ -4,6 +4,7 @@
 - PWA : vérification directe de `version.json` sans cache au démarrage, au retour dans l’app et toutes les 60 secondes.
 - PWA : si la version publique diffère de la version chargée, MISES force `registration.update()` puis recharge la nouvelle version.
 - OAuth Google : le code MISES conserve le Client ID de production ; le domaine GitHub Pages doit être autorisé comme origine JavaScript dans le même client OAuth Google utilisé par ART.
+- Recettes publiques : toucher une recette qui contient une technique ouvre « Comment faire ce son » avec geste, objets/matières et source ; « Ajouter à mon stock » préremplit la fiche personnelle tout en gardant la provenance externe.
 - Version `0.4.0-beta.10`, Android `versionCode 22`, cache PWA `mises-0.4.0-beta.10`.
 
 ## 0.4.0-beta.9 — 2026-10-02 (navigation mobile, partage PWA et Google)
