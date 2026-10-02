@@ -244,7 +244,7 @@ html[data-theme=light] .labelTools fieldset{border-color:#d8d8de}
 }
 
 
-/* 0.4.0-beta.8 · global mobile geometry contract */
+/* 0.4.0-beta.9 · global mobile geometry contract */
 button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 input,select,textarea{max-width:100%;min-width:0}
 .panel,.card,.result,.empty,.challenge,.participantPlan,.preferenceActionBlock{min-width:0;max-width:100%;overflow-wrap:anywhere}
@@ -262,7 +262,7 @@ html[data-interface="inventory"] #goalQrSimple,
 html:not([data-interface="inventory"]) .goalNav .createGoals>div>button:last-child{justify-content:center;text-align:center}
 
 
-/* 0.4.0-beta.8 · first-screen polish */
+/* 0.4.0-beta.9 · first-screen polish */
 #networkStatus:empty{display:none}
 .searchImmediate{margin:.35rem 0 0}
 .searchImmediate #searchResults:empty{display:none}
@@ -314,3 +314,5 @@ dialog .dialoghead{
 }
 html[data-display=mobile] dialog{width:calc(100vw - 16px);max-width:calc(100vw - 16px);padding:1rem .85rem}
 html[data-display=mobile] .shareAppActions{grid-template-columns:1fr}
+
+.searchbox .searchGo{min-width:2.8rem;width:2.8rem;padding:.72rem .4rem;font-size:1.15rem}
