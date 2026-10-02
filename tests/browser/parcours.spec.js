@@ -35,7 +35,7 @@ test('logo dots stay aligned and the fictional catalogue can be corrected offlin
     await page.locator('header').screenshot({ path: `${shots}/logo-${width}.png` })
   }
   await page.setViewportSize({ width: 1280, height: 900 })
-  await page.getByText('Partager', { exact: true }).click()
+  await page.getByLabel('Navigation MISES').getByText('Partager', { exact: true }).click()
   await page.locator('#goalDataBruitage').click()
   await page.locator('.dataDialog [data-files]').setInputFiles({
     name: 'classeur-fictif.xlsx',
