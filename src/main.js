@@ -49,7 +49,7 @@ applySwUpdate=registerSW({
 })
 
 const $=(s,r=document)=>r.querySelector(s)
-const $=(s,r=document)=>[...r.querySelectorAll(s)]
+const $$=(s,r=document)=>[...r.querySelectorAll(s)]
 const PUBLIC_PWA_URL='https://cdriccarboni.github.io/mise-qr-case-finder/'
 let deferredInstallPrompt=null
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event})
