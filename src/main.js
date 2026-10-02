@@ -35,6 +35,8 @@ import './identity.css'
 import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSetting, parseInk } from './ink.js'
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
 import { applyBackup } from './backup.js'
+import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut } from './supabase-client.js'
+import { syncMises } from './sync-core.js'
 migrateLocalKeys()
 migrateSessionKeys()
 applyInk(localStorage.getItem(LOCAL_KEYS.ink))
@@ -145,6 +147,62 @@ async function refresh(){
 }
 await refresh()
 
+let supabaseSyncTimer=0,supabaseSyncBusy=false
+async function updateSupabaseStatus(){
+  const button=$('#supabaseSyncBtn')
+  if(!button)return
+  if(!supabaseConfigured){button.hidden=true;return}
+  try{
+    const session=await supabaseSession().catch(()=>null)
+    button.hidden=false
+    button.textContent=session?.user?.email?`☁ ${session.user.email}`:'☁ Synchroniser'
+    button.classList.toggle('connected',Boolean(session))
+  }catch{button.hidden=false;button.textContent='☁ Synchroniser'}
+}
+async function openSupabaseSync(){
+  if(!supabaseConfigured){toast('Synchronisation indisponible');return}
+  const session=await supabaseSession().catch(()=>null)
+  const d=$('#modal')
+  if(session?.user){
+    d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Synchronisation MISES!</b><small>${esc(session.user.email||'Compte connecté')}</small></div><button id="closeSupabaseSync" class="ghost" type="button">×</button></div><p>Les fiches restent locales et sont synchronisées en arrière-plan. Les photos sont stockées séparément et compressées côté appareil avant envoi.</p><div class="row"><button id="syncNow">Synchroniser maintenant</button><button id="supabaseSignOut" class="ghost" type="button">Déconnecter</button></div><p id="syncNowStatus" class="hint"></p></div>`
+    d.showModal()
+    $('#closeSupabaseSync').onclick=()=>d.close()
+    $('#supabaseSignOut').onclick=async()=>{await supabaseSignOut();d.close();await updateSupabaseStatus();toast('Compte MISES déconnecté')}
+    $('#syncNow').onclick=async()=>{
+      const status=$('#syncNowStatus');status.textContent='Synchronisation…'
+      try{
+        const result=await syncMises(db,{onProgress:p=>{status.textContent=`${p.pushed} envoyées · ${p.pulled} récupérées · ${p.photos} photos`}})
+        status.textContent=`Terminé · ${result.pushed} envoyées · ${result.pulled} récupérées · ${result.photos} photos`
+        await refresh();render();await updateSupabaseStatus()
+      }catch(error){status.textContent=`Erreur : ${error instanceof Error?error.message:'synchronisation impossible'}`}
+    }
+    return
+  }
+  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Synchroniser MISES!</b><small>Compte personnel · sans Google</small></div><button value="cancel" class="ghost">×</button></div><p>Entre ton adresse e-mail. MISES enverra un lien de connexion sécurisé. Aucun mot de passe ni compte Google n’est nécessaire.</p><label>E-mail<input id="supabaseEmail" type="email" autocomplete="email" required placeholder="ton@email.fr"></label><button id="sendSupabaseLink">Recevoir le lien de connexion</button><p id="supabaseAuthStatus" class="hint"></p></form>`
+  d.showModal()
+  $('#sendSupabaseLink').onclick=async e=>{
+    e.preventDefault()
+    const email=$('#supabaseEmail').value.trim(),status=$('#supabaseAuthStatus')
+    if(!email)return
+    try{await sendSupabaseMagicLink(email);status.textContent='Lien envoyé. Ouvre-le dans ce navigateur puis reviens dans MISES.'}
+    catch(error){status.textContent=error instanceof Error?error.message:'Connexion impossible'}
+  }
+}
+async function runSupabaseSync(){
+  if(supabaseSyncBusy||!supabaseConfigured||!navigator.onLine)return
+  const session=await supabaseSession().catch(()=>null)
+  if(!session)return
+  supabaseSyncBusy=true
+  try{await syncMises(db);await refresh();render()}
+  catch(error){console.warn('[MISES] Supabase sync:',error)}
+  finally{supabaseSyncBusy=false;await updateSupabaseStatus()}
+}
+function scheduleSupabaseSync(){clearTimeout(supabaseSyncTimer);supabaseSyncTimer=setTimeout(()=>runSupabaseSync(),1400)}
+window.addEventListener('online',scheduleSupabaseSync)
+window.addEventListener('focus',scheduleSupabaseSync)
+if(supabaseConfigured){supabaseClient().then(client=>client.auth.onAuthStateChange(()=>{updateSupabaseStatus();scheduleSupabaseSync()})).catch(()=>{});scheduleSupabaseSync()}
+await updateSupabaseStatus()
+
 let driveSyncTimer=0,driveSyncBusy=false
 async function privateStatePayload(){
   return {version:3,exportedAt:new Date().toISOString(),...await readData(db),kits:await db.getAll('kits'),learnings:await db.getAll('learnings'),settings:await db.getAll('settings')}
@@ -160,6 +218,8 @@ async function applyPrivateState(payload){
   }
   activeMise=null;await refresh();render()
 }
+$('#supabaseSyncBtn').onclick=()=>openSupabaseSync()
+
 async function updateAccountStatus(){
   const saved=await db.get('settings','google-account'),session=artGoogleSession(),button=$('#accountBtn')
   const blocked=androidGoogleSignInBlocked(),fromArt=project.source==='art'
@@ -674,7 +734,7 @@ $('#app').innerHTML=`
     <button id="printerBtn" class="headerChip" type="button">Imprimante · À connecter</button>
     <button id="preferencesBtn" class="headerIcon" type="button" aria-label="Préférences">⚙</button>
     <button id="manualBtn" class="headerIcon" type="button" aria-label="Mini-manuel">?</button>
-    <button id="accountBtn" type="button" hidden>Google · Non connecté</button>
+    <button id="supabaseSyncBtn" class="headerChip" type="button" hidden>☁ Synchroniser</button><button id="accountBtn" type="button" hidden>Google · Non connecté</button>
     <button id="backupBtn" type="button" hidden aria-label="Sauvegarder">⇩</button>
   </div>
 </header>
@@ -822,7 +882,7 @@ async function runLocalPhoto(file,mise=null,mode='control'){
   const minutes=pendingExerciseMinutes||1
   try{await openLocalPhoto({file,db,mise,resizePhoto,mode,durationMin:minutes,saved:async (next,created)=>{
     if(next)publishProject(next)
-    await refresh();render()
+    await refresh();render();scheduleSupabaseSync()
     for(const row of created||[]) if(row.fresh) undoStack.push({store:'objects',id:row.id})
     if(undoStack.length) $('#undoBtn').hidden=false
     if(mode==='inventory'&&created?.length){
