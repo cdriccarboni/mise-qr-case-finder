@@ -20,7 +20,7 @@ test('search answers are immediate and the first screen stays compact', async ({
   await expect(page.locator('#searchResults')).not.toBeEmpty()
   const recipe = page.locator('[data-public-technique]').first()
   await expect(recipe).toBeVisible()
-  await recipe.click()
+  await recipe.locator('[data-technique-button]').click()
   await expect(page.locator('#modal')).toContainText('Comment faire ce son')
   await expect(page.locator('#modal .techniqueText')).not.toBeEmpty()
   await page.locator('#closePublicTechnique').click()
