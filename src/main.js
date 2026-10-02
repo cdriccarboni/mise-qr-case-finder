@@ -853,12 +853,12 @@ function renderSearch(target='#searchResults'){
   $$('[data-add]',$(target)).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.add))
   $$('[data-fav]',$(target)).forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.fav))
   $$('[data-alt]',$(target)).forEach(b=>b.onclick=()=>openAlternatives(b.dataset.alt))
-  $('[data-public-technique]',$(target)).forEach(card=>{
+  $$('[data-public-technique]',$(target)).forEach(card=>{
     card.onclick=event=>{if(event.target.closest('button,a'))return;openPublicTechnique(card.dataset.publicTechnique)}
     card.onkeydown=event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button,a')){event.preventDefault();openPublicTechnique(card.dataset.publicTechnique)}}
   })
-  $('[data-technique-button]',$(target)).forEach(b=>b.onclick=()=>openPublicTechnique(b.dataset.techniqueButton))
-  $('[data-idea]',$(target)).forEach(b=>b.onclick=()=>{
+  $$('[data-technique-button]',$(target)).forEach(b=>b.onclick=()=>openPublicTechnique(b.dataset.techniqueButton))
+  $$('[data-idea]',$(target)).forEach(b=>b.onclick=()=>{
     const idea=external.find(item=>item.id===b.dataset.idea||item.name===b.dataset.idea)
     openObject({
       name:idea?.name||b.dataset.idea,
