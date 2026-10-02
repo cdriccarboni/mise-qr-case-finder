@@ -1,3 +1,19 @@
+# MISES! — règles produit spécifiques
+
+MISES! est une PWA + application Android de bruitage, inventaire de valises, recherche d'objets/sons/ambiances, préparation, rangement, partage QR et usages pédagogiques.
+
+Règles durables :
+- préserver la séparation entre la base globale Data Bruitage et les sous-ensembles/kit utilisés sur le terrain ;
+- ne jamais publier de données personnelles privées dans le dépôt public ; les jeux de démonstration doivent rester fictifs ou explicitement publics ;
+- mobile-first réel : Safe Areas, sorties de menus, validation tactile visible, recherche immédiatement compréhensible ;
+- photo → détection → nom doit rester corrigeable et réutiliser les briques de vision existantes plutôt qu'un second pipeline concurrent ;
+- inventaire long : liste dépliable, fermeture toujours accessible, pas de modal bloquée ;
+- PWA, Android et données doivent rester cohérents ; une correction web n'est pas une livraison Android ;
+- préserver le parcours Trouver / Créer / Ranger / Préparer / Partager et la simplicité terrain ;
+- les jeux pédagogiques doivent gérer explicitement le nombre de participants lorsque pertinent.
+
+---
+
 # AGENTS.md — règles durables de collaboration
 
 Ces règles s'appliquent à tout agent ou assistant qui intervient sur ce dépôt.
