@@ -27,6 +27,7 @@ test('manifest scope resolves to the GitHub Pages path and the Android asset pat
   assert.match(main, /version\.json\?check=/)
   assert.match(main, /cache:'no-store'/)
   assert.match(main, /registration\?\.update\(\)/)
+  assert.match(main, /PUBLIC_PWA_HOST='cdriccarboni\.github\.io'/)
 })
 
 test('Data Bruitage is the catalogue and the acoustic kit is only a view', () => {
