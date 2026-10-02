@@ -5,7 +5,7 @@ import { ACOUSMATIC_THEATRE_URL, AUTHOR_WEBSITE_URL, PRIVACY_URL, REPOSITORY_URL
 
 const AUTHOR_URL = 'https://carboni-cedric.pages-perso.free.fr/'
 
-test('the about screen keeps the author copyright link and public project URLs', () => {
+test('public credits stay available while Preferences uses Share instead of About', () => {
   assert.equal(AUTHOR_WEBSITE_URL, AUTHOR_URL)
   assert.equal(ACOUSMATIC_THEATRE_URL, 'https://www.acousmatic-theatre.fr/')
   assert.equal(REPOSITORY_URL, 'https://github.com/cdriccarboni/mise-qr-case-finder')
@@ -19,10 +19,9 @@ test('the about screen keeps the author copyright link and public project URLs',
   assert.match(theatre, /href="https:\/\/www\.acousmatic-theatre\.fr\/"/)
   assert.match(theatre, /target="_blank"/)
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8')
-  assert.match(main, /<p class="aboutCredit">© \$\{externalAnchor\(AUTHOR_WEBSITE_URL, 'Cédric Carboni'/)
   assert.match(main, /© Cédric Carboni/)
   assert.doesNotMatch(main, /Une création de|pour \$\{externalAnchor\(ACOUSMATIC_THEATRE_URL/)
-  assert.doesNotMatch(main, /id="aboutHome"/)
-  assert.doesNotMatch(main, /id="goalAbout"/)
-  assert.match(main, /id="preferencesAbout"/)
+  assert.doesNotMatch(main, /id="aboutHome"|id="goalAbout"|id="preferencesAbout"|id="aboutDlg"/)
+  assert.match(main, /id="preferencesShare"[^>]*>Partager<\/button>/)
+  assert.match(main, /https:\/\/cdriccarboni\.github\.io\/mise-qr-case-finder\//)
 })
