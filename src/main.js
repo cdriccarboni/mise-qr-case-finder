@@ -65,10 +65,13 @@ async function checkPublishedVersion(){
     setTimeout(()=>location.reload(),900)
   }catch{}
 }
-window.addEventListener('focus',()=>void checkPublishedVersion())
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void checkPublishedVersion()})
-setInterval(()=>void checkPublishedVersion(),60_000)
-setTimeout(()=>void checkPublishedVersion(),1200)
+const PUBLIC_PWA_HOST='cdriccarboni.github.io'
+if(location.hostname===PUBLIC_PWA_HOST){
+  window.addEventListener('focus',()=>void checkPublishedVersion())
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void checkPublishedVersion()})
+  setInterval(()=>void checkPublishedVersion(),60_000)
+  setTimeout(()=>void checkPublishedVersion(),1200)
+}
 
 const $=(s,r=document)=>r.querySelector(s)
 const $$=(s,r=document)=>[...r.querySelectorAll(s)]
