@@ -186,7 +186,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   }
 
   const downloadPromise = page.waitForEvent('download')
-  await page.getByText('Partager', { exact: true }).click()
+  await page.getByLabel('Navigation MISES').getByText('Partager', { exact: true }).click()
   await page.locator('#goalBackup').click()
   const backup = await (await downloadPromise).path()
   await page.evaluate(() => indexedDB.deleteDatabase('mises-db'))
