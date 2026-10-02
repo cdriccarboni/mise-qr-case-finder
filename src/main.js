@@ -40,13 +40,35 @@ migrateSessionKeys()
 applyInk(localStorage.getItem(LOCAL_KEYS.ink))
 
 let applySwUpdate=()=>{}
+let swRegistration=null
+let pwaRefreshInFlight=false
 applySwUpdate=registerSW({
   immediate:true,
+  onRegisteredSW(_swUrl,registration){swRegistration=registration||null},
   onNeedRefresh(){
-    toast('Nouvelle version disponible')
-    setTimeout(()=>applySwUpdate(true),1600)
+    toast('Nouvelle version disponible · mise à jour…')
+    setTimeout(()=>applySwUpdate(true),300)
   }
 })
+async function checkPublishedVersion(){
+  if(pwaRefreshInFlight||!navigator.onLine)return
+  try{
+    const response=await fetch(`./version.json?check=${Date.now()}`,{cache:'no-store',headers:{accept:'application/json'}})
+    if(!response.ok)return
+    const remote=String((await response.json())?.version||'').trim()
+    if(!remote||remote===APP_VERSION)return
+    pwaRefreshInFlight=true
+    toast(`MISES! ${remote} disponible · actualisation…`)
+    const registration=swRegistration||await navigator.serviceWorker?.getRegistration()
+    await registration?.update()
+    applySwUpdate(true)
+    setTimeout(()=>location.reload(),900)
+  }catch{}
+}
+window.addEventListener('focus',()=>void checkPublishedVersion())
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void checkPublishedVersion()})
+setInterval(()=>void checkPublishedVersion(),60_000)
+setTimeout(()=>void checkPublishedVersion(),1200)
 
 const $=(s,r=document)=>r.querySelector(s)
 const $$=(s,r=document)=>[...r.querySelectorAll(s)]
