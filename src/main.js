@@ -162,6 +162,7 @@ async function updateSupabaseStatus(){
 async function openSupabaseSync(){
   if(!supabaseConfigured){toast('Synchronisation indisponible');return}
   const session=await supabaseSession().catch(()=>null)
+  if(session?.user) await ensureSupabaseAuthListener()
   const d=$('#modal')
   if(session?.user){
     d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Synchronisation MISES!</b><small>${esc(session.user.email||'Compte connecté')}</small></div><button id="closeSupabaseSync" class="ghost" type="button">×</button></div><p>Les fiches restent locales et sont synchronisées en arrière-plan. Les photos sont stockées séparément et compressées côté appareil avant envoi.</p><div class="row"><button id="syncNow">Synchroniser maintenant</button><button id="supabaseSignOut" class="ghost" type="button">Déconnecter</button></div><p id="syncNowStatus" class="hint"></p></div>`
@@ -198,10 +199,22 @@ async function runSupabaseSync(){
   finally{supabaseSyncBusy=false;await updateSupabaseStatus()}
 }
 function scheduleSupabaseSync(){clearTimeout(supabaseSyncTimer);supabaseSyncTimer=setTimeout(()=>runSupabaseSync(),1400)}
-window.addEventListener('online',scheduleSupabaseSync)
-window.addEventListener('focus',scheduleSupabaseSync)
-if(supabaseConfigured){supabaseClient().then(client=>client.auth.onAuthStateChange(()=>{updateSupabaseStatus();scheduleSupabaseSync()})).catch(()=>{});scheduleSupabaseSync()}
-updateSupabaseStatus()
+let supabaseAuthListenerReady=false,supabaseAutoSyncBound=false
+function bindSupabaseAutoSync(){
+  if(supabaseAutoSyncBound)return
+  supabaseAutoSyncBound=true
+  window.addEventListener('online',scheduleSupabaseSync)
+  window.addEventListener('focus',scheduleSupabaseSync)
+}
+async function ensureSupabaseAuthListener(){
+  if(!supabaseConfigured||supabaseAuthListenerReady)return
+  try{
+    const client=await supabaseClient()
+    client.auth.onAuthStateChange(()=>{updateSupabaseStatus();scheduleSupabaseSync()})
+    supabaseAuthListenerReady=true
+    bindSupabaseAutoSync()
+  }catch{}
+}
 
 let driveSyncTimer=0,driveSyncBusy=false
 async function privateStatePayload(){
@@ -1427,6 +1440,7 @@ $('#closeManual').onclick=()=>$('#manualDlg').close()
 
 $('#preferencesShare').onclick=()=>{$('#preferencesDlg').close();void openAppShareDialog()}
 $('#supabaseSyncBtn').onclick=()=>openSupabaseSync()
+if(supabaseConfigured){$('#supabaseSyncBtn').hidden=false;$('#supabaseSyncBtn').textContent='☁ Synchroniser'}
 
 
 function isDialogBackdropClick(dialog,event){
