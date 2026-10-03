@@ -37,3 +37,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+# GitHub Pages redeploy trigger — 2026-10-03
