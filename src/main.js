@@ -218,7 +218,7 @@ async function applyPrivateState(payload){
   }
   activeMise=null;await refresh();render()
 }
-$('#supabaseSyncBtn').onclick=()=>openSupabaseSync()
+
 
 async function updateAccountStatus(){
   const saved=await db.get('settings','google-account'),session=artGoogleSession(),button=$('#accountBtn')
@@ -1426,6 +1426,7 @@ $('#goalManual').onclick=()=>$('#manualDlg').showModal()
 $('#closeManual').onclick=()=>$('#manualDlg').close()
 
 $('#preferencesShare').onclick=()=>{$('#preferencesDlg').close();void openAppShareDialog()}
+$('#supabaseSyncBtn').onclick=()=>openSupabaseSync()
 
 
 function isDialogBackdropClick(dialog,event){
