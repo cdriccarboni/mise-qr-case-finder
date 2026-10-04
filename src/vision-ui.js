@@ -1,11 +1,11 @@
 import { readData, newId, enrichObjects } from './data-bruitage.js'
-import { matchDetections, analyseMise, correctionKey, translateLabel, searchFiches, closestFiches } from './vision-matching.js'
+import { matchDetections, analyseMise, correctionKey, translateLabel, searchFiches, closestFiches, PHOTO_PROPOSAL_HINT, PHOTO_ANALYSIS_UNAVAILABLE, photoProposalStatus } from './vision-matching.js'
 import { detectLocal } from './local-vision.js'
 import { escapeHtml as esc } from './data-ui.js'
 import { FAMILIES } from './constants.js'
 import { newLearning } from './learning.js'
 import { handsChallenges, generateExercises, sightUniverses } from './exercise-engine.js'
-import { confidenceLevel, visualReference } from './vision-engine.js'
+import { visualReference } from './vision-engine.js'
 
 const TITLES = {
   inventory: ['Inventaire rapide', 'Photo, fiche, QR, objet suivant'],
@@ -29,12 +29,12 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
   const creative = mode === 'hands' || mode === 'universe' || mode === 'group'
   dialog.innerHTML = `<div class="form ${creative ? 'playful' : ''}"><div class="dialoghead"><div><b>${mise && mode === 'control' ? 'Contrôle photo de mise' : esc(heading[0])}</b><small>${esc(mise?.name || heading[1])}</small></div><button data-close class="ghost">Fermer</button></div>
     <div class="visionFrame"><img data-photo class="photoPreview" alt="Photo à analyser"><div data-boxes></div></div>
-    <p class="hint">Analyse sur cet appareil, hors ligne. La catégorie est un nom générique (une bouteille d’eau, une tasse…). Les boutons proposent les fiches les plus proches de ta base, et la recherche trouve le nom exact. Un geste remplace la catégorie par ta fiche et mémorise la correction : la prochaine photo de la même catégorie propose d’abord ton objet. Le modèle n’est pas réentraîné. Les personnes sont ignorées.</p>
-    <p data-status role="status">Chargement du modèle local… Vous pouvez déjà saisir un objet.</p>
+    <p class="hint" data-honest>${esc(PHOTO_PROPOSAL_HINT)} La catégorie affichée est un nom général (une bouteille d’eau, une tasse…). Les boutons proposent des fiches de ta base : choisis-en une, ou cherche le nom exact. Rien n’est enregistré tant que tu n’as pas confirmé.</p>
+    <p data-status role="status">Analyse de la photo sur cet appareil… Vous pouvez déjà saisir un objet.</p>
     <div data-creative hidden></div>
     <div class="batchBar"><label>Tout est dans<select data-batch-case><option value="">Choisir un contenant</option>${(data.cases || []).map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></label>
     <label>Ajouter à la mise<select data-batch-mise><option value="">Aucune</option>${mises.map(item => `<option value="${esc(item.id)}">${esc(item.name)}</option>`).join('')}</select></label>
-    <button type="button" data-batch-all class="ghost">Créer les fiches dans ce contenant</button></div>
+    <button type="button" data-batch-all class="ghost">Confirmer et créer les fiches dans ce contenant</button></div>
     <div data-proposals></div><button data-manual class="ghost">+ Objet omis / saisie manuelle</button>
     ${mise ? `<h3>Checklist humaine</h3><div data-checklist>${(mise.objectIds || []).map(id => `<label class="check"><input data-expected type="checkbox" value="${esc(id)}" ${(mise.checked || []).includes(id) ? 'checked' : ''}><span>${esc(catalogue.find(o => o.id === id)?.name || id)}</span></label>`).join('')}</div><p data-summary role="status"></p>` : ''}
     <p data-error role="alert"></p><button data-save>Enregistrer les validations</button></div>`
@@ -71,11 +71,10 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
   function appendProposal(p) {
     const index = proposals.push(p) - 1
     const object = catalogue.find(o => o.id === p.objectId)
-    const unknown = !p.objectId && !p.rejected
+    const unknown = !p.objectId && !p.rejected && !(p.candidates || []).some(item => (item.lexical || 0) >= 0.7)
     const row = document.createElement('fieldset'); row.dataset.row = index; row.className = 'visionProposal'
-    const level=confidenceLevel(p.score ?? p.confidence ?? 0)
-    row.innerHTML = `<legend>Objet ${index + 1} · ${level.label}${p.confidence === undefined ? '' : ` · ${Math.round(p.confidence * 100)} %`}</legend>
-      <p class="hint">${esc(p.rawLabel ? `Catégorie : ${p.category || translateLabel(p.rawLabel)} · ${p.evidence}` : 'Saisie humaine')}${p.ambiguous ? ' · Correspondance ambiguë' : ''}${unknown ? ' · Inconnu, à nommer' : ''}${p.objectId ? ' · Déjà dans la base' : ''}</p>
+    row.innerHTML = `<legend>Objet ${index + 1} · Proposition à confirmer</legend>
+      <p class="hint">${esc(p.rawLabel ? `Catégorie : ${p.category || translateLabel(p.rawLabel)} · ${p.evidence}` : 'Saisie à la main, à confirmer')}${p.ambiguous ? ' · Plusieurs fiches possibles' : ''}${unknown ? ' · Pas de fiche correspondante, à nommer si tu confirmes' : ''}${p.objectId ? ' · Fiche proposée, à confirmer' : ''}</p>
       <div class="fichePicks" data-picks></div>
       <label>Chercher dans ta base<input data-fiche-search type="search" placeholder="Le nom de ta fiche" ${p.rawLabel ? '' : 'hidden'}></label>
       <div class="fichePicks" data-fiche-results></div>
@@ -242,8 +241,8 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
         + exercises.exercises.map(item => `<article class="challenge"><strong>${esc(item.title)}</strong><small>${esc(item.duration)} · ${esc(item.disclaimer)}</small><p>${item.steps.map(esc).join(' ')}</p></article>`).join('')
         + [...(hands.uncertain || []), ...(universes.uncertain || []), ...(exercises.uncertain || [])].map(line => `<p class="uncertain">${esc(line)}</p>`).join('')
     }
-    $('[data-status]').textContent = matches.length ? `${matches.length} objet(s) proposés localement · ${matches.length} zone(s) proposée(s) · IDENTIFIÉ / PROBABLE / SUGGESTION / À IDENTIFIER · aucune validation automatique.` : 'Aucun objet détecté · À IDENTIFIER. Ajoutez les objets omis manuellement.'
+    $('[data-status]').textContent = photoProposalStatus(matches.length)
   } catch {
-    if (!closed && !saving) { analysisState = 'unavailable'; $('[data-status]').textContent = 'Modèle local indisponible. Terminez le chargement de la PWA en ligne puis réessayez. La saisie et les corrections restent disponibles.' }
+    if (!closed && !saving) { analysisState = 'unavailable'; $('[data-status]').textContent = PHOTO_ANALYSIS_UNAVAILABLE }
   }
 }
