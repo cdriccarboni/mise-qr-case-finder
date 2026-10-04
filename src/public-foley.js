@@ -6,10 +6,15 @@ const pick=(list,rng=Math.random)=>list.length?list[Math.floor(rng()*list.length
 
 export function publicReferenceIdeas(library={}){
   return (library.records||[]).map(row=>({
+    id:row.id,
     name:row.sound,
     sounds:row.objects||[],
+    objects:row.objects||[],
     aliases:[row.technique,row.sourceRef].filter(Boolean),
     summary:row.technique,
+    technique:row.technique,
+    fabrication:row.fabrication||null,
+    sourceRef:row.sourceRef||'',
     source:(library.sources||[]).find(s=>s.id===row.sourceId)?.name||'Source Internet',
     sourceUrl:row.sourceUrl,
     kind:'Recette publique',

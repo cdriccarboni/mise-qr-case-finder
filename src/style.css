@@ -316,3 +316,8 @@ html[data-display=mobile] dialog{width:calc(100vw - 16px);max-width:calc(100vw -
 html[data-display=mobile] .shareAppActions{grid-template-columns:1fr}
 
 .searchbox .searchGo{min-width:2.8rem;width:2.8rem;padding:.72rem .4rem;font-size:1.15rem}
+
+.recipeClickable{cursor:pointer}
+.publicTechniqueSheet{align-items:stretch}
+.techniqueTarget{display:flex;gap:.65rem;align-items:center;flex-wrap:wrap}
+.techniqueText{font-size:1.02rem;line-height:1.55;margin:.35rem 0 .7rem}
