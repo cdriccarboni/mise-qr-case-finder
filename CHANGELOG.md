@@ -1,3 +1,11 @@
+## 0.4.0-beta.11 — 2026-10-05 (propositions photo à confirmer)
+
+- Photo : une fiche n’est proposée au premier plan que si le mot vu (valise, chaise, table…) est vraiment dans son nom. Les synonymes plus lâches et les objets seulement « proches » ne prennent plus la place d’une vraie correspondance.
+- Photo : une personne, un objet non reconnu ou une classe trop générale (une table sans le mot « table » dans la fiche) ne fabrique plus de fausse fiche.
+- Écran : le texte dit clairement que c’est une proposition à confirmer, pas une identification certaine. Rien n’est ajouté à une caisse sans un geste de confirmation.
+- Hors ligne : le modèle déjà en cache ne change pas. Aucun service externe.
+- Version `0.4.0-beta.11`. Android `versionCode` inchangé à `22` (seul le nom de version suit). Cache PWA `mises-0.4.0-beta.11`.
+
 ## 0.4.0-beta.10 — 2026-10-02 (mise à jour PWA auto + diagnostic OAuth)
 
 - PWA : passage du service worker en `autoUpdate`, activation immédiate avec `skipWaiting`.

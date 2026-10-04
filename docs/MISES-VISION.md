@@ -34,13 +34,9 @@ Le moteur est prévu en cascade :
 3. mémoire visuelle / similarité locale ;
 4. contexte métier (inventaire, contenant, aliases, Data Bruitage, confirmations).
 
-L'interface normale utilise quatre niveaux :
-- **IDENTIFIÉ** ;
-- **PROBABLE** ;
-- **SUGGESTION** ;
-- **À IDENTIFIER**.
+Le moteur conserve quatre niveaux internes (IDENTIFIÉ, PROBABLE, SUGGESTION, À IDENTIFIER). L'écran photo, lui, ne les affiche pas comme une certitude : il dit que c'est une proposition à confirmer. Le rapprochement se fait par les mots de la fiche, pas par comparaison d'images. La mémoire visuelle stocke toujours une photo confirmée, sans mesurer une similarité d'image.
 
-Aucune proposition n'est validée automatiquement.
+Aucune proposition n'est validée automatiquement, et rien n'est ajouté à une caisse sans confirmation.
 
 ## Vocabulaire métier
 
