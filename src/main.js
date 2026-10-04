@@ -42,13 +42,38 @@ migrateSessionKeys()
 applyInk(localStorage.getItem(LOCAL_KEYS.ink))
 
 let applySwUpdate=()=>{}
+let swRegistration=null
+let pwaRefreshInFlight=false
 applySwUpdate=registerSW({
   immediate:true,
+  onRegisteredSW(_swUrl,registration){swRegistration=registration||null},
   onNeedRefresh(){
-    toast('Nouvelle version disponible')
-    setTimeout(()=>applySwUpdate(true),1600)
+    toast('Nouvelle version disponible · mise à jour…')
+    setTimeout(()=>applySwUpdate(true),300)
   }
 })
+async function checkPublishedVersion(){
+  if(pwaRefreshInFlight||!navigator.onLine)return
+  try{
+    const response=await fetch(`./version.json?check=${Date.now()}`,{cache:'no-store',headers:{accept:'application/json'}})
+    if(!response.ok)return
+    const remote=String((await response.json())?.version||'').trim()
+    if(!remote||remote===APP_VERSION)return
+    pwaRefreshInFlight=true
+    toast(`MISES! ${remote} disponible · actualisation…`)
+    const registration=swRegistration||await navigator.serviceWorker?.getRegistration()
+    await registration?.update()
+    applySwUpdate(true)
+    setTimeout(()=>location.reload(),900)
+  }catch{}
+}
+const PUBLIC_PWA_HOST='cdriccarboni.github.io'
+if(location.hostname===PUBLIC_PWA_HOST){
+  window.addEventListener('focus',()=>void checkPublishedVersion())
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void checkPublishedVersion()})
+  setInterval(()=>void checkPublishedVersion(),60_000)
+  setTimeout(()=>void checkPublishedVersion(),1200)
+}
 
 const $=(s,r=document)=>r.querySelector(s)
 const $$=(s,r=document)=>[...r.querySelectorAll(s)]
@@ -237,15 +262,15 @@ async function updateAccountStatus(){
   const saved=await db.get('settings','google-account'),session=artGoogleSession(),button=$('#accountBtn')
   const blocked=androidGoogleSignInBlocked(),fromArt=project.source==='art'
   if(button){
-    button.textContent=blocked?'Google · via la PWA':saved?.email?(session?`Google · ${saved.email}`:'Google · Reconnecter'):(fromArt?'Google · Continuer depuis ART':'Google · À connecter')
+    button.textContent=blocked?'Google · dans le navigateur':saved?.email?(session?`Google · ${saved.email}`:'Google · Reconnecter'):(fromArt?'Google · Continuer depuis ART':'Google · À connecter')
     button.classList.toggle('connected',Boolean(!blocked&&saved&&session))
   }
   const goal=$('#goalGoogle')
-  if(goal)goal.textContent=blocked?'Connexion Google via la PWA':fromArt?'Continuer Google depuis ART':'Connexion Google'
+  if(goal)goal.textContent=blocked?'Connexion Google dans le navigateur':fromArt?'Continuer Google depuis ART':'Connexion Google'
 }
 function explainAndroidGoogle(){
   const d=$('#modal')
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Connexion Google via la PWA</b><small>Application Android</small></div><button id="closeAndroidGoogle" class="ghost" type="button">×</button></div><p>${esc(googleSignInUnavailableMessage())}</p><p class="hint">La PWA peut se connecter à Google Drive dans Chrome. L’application Android garde ses données locales tant que l’authentification Google native n’est pas configurée.</p><div class="row"><button id="openAndroidGooglePwa" type="button">Ouvrir la PWA pour Google</button><button id="closeAndroidGoogleAlt" class="ghost" type="button">Rester dans l’application</button></div></div>`
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Connexion Google dans le navigateur</b><small>Application Android</small></div><button id="closeAndroidGoogle" class="ghost" type="button" aria-label="Fermer">×</button></div><p>${esc(googleSignInUnavailableMessage())}</p><p class="hint">Chrome peut se connecter à Google Drive. L’application Android garde ses données locales tant que l’authentification Google native n’est pas configurée.</p><div class="row"><button id="openAndroidGooglePwa" type="button">Ouvrir dans Chrome</button><button id="closeAndroidGoogleAlt" class="ghost" type="button">Rester dans l’application</button></div></div>`
   d.showModal()
   $('#closeAndroidGoogle').onclick=()=>d.close()
   $('#closeAndroidGoogleAlt').onclick=()=>d.close()
@@ -467,6 +492,37 @@ function findAlternatives(o){
   const pool=objects.filter(x=>x.id!==o.id).map(x=>({...x,altText:[x.name,...(x.sounds||[]),...(x.tags||[]),...(x.contexts||[])].join(' ')}))
   return new Fuse(pool,{keys:['sounds','tags','contexts','name','altText'],threshold:.48,ignoreLocation:true}).search(queries).slice(0,8).map(x=>x.item)
 }
+function openPublicTechnique(refKey){
+  const recipe=external.find(item=>item.id===refKey||item.name===refKey)
+  if(!recipe?.technique)return
+  const d=$('#modal')
+  d.innerHTML=`<div class="form publicTechniqueSheet">
+    <div class="dialoghead"><div><b>Comment faire ce son</b><small>${esc(recipe.name)}</small></div><button id="closePublicTechnique" class="ghost" type="button" aria-label="Fermer">×</button></div>
+    <div class="techniqueTarget"><span class="chip">Son visé</span><strong>${esc(recipe.name)}</strong></div>
+    <p class="techniqueText">${esc(recipe.technique)}</p>
+    ${(recipe.objects||[]).length?`<div><b>Objets / matières</b><p>${recipe.objects.map(chip).join(' ')}</p></div>`:''}
+    ${recipe.fabrication?`<p class="hint">Dispositif lié : ${esc(recipe.fabrication)}</p>`:''}
+    <div class="row">
+      <button id="addPublicTechnique" type="button">Ajouter à mon stock</button>
+      ${recipe.sourceUrl?`<a class="buttonLink ghost" href="${esc(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">Source ↗</a>`:''}
+    </div>
+  </div>`
+  d.showModal()
+  $('#closePublicTechnique').onclick=()=>d.close()
+  $('#addPublicTechnique').onclick=()=>{
+    d.close()
+    openObject({
+      name:recipe.name,
+      sounds:[recipe.name],
+      device:(recipe.objects||[]).join(', '),
+      notes:recipe.technique,
+      source:recipe.source||'recette publique',
+      owned:true,
+      provenance:'external'
+    })
+  }
+}
+
 function openAlternatives(id){
   const o=objectBy(id);if(!o)return
   const alts=findAlternatives(o),d=$('#modal')
@@ -781,7 +837,7 @@ $('#app').innerHTML=`
 <section id="vibe" class="tab foleyOnly"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 320 52"><circle cx="36" cy="26" r="10"/><polygon points="104,10 124,20 119,42 91,42 84,20"/><polygon points="192,10 216,26 192,42 168,26"/><path d="M246 30c10-12 20-12 30 0s20 12 30 0"/></svg></div><h2>Vibe bruitage</h2><p>Décris un univers. MISES! reste hors ligne et sépare ce que tu possèdes de ce qui est seulement suggéré.</p><div class="grid2"><label>Univers<textarea id="vibePrompt" rows="3" placeholder="Une forêt inquiétante la nuit…"></textarea></label><label>Participant·es<input id="vibePeople" type="number" min="1" max="99" inputmode="numeric" value="${lastParticipantCount}"></label></div><div class="row"><button id="runVibe" type="button">Proposer</button><button type="button" class="ghost" data-vibe-preset="Une forêt inquiétante la nuit avec quelque chose qui rôde au loin">Forêt</button><button type="button" class="ghost" data-vibe-preset="Une vieille maison qui travaille pendant une tempête">Maison</button><button type="button" class="ghost" data-vibe-preset="un bateau en bois pris dans une mer violente">Bateau</button></div><div id="vibeOut"></div></div></section>
 <section id="exercises" class="tab foleyOnly"><div class="panel playful"><div class="tokenStrip" aria-hidden="true"><svg viewBox="0 0 320 52"><circle cx="36" cy="26" r="10"/><polygon points="104,10 124,20 119,42 91,42 84,20"/><polygon points="192,10 216,26 192,42 168,26"/><path d="M246 30c10-12 20-12 30 0s20 12 30 0"/></svg></div><h2>Exercice</h2><p>Généré à partir de ta base. Ce n’est pas une liste figée, et ce n’est pas une fiche.</p><div class="grid2"><label>Durée<select id="exDuration"><option value="0.5">30 secondes</option><option value="1">1 min</option><option value="3">3 min</option><option value="5" selected>5 min</option></select></label><label>Participant·es<input id="exPeople" type="number" min="1" max="99" inputmode="numeric" value="${lastParticipantCount}"></label><label>Niveau<select id="exLevel"><option value="découverte">Découverte</option><option value="atelier" selected>Atelier</option><option value="avancé">Avancé</option></select></label><label>Mode<select id="exMode"><option value="">Plusieurs modes</option><option value="decouverte">Découverte</option><option value="echauffement">Échauffement</option><option value="improvisation">Improvisation</option><option value="contrainte">Contrainte</option><option value="defi">Défi</option><option value="ambiance">Création d’ambiance</option><option value="histoire">Histoire sonore</option><option value="detournement">Détournement d’objet</option><option value="meme-objet">Même objet, plusieurs sons</option><option value="plusieurs-un-son">Plusieurs objets, un seul son</option></select></label></div><label>Univers (facultatif)<input id="exUniverse" placeholder="port, forêt, cuisine…"></label><button id="runExercise" type="button">Générer</button><div id="exerciseOut"></div></div></section>
 <section id="creator" class="tab foleyOnly">
-  <div class="panel"><h2>Créateur de bruitage</h2><p>Décrivez une ambiance ou un son pour explorer votre parc et les références.</p>
+  <div class="panel"><h2>Créateur de bruitage</h2><p>Décris une ambiance ou un son pour explorer ton parc et les références.</p>
   <label>Participant·es<input id="creatorPeople" type="number" min="1" max="99" inputmode="numeric" value="${lastParticipantCount}"></label>
   <div class="row"><button data-preset="mer" class="ghost">Mer</button><button data-preset="forêt" class="ghost">Forêt</button><button data-preset="feu" class="ghost">Feu</button><button data-preset="orage" class="ghost">Orage</button><button id="creatorGroupAmbience" type="button">Créer l’ambiance pour le groupe</button></div></div>
   <div id="creatorResults"></div>
@@ -797,7 +853,7 @@ $('#app').innerHTML=`
 <input id="universePhotoInput" type="file" accept="image/*" capture="environment" hidden>
 <input id="restoreInput" type="file" accept=".json" hidden>
 <dialog id="modal"></dialog>
-<dialog id="scanDlg"><div class="dialoghead"><strong>Caméra</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline muted></video><p id="scanFeedback" class="scanFeedback" role="status">Cadre un QR. La lecture est continue, sans bouton déclencheur.</p><div class="row"><button id="scanObjects" type="button">Analyser les objets</button></div></dialog>
+<dialog id="scanDlg"><div class="dialoghead"><strong id="scanTitle">Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline muted></video><p id="scanFeedback" class="scanFeedback" role="status">Cadre un QR. La lecture est continue, sans bouton déclencheur.</p><div class="row"><button id="scanObjects" type="button">Analyser les objets</button></div></dialog>
 <dialog id="printDlg"></dialog>
 <dialog id="preferencesDlg"><div class="form"><div class="dialoghead"><div><b>Préférences</b><small>Affichage · connexions · données</small></div><button id="closePreferences" class="ghost" type="button">×</button></div>
   <div class="grid2"><label><span>Interface</span><select id="interfaceMode"><option value="foley">Bruitages & pédagogie</option><option value="inventory">Inventaire / régie</option></select></label><label><span>Affichage</span><select id="displayMode"><option value="auto">Auto</option><option value="desktop">Ordinateur</option><option value="mobile">Mobile</option></select></label><label><span>Thème</span><select id="themeMode"><option value="system">Système</option><option value="dark">Sombre</option><option value="light">Clair</option><option value="regie">Mode régie</option></select></label></div><label><span>Catégories personnalisées</span><textarea id="customCategories" rows="3" placeholder="Costumes, accessoires, câbles, consommables…"></textarea></label>
@@ -861,16 +917,32 @@ function renderSearch(target='#searchResults'){
     <div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div>
     <div><h3>${esc(o.name)}</h3><p>${soundSummary(o)?esc(soundSummary(o)):'<span class="muted">Son à préciser</span>'}</p>
     <small>${esc(caseName(caseBy(o.caseId||o.container_id)))} · ${esc(o.family||'À classer')} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></div>
-    <div class="resultActions"><button data-open="${o.id}" class="miniAction" title="Ouvrir la fiche">↗</button><button data-fav="${o.id}" class="miniAction" title="Favori">${o.favorite?'★':'☆'}</button><button data-alt="${o.id}" class="miniAction" title="Alternatives">≈</button><button data-add="${o.id}" class="plus">+</button></div></article>`).join('')
-  if(ideas.length) h+=`<h3 class="ideaTitle">Idées à ajouter à ton parc</h3>`+ideas.map(i=>`<article class="result idea">
+    <div class="resultActions"><button data-open="${o.id}" class="miniAction" type="button" title="Ouvrir la fiche" aria-label="Ouvrir la fiche">↗</button><button data-fav="${o.id}" class="miniAction" type="button" title="Favori" aria-label="Favori">${o.favorite?'★':'☆'}</button><button data-alt="${o.id}" class="miniAction" type="button" title="Alternatives" aria-label="Alternatives">≈</button><button data-add="${o.id}" class="plus" type="button" title="Ajouter à la mise" aria-label="Ajouter à la mise">+</button></div></article>`).join('')
+  if(ideas.length) h+=`<h3 class="ideaTitle">Idées à ajouter à ton parc</h3>`+ideas.map(i=>`<article class="result idea ${i.technique?'recipeClickable':''}" ${i.technique?`data-public-technique="${esc(i.id||i.name)}" tabindex="0" role="button" aria-label="Voir comment faire : ${esc(i.name)}"`:''}>
     <div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p>
-    <small>Source externe · ${esc(i.source||'base de référence')} · pas un document de l’utilisateur</small></div><button class="plus" data-idea="${esc(i.name)}">+</button></article>`).join('')
+    <small>Source externe · ${esc(i.source||'base de référence')} · pas un document de l’utilisateur${i.technique?' · toucher pour voir la technique':''}</small></div><div class="resultActions">${i.technique?`<button class="miniAction" type="button" data-technique-button="${esc(i.id||i.name)}" title="Comment faire" aria-label="Comment faire">?</button>`:''}<button class="plus" type="button" data-idea="${esc(i.id||i.name)}" title="Ajouter à mon stock" aria-label="Ajouter à mon stock">+</button></div></article>`).join('')
   $(target).innerHTML=h
   $$('[data-open]',$(target)).forEach(b=>b.onclick=()=>openObject(objectBy(b.dataset.open)||{id:b.dataset.open}))
   $$('[data-add]',$(target)).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.add))
   $$('[data-fav]',$(target)).forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.fav))
   $$('[data-alt]',$(target)).forEach(b=>b.onclick=()=>openAlternatives(b.dataset.alt))
-  $$('[data-idea]',$(target)).forEach(b=>b.onclick=()=>openObject({name:b.dataset.idea,source:'suggestion externe',owned:false}))
+  $$('[data-public-technique]',$(target)).forEach(card=>{
+    card.onclick=event=>{if(event.target.closest('button,a'))return;openPublicTechnique(card.dataset.publicTechnique)}
+    card.onkeydown=event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button,a')){event.preventDefault();openPublicTechnique(card.dataset.publicTechnique)}}
+  })
+  $$('[data-technique-button]',$(target)).forEach(b=>b.onclick=()=>openPublicTechnique(b.dataset.techniqueButton))
+  $$('[data-idea]',$(target)).forEach(b=>b.onclick=()=>{
+    const idea=external.find(item=>item.id===b.dataset.idea||item.name===b.dataset.idea)
+    openObject({
+      name:idea?.name||b.dataset.idea,
+      sounds:idea?.name?[idea.name]:[],
+      device:(idea?.objects||[]).join(', '),
+      notes:idea?.technique||'',
+      source:idea?.source||'suggestion externe',
+      owned:true,
+      provenance:'external'
+    })
+  })
   $$('[data-open-case]',$(target)).forEach(b=>b.onclick=()=>showCase(b.dataset.openCase))
   $$('[data-open-kit]',$(target)).forEach(b=>b.onclick=()=>showKit(b.dataset.openKit))
   $$('[data-open-mise]',$(target)).forEach(b=>b.onclick=()=>{const m=miseBy(b.dataset.openMise);if(m){activeMise=m.id;setTab('mises');openMise(m)}})
@@ -1007,7 +1079,7 @@ async function showCase(id){
   const elsewhere=objects.filter(o=>(o.caseId||o.container_id)!==id)
   const m=$('#modal')
   m.innerHTML=`<div class="caseView"><div class="dialoghead"><div><b>${esc(caseName(c))}</b><small>${items.length} objet${items.length>1?'s':''}</small></div><button class="ghost" id="closeCase">×</button></div>
-  <img class="qr" src="${qr}" alt="QR de ${esc(caseName(c))}"><code>${esc(c.id)}</code>
+  <img class="qr" src="${qr}" alt="QR de ${esc(caseName(c))}"><p class="hint">Ce QR rouvre cette caisse dans MISES!.</p>
   <div class="miniList">${items.map(o=>`<span>${esc(o.name)} <button type="button" data-remove-object="${o.id}" class="ghost">Retirer</button></span>`).join('')||'<span>Aucun objet dans cette caisse.</span>'}</div>
   <label>Ajouter un objet<select id="caseAddObject"><option value="">Choisir</option>${elsewhere.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join('')}</select></label>
   <p class="hint">${missing.length?`Dans la mise active, pas dans cette caisse : ${missing.map(o=>`${esc(o.name)} (${esc(caseName(caseBy(o.caseId||o.container_id)))})`).join(', ')}`:'Contrôle : rien de la mise active ne manque ici, ou aucune mise n’est active.'}</p>
@@ -1037,6 +1109,7 @@ async function showCase(id){
   }
   $$('[data-remove-object]',m).forEach(button=>button.onclick=async()=>{
     const o=objectBy(button.dataset.removeObject);if(!o)return
+    if(!confirm(`Retirer « ${o.name} » de ${caseName(c)} ?\n\nL’objet reste dans l’inventaire.`))return
     const from=o.caseId||o.container_id||''
     o.locationHistory=[...(o.locationHistory||[]),{at:new Date().toISOString(),from,to:'',method:'caisse'}]
     o.caseId='';o.container_id='';o.updatedAt=new Date().toISOString()
@@ -1259,6 +1332,7 @@ function startMoveScans(){
 async function startScan(){
   if(!navigator.mediaDevices){toast('Caméra indisponible');return}
   const d=$('#scanDlg');if(!d.open)d.showModal()
+  const title=$('#scanTitle');if(title)title.textContent=scanPurpose==='move'?'Déplacer par scans':'Scanner un QR'
   const hint=$('#scanFeedback');if(hint)hint.textContent=scanPurpose==='move'?(moveScanState?.step==='source'?'1/3 · Scanne la valise source':moveScanState?.step==='object'?'2/3 · Scanne le QR de l’objet':'3/3 · Scanne la valise destination'):'Cadre un QR. La lecture est continue, sans bouton déclencheur.'
   scanner=new BrowserQRCodeReader();let handled=false
   try{
@@ -1266,7 +1340,7 @@ async function startScan(){
       if(!result||handled)return
       handled=true
       const text=result.getText()
-      if(hint)hint.textContent=`QR lu : ${text}`
+      if(hint)hint.textContent='QR lu.'
       try{navigator.vibrate?.(40)}catch{}
       stopScan();void handleScanTarget(parseScannedTarget(text))
     })
@@ -1355,7 +1429,7 @@ async function openAppShareDialog(){
   const qr=await QRCode.toDataURL(PUBLIC_PWA_URL,{width:420,margin:2,errorCorrectionLevel:'M'})
   const standalone=Boolean(window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true)
   const nativeApp=Boolean(globalThis.MisesAndroid)
-  d.innerHTML=`<div class="form shareAppSheet"><div class="dialoghead"><div><b>Partager MISES!</b><small>PWA · application</small></div><button id="closeAppShare" class="ghost" type="button" aria-label="Fermer">×</button></div><img class="qr shareAppQr" src="${qr}" alt="QR code pour ouvrir MISES!"><p class="hint">Scanne ce QR pour ouvrir MISES! directement dans le navigateur.</p><code class="shareAppUrl">${esc(PUBLIC_PWA_URL)}</code><div class="row shareAppActions"><button id="sharePwaLink" type="button">Partager l’adresse</button><button id="copyPwaLink" type="button" class="ghost">Copier le lien</button><button id="openPwaLink" type="button" class="ghost">Ouvrir la PWA</button><button id="installPwa" type="button">Installer l’application</button></div><p class="hint">Google Drive se raccorde directement dans la PWA. Sur Android natif, ce bouton ouvre la PWA dans le navigateur pour l’identification Google.</p></div>`
+  d.innerHTML=`<div class="form shareAppSheet"><div class="dialoghead"><div><b>Partager MISES!</b><small>Lien public</small></div><button id="closeAppShare" class="ghost" type="button" aria-label="Fermer">×</button></div><img class="qr shareAppQr" src="${qr}" alt="QR code pour ouvrir MISES!"><p class="hint">Scanne ce QR pour ouvrir MISES! directement dans le navigateur.</p><code class="shareAppUrl">${esc(PUBLIC_PWA_URL)}</code><div class="row shareAppActions"><button id="sharePwaLink" type="button">Partager l’adresse</button><button id="copyPwaLink" type="button" class="ghost">Copier le lien</button><button id="openPwaLink" type="button" class="ghost">Ouvrir dans le navigateur</button><button id="installPwa" type="button">Installer l’application</button></div><p class="hint">Google Drive se raccorde directement dans le navigateur. Sur Android natif, ce bouton ouvre MISES! dans Chrome pour l’identification Google.</p></div>`
   d.showModal()
   $('#closeAppShare').onclick=()=>d.close()
   $('#copyPwaLink').onclick=async()=>{try{await navigator.clipboard.writeText(PUBLIC_PWA_URL);toast('Adresse MISES! copiée')}catch{toast(PUBLIC_PWA_URL)}}
@@ -1391,7 +1465,7 @@ function applyUiPreferences(){
   const googleState=$('#preferencesGoogleState')
   if(googleState){
     if(androidGoogleSignInBlocked()){
-      googleState.innerHTML='<b>Google Drive</b><span>Connexion via la PWA</span>'
+      googleState.innerHTML='<b>Google Drive</b><span>Connexion dans le navigateur</span>'
       $('#preferencesGoogle').textContent='Ouvrir la connexion Google'
     }else{
       const account=$('#accountBtn')?.textContent||''
@@ -1479,6 +1553,8 @@ function handleBackNavigation(){
   }
   const openMenus=$$('.goalNav details[open]')
   if(openMenus.length){openMenus.forEach(detail=>{detail.open=false});return true}
+  const activeTab=document.querySelector('.tab.active')
+  if(activeTab&&activeTab.id!=='search'){setTab('search');return true}
   return false
 }
 $('#scanDlg').addEventListener('cancel',event=>{event.preventDefault();$('#stopScan')?.click()})
