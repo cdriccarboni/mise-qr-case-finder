@@ -1,6 +1,11 @@
 const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || 'https://jemqozyqqsgabljnhfvn.supabase.co'
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_NKPFAOyp7XXDDzlrLDBUeg_Btd0fIZi'
 
+const ANDROID_AUTH_REDIRECT = 'mises://auth'
+const WEB_AUTH_REDIRECT = 'https://cdriccarboni.github.io/mise-qr-case-finder/'
+const isAndroidShell = () => Boolean(window.MisesAndroid) || location.hostname === 'appassets.androidplatform.net'
+const authRedirectUrl = () => isAndroidShell() ? ANDROID_AUTH_REDIRECT : (location.origin === 'https://cdriccarboni.github.io' ? WEB_AUTH_REDIRECT : location.origin + location.pathname)
+
 let clientPromise
 async function loadClient(){
   if(!clientPromise){
@@ -29,7 +34,7 @@ export async function sendSupabaseMagicLink(email){
   const supabase=await loadClient()
   const {error}=await supabase.auth.signInWithOtp({
     email:String(email).trim(),
-    options:{emailRedirectTo:location.origin+location.pathname,shouldCreateUser:true}
+    options:{emailRedirectTo:authRedirectUrl(),shouldCreateUser:true}
   })
   if(error) throw error
 }
