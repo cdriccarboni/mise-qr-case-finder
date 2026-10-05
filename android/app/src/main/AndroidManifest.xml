@@ -13,6 +13,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="MISES!"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
         <activity
@@ -30,6 +31,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="cdriccarboni.github.io" android:pathPrefix="/mise-qr-case-finder" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="mises" android:host="auth" />
             </intent-filter>
         </activity>
     </application>
