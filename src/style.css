@@ -321,3 +321,13 @@ html[data-display=mobile] .shareAppActions{grid-template-columns:1fr}
 .publicTechniqueSheet{align-items:stretch}
 .techniqueTarget{display:flex;gap:.65rem;align-items:center;flex-wrap:wrap}
 .techniqueText{font-size:1.02rem;line-height:1.55;margin:.35rem 0 .7rem}
+
+
+/* Android/mobile: keep Preferences controls clear of the system edge and easy to close. */
+#closePreferences{min-width:52px;min-height:52px;font-size:1.35rem;line-height:1}
+@media(max-width:620px){
+  #preferencesDlg{max-height:calc(100dvh - 48px);scroll-padding-top:68px}
+  #preferencesDlg .dialoghead{padding-top:.7rem}
+}
+html[data-display=mobile] #preferencesDlg{max-height:calc(100dvh - 48px);scroll-padding-top:68px}
+html[data-display=mobile] #preferencesDlg .dialoghead{padding-top:.7rem}
