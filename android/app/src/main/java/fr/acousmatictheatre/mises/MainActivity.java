@@ -11,6 +11,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -40,6 +42,7 @@ public final class MainActivity extends Activity {
     private int safeRight;
     private int safeBottom;
     private int safeLeft;
+    private OnBackInvokedCallback backInvokedCallback;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -150,6 +153,13 @@ public final class MainActivity extends Activity {
         } else {
             webView.restoreState(state);
         }
+        if (Build.VERSION.SDK_INT >= 33) {
+            backInvokedCallback = this::dispatchBackToWeb;
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                    backInvokedCallback
+            );
+        }
         ViewCompat.requestApplyInsets(webView);
     }
 
@@ -203,12 +213,18 @@ public final class MainActivity extends Activity {
         String scheme = data.getScheme() == null ? "" : data.getScheme().toLowerCase();
         String host = data.getHost() == null ? "" : data.getHost().toLowerCase();
         String path = data.getPath() == null ? "" : data.getPath();
-        if (!"https".equals(scheme) || !"cdriccarboni.github.io".equals(host) || !path.startsWith("/mise-qr-case-finder")) {
-            return base;
-        }
+        boolean publicMisesUrl = "https".equals(scheme)
+                && "cdriccarboni.github.io".equals(host)
+                && path.startsWith("/mise-qr-case-finder");
+        boolean authDeepLink = "mises".equals(scheme) && "auth".equals(host);
+        if (!publicMisesUrl && !authDeepLink) return base;
+
+        StringBuilder target = new StringBuilder(base);
         String query = data.getEncodedQuery();
-        if (query == null || query.isEmpty()) return base;
-        return base + "?" + query;
+        String fragment = data.getEncodedFragment();
+        if (query != null && !query.isEmpty()) target.append("?").append(query);
+        if (fragment != null && !fragment.isEmpty()) target.append("#").append(fragment);
+        return target.toString();
     }
 
     private boolean staysInApp(Uri uri) {
@@ -233,13 +249,12 @@ public final class MainActivity extends Activity {
 
     private void performBrowserBackOrExit() {
         if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+        else finish();
     }
 
-    @Override
-    public void onBackPressed() {
+    private void dispatchBackToWeb() {
         if (webView == null) {
-            super.onBackPressed();
+            finish();
             return;
         }
         webView.evaluateJavascript(
@@ -248,6 +263,20 @@ public final class MainActivity extends Activity {
                     if (!"true".equals(handled)) performBrowserBackOrExit();
                 }
         );
+    }
+
+    @Override
+    public void onBackPressed() {
+        dispatchBackToWeb();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (Build.VERSION.SDK_INT >= 33 && backInvokedCallback != null) {
+            getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(backInvokedCallback);
+            backInvokedCallback = null;
+        }
+        super.onDestroy();
     }
 
     @Override
