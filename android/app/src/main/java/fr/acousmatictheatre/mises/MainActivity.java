@@ -33,6 +33,9 @@ public final class MainActivity extends Activity {
     private static final int MEDIA_PERMISSION_REQUEST = 2101;
     private static final int FILE_CHOOSER_REQUEST = 2102;
     private static final String MISE_ORIGIN = "https://cdriccarboni.github.io";
+    private static final String PWA_HOST = "cdriccarboni.github.io";
+    private static final String PWA_PATH = "/mise-qr-case-finder";
+    private static final String SUPABASE_HOST = "jemqozyqqsgabljnhfvn.supabase.co";
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private NativePrinterBridge printerBridge;
@@ -111,6 +114,11 @@ public final class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
+                String localCallback = localCallbackUrl(uri);
+                if (localCallback != null) {
+                    view.loadUrl(localCallback);
+                    return true;
+                }
                 if (staysInApp(uri)) return false;
                 openExternal(uri);
                 return true;
@@ -151,6 +159,12 @@ public final class MainActivity extends Activity {
             webView.restoreState(state);
         }
         ViewCompat.requestApplyInsets(webView);
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                    this::handleSystemBack
+            );
+        }
     }
 
     void applyAppColor(String hex) {
@@ -200,20 +214,34 @@ public final class MainActivity extends Activity {
         String base = getString(R.string.mise_url);
         if (intent == null || intent.getData() == null) return base;
         Uri data = intent.getData();
-        String scheme = data.getScheme() == null ? "" : data.getScheme().toLowerCase();
-        String host = data.getHost() == null ? "" : data.getHost().toLowerCase();
-        String path = data.getPath() == null ? "" : data.getPath();
-        if (!"https".equals(scheme) || !"cdriccarboni.github.io".equals(host) || !path.startsWith("/mise-qr-case-finder")) {
-            return base;
-        }
-        String query = data.getEncodedQuery();
-        if (query == null || query.isEmpty()) return base;
-        return base + "?" + query;
+        if (isSupabaseVerifyUrl(data)) return data.toString();
+        String callback = localCallbackUrl(data);
+        return callback == null ? base : callback;
+    }
+
+    private String localCallbackUrl(Uri uri) {
+        String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
+        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+        String path = uri.getPath() == null ? "" : uri.getPath();
+        if (!"https".equals(scheme) || !PWA_HOST.equals(host) || !path.startsWith(PWA_PATH)) return null;
+        StringBuilder result = new StringBuilder(getString(R.string.mise_url));
+        String query = uri.getEncodedQuery();
+        String fragment = uri.getEncodedFragment();
+        if (query != null && !query.isEmpty()) result.append('?').append(query);
+        if (fragment != null && !fragment.isEmpty()) result.append('#').append(fragment);
+        return result.toString();
     }
 
     private boolean staysInApp(Uri uri) {
         String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
-        return "appassets.androidplatform.net".equals(host);
+        return "appassets.androidplatform.net".equals(host) || SUPABASE_HOST.equals(host);
+    }
+
+    private static boolean isSupabaseVerifyUrl(Uri uri) {
+        String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
+        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+        String path = uri.getPath() == null ? "" : uri.getPath();
+        return "https".equals(scheme) && SUPABASE_HOST.equals(host) && path.startsWith("/auth/v1/verify");
     }
 
     private static boolean isGoogleAuthHost(Uri uri) {
@@ -233,13 +261,12 @@ public final class MainActivity extends Activity {
 
     private void performBrowserBackOrExit() {
         if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+        else finish();
     }
 
-    @Override
-    public void onBackPressed() {
+    private void handleSystemBack() {
         if (webView == null) {
-            super.onBackPressed();
+            finish();
             return;
         }
         webView.evaluateJavascript(
@@ -248,6 +275,11 @@ public final class MainActivity extends Activity {
                     if (!"true".equals(handled)) performBrowserBackOrExit();
                 }
         );
+    }
+
+    @Override
+    public void onBackPressed() {
+        handleSystemBack();
     }
 
     @Override
