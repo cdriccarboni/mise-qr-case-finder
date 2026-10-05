@@ -495,12 +495,21 @@ function findAlternatives(o){
 function openPublicTechnique(refKey){
   const recipe=external.find(item=>item.id===refKey||item.name===refKey)
   if(!recipe?.technique)return
+  const block=(title,value)=>value?`<div><b>${title}</b><p class="techniqueText">${esc(value)}</p></div>`:''
   const d=$('#modal')
   d.innerHTML=`<div class="form publicTechniqueSheet">
     <div class="dialoghead"><div><b>Comment faire ce son</b><small>${esc(recipe.name)}</small></div><button id="closePublicTechnique" class="ghost" type="button" aria-label="Fermer">×</button></div>
     <div class="techniqueTarget"><span class="chip">Son visé</span><strong>${esc(recipe.name)}</strong></div>
+    ${recipe.quickRecipe?`<p class="hint">${esc(recipe.quickRecipe)}</p>`:''}
     <p class="techniqueText">${esc(recipe.technique)}</p>
     ${(recipe.objects||[]).length?`<div><b>Objets / matières</b><p>${recipe.objects.map(chip).join(' ')}</p></div>`:''}
+    ${block('Matériel',recipe.materialsMin)}
+    ${block('Préparation',recipe.preparation)}
+    ${block('Geste pas à pas',recipe.steps && recipe.steps!==recipe.technique?recipe.steps:'')}
+    ${block('Variantes',recipe.variants)}
+    ${block('Surface / contexte',recipe.surfaceContext)}
+    ${block('Captation',recipe.capture||recipe.micPerspective)}
+    ${block('Passes',recipe.passes)}
     ${recipe.fabrication?`<p class="hint">Dispositif lié : ${esc(recipe.fabrication)}</p>`:''}
     <div class="row">
       <button id="addPublicTechnique" type="button">Ajouter à mon stock</button>

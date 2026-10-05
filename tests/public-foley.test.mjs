@@ -10,7 +10,7 @@ const library = JSON.parse(readFileSync(new URL('../public/public-foley.json', i
 
 test('public payload is scoped to PUBLIC_WEB and contains no private provenance', () => {
   assert.equal(library.publicationScope, 'PUBLIC_WEB')
-  assert.equal(library.records.length, 99)
+  assert.equal(library.records.length, 216)
   assert.ok(library.fabrications.length >= 12)
   assert.ok(library.games.length >= 8)
   assert.ok(library.pedagogyActivities.length >= 7)
@@ -23,6 +23,8 @@ test('public payload is scoped to PUBLIC_WEB and contains no private provenance'
   })
   assert.doesNotMatch(published, /PRIVE_ONLY|PRIVE_UTILISATEUR|MIXTE_PRIVE_WEB/)
   assert.ok(library.records.every(row => /^https?:\/\//.test(row.sourceUrl)))
+  assert.ok(library.records.every(row => !row.publicationScope || row.publicationScope === 'PUBLIC_WEB'))
+  assert.ok((library.records.filter(row => row.recipeId).length) >= 200)
 })
 
 test('public references retain source URLs', () => {
