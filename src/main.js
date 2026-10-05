@@ -495,7 +495,7 @@ function findAlternatives(o){
 function openPublicTechnique(refKey){
   const recipe=external.find(item=>item.id===refKey||item.name===refKey)
   if(!recipe?.technique)return
-  const block=(title,value)=>value?`<div><b>${title}</b><p class="techniqueText">${esc(value)}</p></div>`:''
+  const block=(title,value)=>value?`<div><b>${title}</b><p class="techniqueDetail">${esc(value)}</p></div>`:''
   const d=$('#modal')
   d.innerHTML=`<div class="form publicTechniqueSheet">
     <div class="dialoghead"><div><b>Comment faire ce son</b><small>${esc(recipe.name)}</small></div><button id="closePublicTechnique" class="ghost" type="button" aria-label="Fermer">×</button></div>
