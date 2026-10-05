@@ -293,7 +293,7 @@ html[data-display=mobile] main{padding-bottom:.35rem}
 .hero>.searchbox{margin-top:.5rem}
 dialog .dialoghead{
   position:sticky;
-  top:-1rem;
+  top:0;
   z-index:30;
   margin:-.25rem 0 .35rem;
   padding:.35rem 0 .55rem;
@@ -308,7 +308,7 @@ dialog .dialoghead{
 .shareAppActions button{width:100%;min-height:48px}
 @media(max-width:620px){
   dialog{width:calc(100vw - 16px);max-width:calc(100vw - 16px);padding:1rem .85rem}
-  dialog .dialoghead{top:-1rem}
+  dialog .dialoghead{top:0}
   .shareAppActions{grid-template-columns:1fr}
   .goalNav summary{min-height:48px;display:flex;align-items:center;justify-content:space-between}
 }
