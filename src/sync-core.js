@@ -1,4 +1,5 @@
 import { DATA_STORES } from './data-bruitage.js'
+import { isOwnerPrivateAccount } from './owner-private.js'
 import { supabaseClient, supabaseSession } from './supabase-client.js'
 
 const BUCKET='mises-photos'
@@ -30,9 +31,16 @@ function remotePath(spaceId,store,recordId){
   const safe=v=>String(v).replace(/[^a-zA-Z0-9._-]/g,'_')
   return `${spaceId}/${safe(store)}/${safe(recordId)}.jpg`
 }
-function shouldSync(store,row){
+function isOwnerPrivateRow(row){
+  const scope=String(row?.publicationScope||'').toUpperCase()
+  const tags=Array.isArray(row?.tags)?row.tags:[]
+  return scope==='PRIVE_ONLY' || tags.includes('data-bruitage-v5')
+}
+function shouldSync(store,row,session){
   if(!row||!row.id) return false
   if(store==='objects' && row.owned===false) return false
+  // Corpus Data Bruitage V5 privé : uniquement le compte propriétaire via Supabase.
+  if(isOwnerPrivateRow(row) && !isOwnerPrivateAccount(session?.user?.email)) return false
   return true
 }
 async function ensurePersonalSpace(supabase,user){
@@ -93,7 +101,7 @@ export async function syncMises(db,{onProgress=()=>{}}={}){
   for(const store of SYNC_STORES){
     const localRows=await db.getAll(store)
     for(const row of localRows){
-      if(!shouldSync(store,row)) continue
+      if(!shouldSync(store,row,session)) continue
       const key=`${store}::${row.id}`
       const cloud=remoteMap.get(key)
       const lt=localTime(row)

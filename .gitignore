@@ -39,3 +39,7 @@ android/app/src/main/assets/www/
 dist-android/
 *.jks
 *.keystore
+
+# Packs Data Bruitage privés (jamais versionnés)
+/private-mises/
+**/MISES-private-data-bruitage.json

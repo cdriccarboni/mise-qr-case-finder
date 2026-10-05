@@ -101,6 +101,49 @@ export function textToReview(text, sourceId, kind) {
   if (!paragraphs.length) data.review.push({ id: `${sourceId}-empty`, sourceId, reason: 'Aucun texte extrait. Document scanné ou vide : saisie manuelle nécessaire (OCR non inclus).', status: 'pending', provenance: 'review' })
   return data
 }
+
+const V5_META_SHEETS = new Set([
+  'API_MISES', 'RECETTES_EXECUTABLES', 'TABLEAU_DE_BORD_RECETTES', 'VERSION', 'PLAN_RECETTES',
+  'SYNTHÈSE_V5', 'CONTROLE_RECETTES', 'SYNTHÈSE_QUALITÉ', 'LIRE_D_ABORD', 'BRUITAGES', 'OBJETS',
+  'TECHNIQUES', 'RELATIONS', 'JEUX', 'ACTIVITES_PEDAGOGIQUES', 'SCENES', 'ETAPES_SCENES',
+  'FABRICATIONS', 'UNIVERS', 'TAGS_JEUX', 'MODELES_JEUX', 'INVENTAIRES_HISTORIQUES', 'MEDIAS',
+  'SOURCES', 'PREUVES', 'A_VERIFIER', 'PUBLICATION', 'EXPORT_PUBLIC_WEB', 'AUDIT_V3', 'AUDIT_V4',
+  'CONTROLE_QUALITE_V4', 'VOCABULAIRE', 'RECETTES_PRATIQUES_V5', 'AUDIT_V5', 'MODELE_RECETTE',
+  'A_REFORMULER_SECURITE', 'CONTRAT_MISES'
+])
+/** Map CONSULTATION (Data Bruitage V5) → Objets. Only PRIVE_ONLY / MIXTE enter personal stock.
+ *  PUBLIC_WEB stays in the embedded public library and is skipped here. */
+export function consultationRowsToObjects(rows = [], sourceId = 'consultation') {
+  const objects = []
+  for (const [index, row] of rows.entries()) {
+    const scope = String(row.publication_scope || row.publicationScope || '').trim().toUpperCase()
+    if (scope === 'PUBLIC_WEB') continue
+    if (scope && scope !== 'PRIVE_ONLY' && scope !== 'MIXTE') continue
+    const son = String(row.son || row.sound || '').trim()
+    const objets = String(row.objets || row.objects || '').trim()
+    const technique = String(row.technique || '').trim()
+    const relationId = String(row.relation_id || row.relationId || `${sourceId}-${index + 1}`).trim()
+    if (!son && !objets && !technique) continue
+    objects.push({
+      id: `obj-${relationId}`,
+      name: son || objets || relationId,
+      hear: son,
+      imagine: '',
+      device: objets,
+      family: 'Data Bruitage privé',
+      source: String(row.sources || '').slice(0, 240),
+      status: String(row.statut || 'available'),
+      notes: technique,
+      provenance: 'user-document',
+      sounds: son ? [son] : [],
+      owned: true,
+      publicationScope: scope || 'PRIVE_ONLY',
+      tags: ['prive', 'data-bruitage-v5']
+    })
+  }
+  return objects
+}
+
 const DATA_MARKERS = ['MISES-Data-Bruitage-v1', 'MISE-Data-Bruitage-v1']
 const BINDER_MARKERS = ['MISES-Classeur-v1', 'MISE-Classeur-v1']
 const MARKER_SHEETS = ['_MISES', '_MISE']
@@ -111,13 +154,26 @@ export function workbookToData(bytes, sourceId, csv = false) {
   const classeur = BINDER_MARKERS.includes(marker)
   const canonical = DATA_MARKERS.includes(marker) || classeur
   const skip = new Set([...MARKER_SHEETS, ...(classeur ? ['Index', 'Doublons'] : [])])
+  const hasConsultation = Boolean(book.Sheets.CONSULTATION) && !csv
+  if (hasConsultation) {
+    // Data Bruitage V5 workbook: import only personal CONSULTATION rows; ignore meta/public sheets.
+    for (const name of book.SheetNames) {
+      if (V5_META_SHEETS.has(name) || name === 'CONSULTATION') skip.add(name)
+    }
+  }
   const tables = {}
   for (const name of book.SheetNames.filter(n => !skip.has(n))) {
     const rows = XLSX.utils.sheet_to_json(book.Sheets[name], { defval: '' })
     // Our workbook uses typed cells and json: values; ordinary tables accept common headers.
     tables[csv ? 'Objets' : name] = canonical ? rows.map(row => Object.fromEntries(Object.entries(row).filter(([, v]) => v !== '').map(([k, v]) => [k, decodeCell(v)]))) : rows
   }
-  return { data: importTables(tables, sourceId, { canonical }), canonical }
+  const data = importTables(tables, sourceId, { canonical })
+  if (hasConsultation) {
+    const consultation = XLSX.utils.sheet_to_json(book.Sheets.CONSULTATION, { defval: '' })
+    const privateObjects = consultationRowsToObjects(consultation, sourceId)
+    data.objects.push(...privateObjects.map(row => normalizeImportRow(row, 'objects', sourceId, 0)))
+  }
+  return { data, canonical }
 }
 export function exportWorkbook(data) {
   const book = XLSX.utils.book_new()

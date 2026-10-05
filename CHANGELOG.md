@@ -1,3 +1,12 @@
+## 0.4.0-beta.12 — 2026-10-05 (glossaire public V5 + privé Supabase propriétaire)
+
+- Glossaire public : `public/public-foley.json` régénéré depuis `EXPORT_PUBLIC_WEB` uniquement (216 recettes `PUBLIC_WEB`, 12 fabrications, 19 sources). Aucun `PRIVE_ONLY` dans le dépôt.
+- Recettes publiques enrichies (préparation / geste / captation) affichées dans « Comment faire ce son ».
+- Privé : import local CONSULTATION (`PRIVE_ONLY` / `MIXTE`) + sync Supabase réservée au compte `cdric.carboni@gmail.com` (garde client + script RLS `supabase/rls-owner-private.sql`).
+- Scripts : `build-public-foley-from-xlsx.mjs` (pack public) et `build-private-data-bruitage-from-xlsx.mjs` (sortie hors git uniquement).
+- Doc : `docs/DATA-PUBLIQUE-PRIVEE.md`.
+- Version `0.4.0-beta.12`, Android `versionCode` 23, cache PWA `mises-0.4.0-beta.12`.
+
 ## 0.4.0-beta.11 — 2026-10-05 (propositions photo à confirmer)
 
 - Photo : une fiche n’est proposée au premier plan que si le mot vu (valise, chaise, table…) est vraiment dans son nom. Les synonymes plus lâches et les objets seulement « proches » ne prennent plus la place d’une vraie correspondance.
