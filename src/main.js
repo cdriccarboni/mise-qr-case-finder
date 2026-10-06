@@ -210,7 +210,7 @@ async function openSupabaseSync(){
     e.preventDefault()
     const email=$('#supabaseEmail').value.trim(),status=$('#supabaseAuthStatus')
     if(!email)return
-    try{await sendSupabaseMagicLink(email);status.textContent='Lien envoyé. Ouvre-le dans ce navigateur puis reviens dans MISES.'}
+    try{await sendSupabaseMagicLink(email);status.textContent=window.MisesAndroid?'Lien envoyé. Ouvre-le depuis ton e-mail : Android revient directement dans MISES!.':'Lien envoyé. Ouvre-le puis reviens dans MISES.'}
     catch(error){status.textContent=error instanceof Error?error.message:'Connexion impossible'}
   }
 }

@@ -1,5 +1,6 @@
 const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || 'https://jemqozyqqsgabljnhfvn.supabase.co'
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_NKPFAOyp7XXDDzlrLDBUeg_Btd0fIZi'
+const SUPABASE_EMAIL_REDIRECT_URL = import.meta.env?.VITE_SUPABASE_EMAIL_REDIRECT_URL || 'https://cdriccarboni.github.io/mise-qr-case-finder/'
 
 let clientPromise
 async function loadClient(){
@@ -29,7 +30,7 @@ export async function sendSupabaseMagicLink(email){
   const supabase=await loadClient()
   const {error}=await supabase.auth.signInWithOtp({
     email:String(email).trim(),
-    options:{emailRedirectTo:location.origin+location.pathname,shouldCreateUser:true}
+    options:{emailRedirectTo:SUPABASE_EMAIL_REDIRECT_URL,shouldCreateUser:true}
   })
   if(error) throw error
 }
