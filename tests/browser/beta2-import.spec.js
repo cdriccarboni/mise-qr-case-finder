@@ -5,14 +5,14 @@ const backup = JSON.parse(readFileSync(new URL('../fixtures/beta2-backup.json', 
 
 test('the new app reimports a complete beta.2 backup file', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.12')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.13')
   page.once('dialog', dialog => dialog.accept())
   await page.locator('#restoreInput').setInputFiles({
     name: 'MISE-backup.json',
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(backup))
   })
-  await expect(page.locator('#toast')).toHaveText('Sauvegarde importée')
+  await expect(page.locator('#toast')).toContainText('Sauvegarde importée :')
   await page.reload()
   await page.locator('#q').fill('Gourde froissable')
   await expect(page.locator('#searchResults')).toContainText('Gourde froissable')

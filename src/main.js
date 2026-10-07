@@ -34,7 +34,7 @@ import { participantCount } from './participant-plan.js'
 import './identity.css'
 import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSetting, parseInk } from './ink.js'
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
-import { applyBackup } from './backup.js'
+import { applyBackup, backupItemCount } from './backup.js'
 import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut } from './supabase-client.js'
 import { syncMises } from './sync-core.js'
 migrateLocalKeys()
@@ -245,8 +245,8 @@ let driveSyncTimer=0,driveSyncBusy=false
 async function privateStatePayload(){
   return {version:3,exportedAt:new Date().toISOString(),...await readData(db),kits:await db.getAll('kits'),learnings:await db.getAll('learnings'),settings:await db.getAll('settings')}
 }
-async function applyPrivateState(payload){
-  await applyBackup(db, payload)
+async function applyPrivateState(payload, restoreOptions){
+  const report=await applyBackup(db, payload, restoreOptions)
   if(Array.isArray(payload?.settings)){
     const savedInk = inkFromSettings(payload.settings)
     if(savedInk) localStorage.setItem(LOCAL_KEYS.ink, savedInk)
@@ -255,6 +255,7 @@ async function applyPrivateState(payload){
     paintInkSwatches(savedInk || DEFAULT_INK)
   }
   activeMise=null;await refresh();render()
+  return report
 }
 
 
@@ -1684,9 +1685,36 @@ $('#backupBtn').onclick=async()=>{
   setTimeout(()=>URL.revokeObjectURL(url),2000)
 }
 
+function restoreNumber(value){return Number(value||0).toLocaleString('fr-FR')}
+function setRestoreProgress(message=''){
+  for(const selector of ['#goalRestore','#preferencesRestore']){
+    const button=$(selector);if(!button)continue
+    if(!button.dataset.restoreLabel)button.dataset.restoreLabel=button.textContent
+    button.disabled=Boolean(message)
+    button.textContent=message||button.dataset.restoreLabel
+    button.setAttribute('aria-busy',message?'true':'false')
+  }
+}
 $('#restoreInput').onchange=async event=>{
   const file=event.target.files?.[0];if(!file)return
-  try{const payload=JSON.parse(await file.text());if(!confirm('Importer cette sauvegarde MISES! et remplacer les données locales de cet appareil ?'))return;await applyPrivateState(payload);scheduleDriveSync();toast('Sauvegarde importée')}catch(error){toast(error instanceof Error?error.message:'Import impossible')}finally{event.target.value=''}
+  try{
+    const payload=JSON.parse(await file.text())
+    const expected=backupItemCount(payload)
+    if(!confirm(`Importer cette sauvegarde MISES! (${restoreNumber(expected)} élément(s)) et remplacer les données locales de cet appareil ?`))return
+    let lastShown=-100
+    setRestoreProgress(`Import 0 / ${restoreNumber(expected)}`)
+    const report=await applyPrivateState(payload,{onProgress:state=>{
+      if(state.processed===state.total||state.processed-lastShown>=100){
+        lastShown=state.processed
+        setRestoreProgress(`Import ${restoreNumber(state.processed)} / ${restoreNumber(state.total)}`)
+      }
+    }})
+    if(!report.verified)throw new Error('La restauration n’a pas pu être vérifiée')
+    scheduleDriveSync()
+    const details=[report.duplicates?`${restoreNumber(report.duplicates)} doublon(s)`:'',report.invalid?`${restoreNumber(report.invalid)} ignoré(s)`:''].filter(Boolean).join(' · ')
+    toast(`Sauvegarde importée : ${restoreNumber(report.imported)} élément(s) vérifié(s)${details?` · ${details}`:''}`)
+  }catch(error){toast(error instanceof Error?error.message:'Import impossible')}
+  finally{setRestoreProgress('');event.target.value=''}
 }
 
 await settleArtProject()
