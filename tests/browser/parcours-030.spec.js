@@ -20,7 +20,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await page.goto('/')
   await page.evaluate(async () => { await navigator.serviceWorker.ready })
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true)
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.12')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.13')
   await expect(page.locator('#projectContext')).toBeHidden()
   await expect(page.locator('#aboutHome')).toHaveCount(0)
   await expect(page.locator('#goalAbout')).toHaveCount(0)
@@ -193,7 +193,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await page.reload()
   page.once('dialog', dialogBox => dialogBox.accept())
   await page.locator('#restoreInput').setInputFiles(backup)
-  await expect(page.locator('#toast')).toHaveText('Sauvegarde importée')
+  await expect(page.locator('#toast')).toContainText('Sauvegarde importée :')
   await page.locator('#q').fill('Chaîne moyenne')
   await expect(page.locator('#searchResults')).toContainText('Caisse grise n°23')
 
