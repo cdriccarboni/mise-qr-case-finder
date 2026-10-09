@@ -33,6 +33,18 @@ on:
       - "tests/**"
   workflow_dispatch:
     inputs:
+      expected_sha:
+        description: "Commit SHA exact approuvé pour une publication Play"
+        required: false
+        type: string
+      expected_version:
+        description: "VersionName approuvée"
+        required: false
+        type: string
+      expected_version_code:
+        description: "VersionCode Android approuvé"
+        required: false
+        type: string
       publish_to_play:
         description: "Publier l'AAB signé sur Google Play"
         required: true
@@ -47,6 +59,10 @@ on:
           - internal
           - alpha
           - beta
+
+concurrency:
+  group: mises-android-${{ github.event_name == 'workflow_dispatch' && inputs.publish_to_play && inputs.track || github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -63,6 +79,27 @@ jobs:
       PACKAGE_NAME: "fr.acousmatictheatre.mises"
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verify explicit Play release authorization
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_to_play }}
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
+          EXPECTED_VERSION_CODE: ${{ inputs.expected_version_code }}
+          EXPECTED_TRACK: ${{ inputs.track }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main" || { echo "::error::Play deliveries are restricted to main"; exit 1; }
+          test -n "$EXPECTED_SHA" && test "$GITHUB_SHA" = "$EXPECTED_SHA" || { echo "::error::Commit differs from the approved SHA"; exit 1; }
+          case "$EXPECTED_TRACK" in internal|alpha|beta) ;; *) echo "::error::Unauthorized Play track"; exit 1 ;; esac
+          VERSION="$(node -p "require('./package.json').version")"
+          ANDROID_VERSION="$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)".*$/\1/p' android/app/build.gradle.kts | head -n 1)"
+          CODE="$(sed -nE 's/^[[:space:]]*versionCode = ([0-9]+).*$/\1/p' android/app/build.gradle.kts | head -n 1)"
+          PACKAGE="$(sed -nE 's/^val playApplicationId = "([^"]+)".*$/\1/p' android/app/build.gradle.kts | head -n 1)"
+          test -n "$EXPECTED_VERSION" && test "$VERSION" = "$EXPECTED_VERSION" && test "$ANDROID_VERSION" = "$EXPECTED_VERSION" || { echo "::error::Version differs from approved version"; exit 1; }
+          test -n "$EXPECTED_VERSION_CODE" && test "$CODE" = "$EXPECTED_VERSION_CODE" || { echo "::error::Android versionCode differs from approved version"; exit 1; }
+          test "$PACKAGE" = "$PACKAGE_NAME" || { echo "::error::Android package name mismatch"; exit 1; }
+          echo "Approved release: sha=$GITHUB_SHA version=$VERSION versionCode=$CODE package=$PACKAGE track=$EXPECTED_TRACK"
 
       - uses: actions/setup-node@v4
         with:
@@ -188,7 +225,7 @@ jobs:
           fi
 
       - name: Publish signed AAB to Google Play
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_to_play }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_to_play && github.ref == 'refs/heads/main' }}
         env:
           PLAY_TRACK: ${{ inputs.track }}
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
