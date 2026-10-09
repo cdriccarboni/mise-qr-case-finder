@@ -170,12 +170,8 @@ jobs:
           test -n "$AAB"
           jarsigner -verify -verbose -certs "$AAB" >/dev/null
 
-      - uses: actions/upload-artifact@v4
-        if: steps.play_signing.outputs.available == 'true'
-        with:
-          name: MISES-Play-AAB
-          path: android/app/build/outputs/bundle/release/*.aab
-          if-no-files-found: error
+      # Signed AABs must not be exported as artifacts from this public repository.
+      # Keep them on the ephemeral runner only for an explicitly authorized Play upload.
 
       - name: Require Play credentials when publishing
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_to_play }}
@@ -267,16 +263,3 @@ jobs:
           else
             gh release create "$TAG" "/tmp/$ASSET"               --prerelease               --title "MISES ! ${VERSION} — APK TEST"               --notes "APK Android de test validé par la recette GitHub (unitaires, build PWA, Playwright, assembleDebug) avec signature de test persistante. Test uniquement."
           fi
-
-      - name: Attach signed Play AAB to the pre-release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.play_signing.outputs.available == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VERSION="$(node -p "require('./package.json').version")"
-          VERSION_CODE="$(grep -E 'versionCode = ' android/app/build.gradle.kts | head -n1 | grep -oE '[0-9]+')"
-          TAG="v${VERSION}"
-          AAB="$(find android/app/build/outputs/bundle/release -name '*.aab' -type f | head -n 1)"
-          ASSET="MISES-${VERSION}-v${VERSION_CODE}-PLAY.aab"
-          cp "$AAB" "/tmp/$ASSET"
-          gh release upload "$TAG" "/tmp/$ASSET" --clobber
