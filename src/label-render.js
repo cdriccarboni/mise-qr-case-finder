@@ -138,7 +138,8 @@ function paintQr(img, text, left, top, maxSize) {
 export function renderLabelRgba(spec) {
   const width = 384
   const nameLines = wrap(spec.name || 'MISES', 3, 360)
-  const extra = [spec.location, spec.category].filter(Boolean)
+  const isSpare = Boolean(spec.spare || spec.isSpare)
+  const extra = [spec.location, spec.category, isSpare ? 'SPARE (SECOURS)' : ''].filter(Boolean)
   const height = 150 + nameLines.length * 28 + 280 + extra.length * 22 + 36
   const img = createImage(width, height, PAPER)
   blitWordmark(img, Math.round((width - WORDMARK_BITMAP.width) / 2), 16, INK)

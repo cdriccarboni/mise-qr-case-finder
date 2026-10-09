@@ -46,7 +46,7 @@ async function geometryIssues(page, scope = '.tab.active') {
 test('chaque sous-onglet reste dans les bords sur un viewport Pixel 9', async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 })
   await page.goto('/')
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.13')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.14')
   for (const id of tabIds) {
     await activateTab(page, id)
     expect(await geometryIssues(page), id).toEqual([])
@@ -56,7 +56,7 @@ test('chaque sous-onglet reste dans les bords sur un viewport Pixel 9', async ({
 test('Vibe garde ses dessins centrés, ses boutons propres et sa couleur globale', async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 })
   await page.goto('/')
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.13')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.14')
   await page.locator('[data-tab="vibe"]').click()
   await page.locator('#vibePrompt').fill('forêt nocturne')
   await page.locator('#runVibe').click()
@@ -87,7 +87,7 @@ test('Vibe garde ses dessins centrés, ses boutons propres et sa couleur globale
 test('les cartouches seuls sur leur ligne centrent leur mot', async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 })
   await page.goto('/')
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.13')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.14')
   const last = page.locator('.fieldShortcuts > button').last()
   const parent = page.locator('.fieldShortcuts')
   const [box, pbox, textAlign] = await Promise.all([
@@ -95,6 +95,14 @@ test('les cartouches seuls sur leur ligne centrent leur mot', async ({ page }) =
     parent.boundingBox(),
     last.evaluate(node => getComputedStyle(node).textAlign)
   ])
-  expect(box.width).toBeGreaterThan(pbox.width * .85)
+  const count = await parent.locator(':scope > button').count()
+  if (count % 2 === 1) {
+    // A single button in the last row must span the mobile grid.
+    expect(box.width).toBeGreaterThan(pbox.width * .85)
+  } else {
+    // With two buttons per final row there is no orphan: both remain half-width.
+    const previous = await parent.locator(':scope > button').nth(count - 2).boundingBox()
+    expect(Math.abs(box.width - previous.width)).toBeLessThan(2)
+  }
   expect(textAlign).toBe('center')
 })

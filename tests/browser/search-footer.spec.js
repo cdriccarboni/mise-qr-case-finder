@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 test('search answers are immediate and the first screen stays compact', async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 })
   await page.goto('/')
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.13')
+  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.14')
   await expect(page.locator('#q')).toHaveAttribute('placeholder', /tonnerre/i)
   await expect(page.locator('#searchResults')).toBeEmpty()
   await expect(page.locator('#searchResults .empty')).toHaveCount(0)
@@ -33,7 +33,7 @@ test('search answers are immediate and the first screen stays compact', async ({
   const footer = page.locator('.appFooter')
   await expect(footer).toBeVisible()
   await expect(footer).toContainText('MISES! · QR Case Finder')
-  await expect(footer.locator('#footerVersion')).toHaveText('0.4.0-beta.13')
+  await expect(footer.locator('#footerVersion')).toHaveText('0.4.0-beta.14')
   await expect(footer).toContainText('© Cédric Carboni')
   await expect(footer).not.toContainText('Code & création')
   const footerBox = await footer.boundingBox()
