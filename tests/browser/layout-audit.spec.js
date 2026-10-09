@@ -95,6 +95,14 @@ test('les cartouches seuls sur leur ligne centrent leur mot', async ({ page }) =
     parent.boundingBox(),
     last.evaluate(node => getComputedStyle(node).textAlign)
   ])
-  expect(box.width).toBeGreaterThan(pbox.width * .85)
+  const count = await parent.locator(':scope > button').count()
+  if (count % 2 === 1) {
+    // A single button in the last row must span the mobile grid.
+    expect(box.width).toBeGreaterThan(pbox.width * .85)
+  } else {
+    // With two buttons per final row there is no orphan: both remain half-width.
+    const previous = await parent.locator(':scope > button').nth(count - 2).boundingBox()
+    expect(Math.abs(box.width - previous.width)).toBeLessThan(2)
+  }
   expect(textAlign).toBe('center')
 })
