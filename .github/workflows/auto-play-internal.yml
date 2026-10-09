@@ -1,0 +1,122 @@
+name: Auto-deliver MISES to Google Play internal after green CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/auto-play-internal.yml'
+      - 'scripts/internal-release-contract.mjs'
+      - 'tests/internal-release-contract.test.mjs'
+  workflow_dispatch:
+    # Manual dry-run is safe; the existing android.yml remains the actual publisher.
+  workflow_run:
+    workflows: ['Build MISES ! Android']
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: mises-auto-play-internal
+  cancel-in-progress: false
+
+jobs:
+  validate-gate:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test tests/internal-release-contract.test.mjs
+      - run: echo 'Dry run only; no build is published by this job.'
+
+  prepare-internal:
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      vars.AUTO_PLAY_INTERNAL == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Confirm the source is still the live main branch
+        id: contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          LIVE_SHA="$(git ls-remote https://github.com/$GITHUB_REPOSITORY.git refs/heads/main | cut -f1)"
+          test -n "$LIVE_SHA"
+          export RELEASE_SOURCE_SHA="$SOURCE_SHA"
+          export RELEASE_LIVE_MAIN_SHA="$LIVE_SHA"
+          node scripts/internal-release-contract.mjs
+
+      - name: Wait for matching web CI to pass (same exact commit)
+        if: steps.contract.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 24); do
+            CONCLUSION="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/validate-web.yml/runs?head_sha=$SOURCE_SHA&per_page=50" \
+              --jq '[.workflow_runs[] | select(.head_sha == env.SOURCE_SHA and .event == "push")] | sort_by(.created_at) | last | .conclusion // empty')"
+            if [ "$CONCLUSION" = success ]; then
+              echo "Matching web CI passed for $SOURCE_SHA"
+              exit 0
+            fi
+            if [ "$CONCLUSION" = failure ] || [ "$CONCLUSION" = cancelled ] || [ "$CONCLUSION" = timed_out ]; then
+              echo "::error::Matching web CI did not succeed: $CONCLUSION"
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "::error::Matching web CI did not complete within 4 minutes."
+          exit 1
+
+      - name: Prevent duplicate releases and stale dispatches
+        id: duplicate
+        if: steps.contract.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          LATEST="$(git ls-remote https://github.com/$GITHUB_REPOSITORY.git refs/heads/main | cut -f1)"
+          test "$SOURCE_SHA" = "$LATEST" || { echo "::error::Main moved: manual review required"; exit 1; }
+          EXISTS="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/android.yml/runs?head_sha=$SOURCE_SHA&event=workflow_dispatch&per_page=50" \
+            --jq '[.workflow_runs[] | select(.head_sha == env.SOURCE_SHA and (.status == "queued" or .status == "in_progress" or .conclusion == "success"))] | length')"
+          if [ "$EXISTS" -gt 0 ]; then
+            echo "already_dispatched=true" >> "$GITHUB_OUTPUT"
+            echo "A matching Android dispatch exists. No duplicate release."
+          else
+            echo "already_dispatched=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dispatch the existing signed Play pipeline (internal only)
+        if: steps.contract.outputs.eligible == 'true' && steps.duplicate.outputs.already_dispatched == 'false'
+        env:
+          VERSION: ${{ steps.contract.outputs.version }}
+          VERSION_CODE: ${{ steps.contract.outputs.version_code }}
+        run: |
+          set -euo pipefail
+          gh workflow run android.yml --repo "$GITHUB_REPOSITORY" --ref main \
+            -f expected_sha="$SOURCE_SHA" \
+            -f expected_version="$VERSION" \
+            -f expected_version_code="$VERSION_CODE" \
+            -f publish_to_play=true \
+            -f track=internal
+          echo "Play internal delivery requested for $SOURCE_SHA, $VERSION/$VERSION_CODE"
