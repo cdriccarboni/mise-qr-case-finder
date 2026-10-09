@@ -9,6 +9,8 @@ import { visualReference } from './vision-engine.js'
 import { casePathString, caseDisplayName } from './containers.js'
 import { findSmartCompletions } from './quick-add.js'
 
+const unique = values => [...new Set(values)]
+
 const TITLES = {
   inventory: ['Inventaire rapide', 'Photo, fiche, QR, objet suivant'],
   group: ['Plusieurs objets', 'Une proposition par objet visible. Les personnes sont ignorées.'],
