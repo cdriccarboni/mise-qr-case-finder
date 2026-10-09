@@ -32,6 +32,11 @@ import { newLearning } from './learning.js'
 import { answerBlock, vibeBlock, exerciseBlock } from './terrain-ui.js'
 import { participantCount } from './participant-plan.js'
 import './identity.css'
+import { caseBreadcrumb, casePathString, objectPathString, directSubContainers, containerStats, CONTAINER_TYPES, caseDisplayName } from './containers.js'
+import { renderPedagogySpacesHtml, PEDAGOGY_SPACES } from './pedagogy-spaces.js'
+import { openVoiceLabelCreator } from './voice-label.js'
+import { openCasePhotoCreator } from './case-photo.js'
+import { openQuickAddObject, findSmartCompletions } from './quick-add.js'
 import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSetting, parseInk } from './ink.js'
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
 import { applyBackup, backupItemCount } from './backup.js'
@@ -433,25 +438,51 @@ function expandQuery(q){
 
 function searchOwned(q){
   if(!q.trim()) return []
+  const isSpareQuery = /\bspare\b/i.test(q)
   const enriched=objects.map(o=>({
     ...o,
-    caseLabel:caseName(caseBy(o.caseId||o.container_id)),
+    pathString: objectPathString(o, cases),
+    caseLabel: caseDisplayName(caseBy(o.caseId||o.container_id)),
+    displayName: o.nickname ? `${o.name} — ${o.nickname.toUpperCase()}` : o.name,
     ...soundFields(o),
-    searchText:[o.name,o.detectedName,o.hear,o.imagine,o.device,o.notes,...(o.sounds||[]),...(o.tags||[]),...(o.contexts||[]),o.family,caseName(caseBy(o.caseId||o.container_id))].join(' ')
+    searchText:[
+      o.name, o.nickname, o.detectedName, o.hear, o.imagine, o.device, o.notes,
+      ...(o.sounds||[]), ...(o.tags||[]), ...(o.aliases||[]), ...(o.contexts||[]),
+      o.family, o.spare ? 'SPARE' : '',
+      objectPathString(o, cases),
+      caseDisplayName(caseBy(o.caseId||o.container_id))
+    ].filter(Boolean).join(' ')
   }))
   const fuse=new Fuse(enriched,{
     keys:[
-      {name:'name',weight:.28},{name:'hear',weight:.2},{name:'imagine',weight:.16},{name:'sounds',weight:.14},{name:'tags',weight:.08},
-      {name:'searchText',weight:.1},{name:'caseLabel',weight:.04}
+      {name:'displayName',weight:.32},
+      {name:'name',weight:.28},
+      {name:'nickname',weight:.28},
+      {name:'hear',weight:.2},
+      {name:'imagine',weight:.16},
+      {name:'sounds',weight:.14},
+      {name:'tags',weight:.12},
+      {name:'aliases',weight:.14},
+      {name:'searchText',weight:.12},
+      {name:'pathString',weight:.1},
+      {name:'caseLabel',weight:.06}
     ],
-    threshold:.44,ignoreLocation:true,includeScore:true
+    threshold:.45,ignoreLocation:true,includeScore:true
   })
-  return fuse.search(expandQuery(q)).map(x=>({...x.item,_score:x.score})).sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||(a._score-b._score)).slice(0,20)
+  let hits = fuse.search(expandQuery(q)).map(x=>({...x.item,_score:x.score}))
+  if(isSpareQuery){
+    const spareHits = enriched.filter(o => o.spare || /\bspare\b/i.test(o.nickname||'') || /\bspare\b/i.test(o.name||''))
+    const seenIds = new Set(hits.map(h => h.id))
+    for(const sh of spareHits){
+      if(!seenIds.has(sh.id)) hits.unshift({ ...sh, _score: 0 })
+    }
+  }
+  return hits.sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||(a._score-b._score)).slice(0,25)
 }
 function searchEntities(q){
   if(!q.trim()) return {cases:[],kits:[],mises:[]}
   const query=expandQuery(q)
-  const caseHits=new Fuse(cases.map(c=>({...c,label:caseName(c),kind:'case',searchText:[c.name,c.notes,c.location,caseName(c)].filter(Boolean).join(' ')})),{keys:['name','label','notes','searchText'],threshold:.44,ignoreLocation:true,includeScore:true}).search(query).slice(0,6).map(x=>({...x.item,_score:x.score}))
+  const caseHits=new Fuse(cases.map(c=>({...c,label:caseName(c),displayName:caseDisplayName(c),path:casePathString(c.id,cases),kind:'case',searchText:[c.name,c.notes,c.location,caseName(c),caseDisplayName(c),casePathString(c.id,cases)].filter(Boolean).join(' ')})),{keys:['name','label','displayName','path','notes','searchText'],threshold:.44,ignoreLocation:true,includeScore:true}).search(query).slice(0,6).map(x=>({...x.item,_score:x.score}))
   const kitHits=new Fuse(kits.map(k=>({...k,kind:'kit',searchText:[k.name,k.source,...(k.contexts||[]),...(k.objectIds||[]).map(id=>objectBy(id)?.name)].filter(Boolean).join(' ')})),{keys:['name','source','contexts','searchText'],threshold:.44,ignoreLocation:true,includeScore:true}).search(query).slice(0,6).map(x=>({...x.item,_score:x.score}))
   const miseHits=new Fuse(mises.map(m=>({...m,kind:'mise',searchText:[m.name,m.projectName,m.notes,...(m.objectIds||[]).map(id=>objectBy(id)?.name)].filter(Boolean).join(' ')})),{keys:['name','projectName','notes','searchText'],threshold:.44,ignoreLocation:true,includeScore:true}).search(query).slice(0,6).map(x=>({...x.item,_score:x.score}))
   return {cases:caseHits,kits:kitHits,mises:miseHits}
@@ -567,6 +598,69 @@ async function captureAudioMemo(o,button){
   }
 }
 async function showObjectQr(o){await openEntityLabel('object', o)}
+function openMoveModal(o){
+  const d=$('#modal')
+  const currentCase=o.caseId||o.container_id||''
+  d.innerHTML=`<div class="form">
+    <div class="dialoghead"><div><b>Déplacer « ${esc(o.name)} »</b><small>Choisir le contenant de destination</small></div><button id="closeMoveModal" class="ghost" type="button">×</button></div>
+    <label>Nouvel emplacement :<select id="moveTargetCase">
+      <option value="">Sans contenant</option>
+      ${cases.map(c=>`<option value="${c.id}" ${c.id===currentCase?'selected':''}>${esc(casePathString(c.id,cases)||caseDisplayName(c))}</option>`).join('')}
+    </select></label>
+    <div class="row">
+      <button id="confirmMove" type="button">Déplacer l’objet</button>
+      <button id="cancelMove" class="ghost" type="button">Annuler</button>
+    </div>
+  </div>`
+  d.showModal()
+  $('#closeMoveModal').onclick=()=>d.close()
+  $('#cancelMove').onclick=()=>d.close()
+  $('#confirmMove').onclick=async()=>{
+    const targetId=$('#moveTargetCase').value
+    const from=o.caseId||o.container_id||''
+    o.locationHistory=[...(o.locationHistory||[]),{at:new Date().toISOString(),from,to:targetId,method:'déplacement manuel'}]
+    o.caseId=targetId;o.container_id=targetId;o.updatedAt=new Date().toISOString()
+    await db.put('objects',o)
+    scheduleDriveSync();d.close();await refresh();render()
+    const targetCase=caseBy(targetId)
+    toast(targetCase?`${o.name} → ${caseDisplayName(targetCase)}`:`${o.name} retiré du contenant`)
+  }
+}
+function showObjectScanned(o){
+  if(!o)return
+  const d=$('#modal')
+  const hasSpare=Boolean(o.spare||/\bspare\b/i.test(o.name||'')||/\bspare\b/i.test(o.nickname||''))
+  const path=objectPathString(o,cases)
+  const caseObj=caseBy(o.caseId||o.container_id)
+  d.innerHTML=`<div class="form objectScannedView">
+    <div class="dialoghead"><div><b>${esc(o.name)}${o.nickname?` — ${esc(o.nickname.toUpperCase())}`:''}</b><small>${esc(provenanceLabel(o.provenance||'user-document'))}</small></div><button id="closeScannedObj" class="ghost" type="button">×</button></div>
+    ${o.photo?`<img class="photoPreview" src="${o.photo}" alt="${esc(o.name)}">`:''}
+    <div class="scannedInfo">
+      <p class="scannedLocation">Emplacement : <b>${esc(path)}</b> ${hasSpare?'<span class="spareBadge">SPARE</span>':''}</p>
+      ${(o.aliases||[]).length?`<p class="hint">Alias / surnoms : ${esc(o.aliases.join(', '))}</p>`:''}
+      <p class="hint">Quantité disponible : <b>${esc(o.quantity||1)}</b>${o.state?` · État : ${esc(o.state)}`:''}</p>
+      ${soundSummary(o)?`<p class="hint">Sons : ${esc(soundSummary(o))}</p>`:''}
+    </div>
+    <div class="scannedActionsRow row">
+      <button id="scanLocate" type="button">📍 LOCALISER</button>
+      <button id="scanEdit" type="button" class="ghost">✏ MODIFIER</button>
+      <button id="scanMove" type="button" class="ghost">⇄ DÉPLACER</button>
+      <button id="scanPrintQr" type="button" class="ghost">🖨 IMPRIMER QR</button>
+      <button id="scanAddList" type="button" class="ghost">➕ AJOUTER À UNE LISTE</button>
+    </div>
+  </div>`
+  d.showModal()
+  $('#closeScannedObj').onclick=()=>d.close()
+  $('#scanLocate').onclick=()=>{
+    d.close()
+    if(caseObj){setTab('cases');showCase(caseObj.id);toast(`Rangé dans : ${caseDisplayName(caseObj)}`)}
+    else toast('Objet sans contenant attribué')
+  }
+  $('#scanEdit').onclick=()=>{d.close();openObject(o)}
+  $('#scanMove').onclick=()=>{d.close();openMoveModal(o)}
+  $('#scanPrintQr').onclick=()=>{d.close();openEntityLabel('object',o)}
+  $('#scanAddList').onclick=()=>{d.close();addToActiveMise(o.id)}
+}
 function pageOrigin(){return location.href.split('?')[0].split('#')[0]}
 function sendSystemPrint(dataUrl, jobName){
   if(window.MisesAndroidPrinter&&typeof window.MisesAndroidPrinter.printWithSystem==='function'){
@@ -684,17 +778,56 @@ function openPlayHub(containerId=null){
   const summary=summarizeInventory(graph,filters)
   const label=containerId?caseName(caseBy(containerId)):'tout l’inventaire'
   const d=$('#modal')
-  d.innerHTML=`<div class="form">${playHubHtml(summary,label,esc,lastParticipantCount)}</div>`
+  d.innerHTML=`<div class="form">${playHubHtml(summary,label,esc,lastParticipantCount)}<div class="row" style="margin-top:.6rem;border-top:1px solid #28282e;padding-top:.6rem"><button type="button" class="ghost" data-play-pedagogy style="width:100%">🎓 Ouvrir Atelier, 10 jeux & Pédagogie</button></div></div>`
   d.showModal()
   const close=()=>d.close()
   const selectedParticipants=()=>{lastParticipantCount=participantCount(d.querySelector('#playPeople')?.value||lastParticipantCount);return lastParticipantCount}
   d.querySelector('[data-play-close]')?.addEventListener('click',close)
+  d.querySelector('[data-play-pedagogy]')?.addEventListener('click',()=>{d.close();openPedagogyModal('jeux')})
   d.querySelector('[data-play-action="challenge"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openInventoryChallenge({...filters,participants})})
   d.querySelector('[data-play-action="workshop"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openWorkshopFlow(filters,label,participants)})
   d.querySelector('[data-play-action="universe"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openInventoryChallenge({...filters,gameType:'E',universe:'forêt',participants})})
   d.querySelector('[data-play-action="surprise"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openSurprise({...filters,participants})})
   d.querySelector('[data-play-action="public"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openPublicGame(null,participants)})
   d.querySelector('[data-play-action="random-universe"]')?.addEventListener('click',()=>{const participants=selectedParticipants();d.close();openRandomPublicUniverse(participants)})
+}
+function openPedagogyModal(initialSpace = 'atelier'){
+  let activeSpace = initialSpace
+  const d = $('#modal')
+  const render = () => {
+    d.innerHTML = `<div class="form">${renderPedagogySpacesHtml(activeSpace, esc)}</div>`
+    if (!d.open) d.showModal()
+    d.querySelector('[data-pedagogy-close]')?.addEventListener('click', () => d.close())
+    d.querySelectorAll('[data-ped-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeSpace = btn.dataset.pedTab
+        render()
+      })
+    })
+    d.querySelectorAll('[data-launch-game]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const code = btn.dataset.launchGame
+        d.close()
+        openInventoryChallenge({ gameType: code })
+      })
+    })
+    d.querySelectorAll('[data-launch-program]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        d.close()
+        openWorkshopFlow({}, 'Atelier sonore', lastParticipantCount)
+      })
+    })
+    d.querySelectorAll('[data-voice-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const act = btn.dataset.voiceAction
+        d.close()
+        if (act === 'label') openVoiceLabelFlow()
+        else if (act === 'search') { $('#q').focus(); $('#q').value = 'micro bruitage'; renderSearch() }
+        else if (act === 'game') openInventoryChallenge({ gameType: 'A' })
+      })
+    })
+  }
+  render()
 }
 function openInventoryChallenge(filters={}, preset=null){
   const graph=currentGameGraph()
@@ -823,6 +956,9 @@ $('#app').innerHTML=`
   <div class="searchbox"><input id="q" autocomplete="off" aria-label="Recherche MISES!" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="searchGo" class="searchGo" type="button" title="Lancer la recherche" aria-label="Lancer la recherche">→</button><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
   <section id="search" class="tab active searchImmediate" aria-label="Réponse à la recherche"><div id="searchResults"></div></section>
   <div class="quick fieldShortcuts" aria-label="Raccourcis terrain">
+    <button type="button" data-action="quick-add">⚡ Ajout rapide</button>
+    <button type="button" data-action="case-photo">📷 Caisse par photo</button>
+    <button type="button" data-action="voice-label">🎙 Étiquette vocale</button>
     <button type="button" data-action="scan">Scanner un QR</button>
     <button type="button" data-action="photo">Ajouter une photo</button>
     <button type="button" data-action="inventory">Inventaire photo</button>
@@ -832,13 +968,13 @@ $('#app').innerHTML=`
 </section>
 <div class="goalNav" aria-label="Navigation MISES">
  <details open><summary>Trouver</summary><div><button class="foleyOnly" data-tab="creator">Créateur d’ambiance</button><button class="foleyOnly" data-tab="vibe">Vibe bruitage</button></div></details>
- <details class="createGoals"><summary>Créer</summary><div><span class="inventoryNavGroup inventoryOnly"><button id="goalAddObjectSimple" type="button">+ Objet</button><button id="goalAddCaseSimple" type="button">+ Contenant</button><button id="goalQrSimple" type="button">Étiquettes QR</button></span><button id="goalPlay" class="foleyOnly" type="button">Jouer</button><button id="goalWorkshop" class="foleyOnly" type="button">Préparer un atelier</button><button id="goalChallenge" class="foleyOnly" type="button">Défi bruitage</button><button id="goalPublic" class="foleyOnly" data-tab="publicLibrary" type="button">Bibliothèque publique</button><button id="goalFabrications" class="foleyOnly" data-tab="fabrications" type="button">Fabrications</button><button id="goalActivities" class="foleyOnly" data-tab="activities" type="button">Activités pédagogiques</button><button id="goalRandomUniverse" class="foleyOnly" type="button">Univers aléatoire</button><button id="goalHands" class="foleyOnly" type="button">Crée ton bruitage</button><button id="goalExercise" class="foleyOnly" type="button">Exercice</button><button id="goalGroupPhoto" class="foleyOnly" type="button">Photo de groupe</button><button id="goalUniverse" class="foleyOnly" type="button">Univers d’une photo</button></div></details>
+ <details class="createGoals"><summary>Créer</summary><div><span class="inventoryNavGroup inventoryOnly"><button id="goalQuickAdd" type="button">⚡ Ajout rapide</button><button id="goalCasePhoto" type="button">📷 Caisse par photo</button><button id="goalVoiceLabel" type="button">🎙 Étiquette vocale</button><button id="goalAddObjectSimple" type="button">+ Objet</button><button id="goalAddCaseSimple" type="button">+ Contenant</button><button id="goalQrSimple" type="button">Étiquettes QR</button></span><button id="goalPlay" class="foleyOnly" type="button">Jouer</button><button id="goalWorkshop" class="foleyOnly" type="button">Préparer un atelier</button><button id="goalChallenge" class="foleyOnly" type="button">Défi bruitage</button><button id="goalPublic" class="foleyOnly" data-tab="publicLibrary" type="button">Bibliothèque publique</button><button id="goalFabrications" class="foleyOnly" data-tab="fabrications" type="button">Fabrications</button><button id="goalActivities" class="foleyOnly" data-tab="activities" type="button">Activités pédagogiques</button><button id="goalPedagogySpaces" class="foleyOnly" type="button">Atelier & 10 jeux</button><button id="goalRandomUniverse" class="foleyOnly" type="button">Univers aléatoire</button><button id="goalHands" class="foleyOnly" type="button">Crée ton bruitage</button><button id="goalExercise" class="foleyOnly" type="button">Exercice</button><button id="goalGroupPhoto" class="foleyOnly" type="button">Photo de groupe</button><button id="goalUniverse" class="foleyOnly" type="button">Univers d’une photo</button></div></details>
  <details><summary>Ranger</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
  <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
-<section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><button id="addObject">+ Objet</button></div><div id="objectCards" class="cards"></div></section>
-<section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><button id="addCase">+ Contenant</button></div><p class="hint">Crée une valise ou une caisse, puis ouvre-la pour créer / imprimer son QR code. Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
+<section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><div class="row"><button id="filterSpareBtn" class="ghost" type="button">Filtrer SPARE</button><button id="quickAddObjectBtn" class="ghost" type="button">⚡ Ajout rapide</button><button id="addObject">+ Objet</button></div></div><div id="objectCards" class="cards"></div></section>
+<section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><div class="row"><button id="addCasePhotoBtn" class="ghost" type="button">📷 Caisse par photo</button><button id="addCase">+ Contenant</button></div></div><p class="hint">Crée une valise ou une caisse, puis ouvre-la pour créer / imprimer son QR code. Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
 <section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation : spectacle, atelier, tournée ou besoin ponctuel.</p><div id="kitCards" class="cards"></div></section>
 <section id="mises" class="tab"><div class="miseSectionHead"><div><small>MISES ET CONTRÔLE</small><h2>Mises et contrôle</h2><p>Préparer, ouvrir et vérifier la mise du spectacle.</p></div><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards miseCards"></div></section>
 <section id="publicLibrary" class="tab foleyOnly"><div id="publicLibraryBody"></div></section>
@@ -856,6 +992,8 @@ $('#app').innerHTML=`
 <footer class="appFooter" aria-label="Informations MISES"><span>MISES! · QR Case Finder · <b id="footerVersion">${APP_VERSION}</b> · © Cédric Carboni</span></footer>
 
 <input id="photoInput" type="file" accept="image/*" capture="environment" hidden>
+<input id="quickAddPhotoInput" type="file" accept="image/*" capture="environment" hidden>
+<input id="casePhotoInput" type="file" accept="image/*" capture="environment" hidden>
 <input id="galleryInput" type="file" accept="image/*" hidden>
 <input id="groupPhotoInput" type="file" accept="image/*" capture="environment" hidden>
 <input id="inventoryInput" type="file" accept="image/*" capture="environment" hidden>
@@ -863,7 +1001,7 @@ $('#app').innerHTML=`
 <input id="universePhotoInput" type="file" accept="image/*" capture="environment" hidden>
 <input id="restoreInput" type="file" accept=".json" hidden>
 <dialog id="modal"></dialog>
-<dialog id="scanDlg"><div class="dialoghead"><strong id="scanTitle">Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline muted></video><p id="scanFeedback" class="scanFeedback" role="status">Cadre un QR. La lecture est continue, sans bouton déclencheur.</p><div class="row"><button id="scanObjects" type="button">Analyser les objets</button></div></dialog>
+<dialog id="scanDlg"><div class="dialoghead"><strong id="scanTitle">Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline muted></video><p id="scanFeedback" class="scanFeedback" role="status">Cadre un QR. La lecture est continue, sans bouton déclencheur.</p><div class="row manualScanRow"><input id="manualScanInput" placeholder="Ou saisis/colle un identifiant en secours..." style="flex:1"><button id="manualScanGo" type="button" class="ghost">Ouvrir</button></div><div class="row"><button id="scanObjects" type="button">Analyser les objets</button></div></dialog>
 <dialog id="printDlg"></dialog>
 <dialog id="preferencesDlg"><div class="form"><div class="dialoghead"><div><b>Préférences</b><small>Affichage · connexions · données</small></div><button id="closePreferences" class="ghost" type="button">×</button></div>
   <div class="grid2"><label><span>Interface</span><select id="interfaceMode"><option value="foley">Bruitages & pédagogie</option><option value="inventory">Inventaire / régie</option></select></label><label><span>Affichage</span><select id="displayMode"><option value="auto">Auto</option><option value="desktop">Ordinateur</option><option value="mobile">Mobile</option></select></label><label><span>Thème</span><select id="themeMode"><option value="system">Système</option><option value="dark">Sombre</option><option value="light">Clair</option><option value="regie">Mode régie</option></select></label></div><label><span>Catégories personnalisées</span><textarea id="customCategories" rows="3" placeholder="Costumes, accessoires, câbles, consommables…"></textarea></label>
@@ -923,10 +1061,10 @@ function renderSearch(target='#searchResults'){
   }
   if(globalHits.length){h+=`<div class="resultHead"><b>${globalHits.length} résultat${globalHits.length>1?'s':''} dans l’index global</b><span>Sons, documents, instruments, jeux et références publiques.</span></div>`+globalHits.slice(0,10).map(row=>`<article class="result idea"><div class="thumb">⌕</div><div><h3>${esc(row.label)}</h3><p>${esc(row.kind)}</p><small>${esc((row.terms||[]).slice(1,5).join(' · '))}</small></div></article>`).join('')}
   h+=`<div class="resultHead"><b>${own.length} résultat${own.length>1?'s':''} dans ton parc</b><span>Les idées externes restent séparées.</span></div>`
-  h+=own.map(o=>`<article class="result">
+  h+=own.map(o=>`<article class="result ${o.spare?'isSpareResult':''}">
     <div class="thumb">${o.photo?`<img src="${o.photo}">`:'◌'}</div>
-    <div><h3>${esc(o.name)}</h3><p>${soundSummary(o)?esc(soundSummary(o)):'<span class="muted">Son à préciser</span>'}</p>
-    <small>${esc(caseName(caseBy(o.caseId||o.container_id)))} · ${esc(o.family||'À classer')} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></div>
+    <div><h3>${esc(o.name)}${o.nickname?` <span class="nickBadge">${esc(o.nickname)}</span>`:''}${o.spare?' <span class="spareBadge">SPARE</span>':''}</h3><p>${soundSummary(o)?esc(soundSummary(o)):'<span class="muted">Son à préciser</span>'}</p>
+    <small>${esc(objectPathString(o, cases))} · ${esc(o.family||'À classer')}${o.state?` · ${esc(o.state)}`:''}${o.quantity>1?` · qté ${o.quantity}`:''} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></div>
     <div class="resultActions"><button data-open="${o.id}" class="miniAction" type="button" title="Ouvrir la fiche" aria-label="Ouvrir la fiche">↗</button><button data-fav="${o.id}" class="miniAction" type="button" title="Favori" aria-label="Favori">${o.favorite?'★':'☆'}</button><button data-alt="${o.id}" class="miniAction" type="button" title="Alternatives" aria-label="Alternatives">≈</button><button data-add="${o.id}" class="plus" type="button" title="Ajouter à la mise" aria-label="Ajouter à la mise">+</button></div></article>`).join('')
   if(ideas.length) h+=`<h3 class="ideaTitle">Idées à ajouter à ton parc</h3>`+ideas.map(i=>`<article class="result idea ${i.technique?'recipeClickable':''}" ${i.technique?`data-public-technique="${esc(i.id||i.name)}" tabindex="0" role="button" aria-label="Voir comment faire : ${esc(i.name)}"`:''}>
     <div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p>
@@ -1005,7 +1143,7 @@ function pickPhoto(inputId,miseId=null){
 
 function openObject(p={}){
   const current=p.id?objects.find(o=>o.id===p.id):null
-  const o=current||{id:uid('obj'),name:p.name||'',detectedName:'',sounds:p.sounds||[],hear:p.hear||'',imagine:p.imagine||'',device:p.device||'',notes:p.notes||'',tags:[],contexts:[],photo:p.photo||'',caseId:'',family:p.family||'À classer',source:p.source||'manuel',owned:p.owned??true,status:p.status||'available',provenance:p.provenance||(p.owned===false?'external':'user-document')}
+  const o=current||{id:uid('obj'),name:p.name||'',nickname:p.nickname||'',spare:Boolean(p.spare),quantity:p.quantity||1,state:p.state||'Bon état',detectedName:'',sounds:p.sounds||[],hear:p.hear||'',imagine:p.imagine||'',device:p.device||'',notes:p.notes||'',tags:[],contexts:[],photo:p.photo||'',caseId:'',family:p.family||'À classer',source:p.source||'manuel',owned:p.owned??true,status:p.status||'available',provenance:p.provenance||(p.owned===false?'external':'user-document')}
   const shown=soundFields(current||o)
   const m=$('#modal')
   m.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>${current?'Modifier':'Ajouter'} un objet</b><small>${esc(provenanceLabel(o.provenance||'user-document'))}</small></div><button value="cancel" class="ghost">×</button></div>
@@ -1013,12 +1151,20 @@ function openObject(p={}){
   <div class="objectQuick"><button type="button" id="favObject" class="ghost">${o.favorite?'★ Favori':'☆ Favori'}</button>${current?'<button type="button" id="qrObject" class="ghost">QR objet</button><button type="button" id="freeLabelObject" class="ghost">Créer une étiquette</button>':''}<button type="button" id="audioMemo" class="ghost">${o.audioMemo?'Réenregistrer mémo sonore':'Enregistrer un mémo sonore'}</button></div>
   <p id="audioNote" class="hint" role="status" ${o.audioMemo?'hidden':''}>${o.audioMemo?'':'Aucun mémo sonore pour cette fiche.'}</p>
   <audio id="audioMemoPlayer" controls data-memo ${o.audioMemo?'':'hidden'}></audio>
-  <label>Nom<input id="fName" value="${esc(o.name)}" placeholder="Bouteille fictive"></label>
+  <label>Nom<input id="fName" value="${esc(o.name)}" placeholder="Ex : Micro bruitage"></label>
+  <div class="grid2">
+    <label>Surnom / Alias (ex : ELVIS)<input id="fNickname" value="${esc(o.nickname||'')}" placeholder="ELVIS, PETITE DI, SPARE…"></label>
+    <label class="check"><input id="fSpare" type="checkbox" ${o.spare||/\bspare\b/i.test(o.nickname||'')||/\bspare\b/i.test(o.name)?'checked':''}><span>Statut SPARE (secours)</span></label>
+  </div>
+  <div class="grid2">
+    <label>Quantité<input id="fQuantity" type="number" min="1" value="${o.quantity||1}"></label>
+    <label>État<select id="fState">${['Bon état','Neuf','Usagé','À réparer','Hors service'].map(st=>`<option ${(o.state||'Bon état')===st?'selected':''}>${st}</option>`).join('')}</select></label>
+  </div>
   <label class="foleyOnly">Son à entendre<input id="fHear" value="${esc(shown.hear)}" placeholder="glouglou fictif"></label>
   <label class="foleyOnly">Son à imaginer<input id="fImagine" value="${esc(shown.imagine)}" placeholder="océan imaginé fictif"></label>
   <label class="foleyOnly">Objet ou dispositif nécessaire<input id="fDevice" value="${esc(o.device||'')}" placeholder="bouteille en verre fictive"></label>
   <div class="grid2"><label>Famille<select id="fFamily">${currentCategories().map(x=>`<option ${o.family===x?'selected':''}>${x}</option>`)}</select></label>
-  <label>Contenant<select id="fCase"><option value="">Sans contenant</option>${cases.map(c=>`<option value="${c.id}" ${(o.caseId||o.container_id)===c.id?'selected':''}>${esc(caseName(c))}</option>`)}</select></label></div>
+  <label>Contenant<select id="fCase"><option value="">Sans contenant</option>${cases.map(c=>`<option value="${c.id}" ${(o.caseId||o.container_id)===c.id?'selected':''}>${esc(casePathString(c.id, cases) || caseDisplayName(c))}</option>`).join('')}</select></label></div>
   <label>Usages déjà saisis, distincts des deux sons<input id="fSounds" value="${esc((o.sounds||[]).join(', '))}" placeholder="liste libre, non fusionnée"></label>
   <label>Notes<textarea id="fNotes" rows="3">${esc(o.notes||'')}</textarea></label>
   <div class="grid2"><label>Origine<select id="fProvenance">${Object.entries(PROVENANCE).map(([key,label])=>`<option value="${key}" ${(o.provenance||'user-document')===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
@@ -1031,7 +1177,7 @@ function openObject(p={}){
   $('#pickCamera').onclick=()=>pickPhoto('photoInput')
   $('#favObject').onclick=()=>{o.favorite=!o.favorite;$('#favObject').textContent=o.favorite?'★ Favori':'☆ Favori'}
   if($('#qrObject'))$('#qrObject').onclick=()=>showObjectQr(o)
-  if($('#freeLabelObject'))$('#freeLabelObject').onclick=()=>openFreeLabel({type:'object',id:o.id,name:o.name,photo:o.photo||''})
+  if($('#freeLabelObject'))$('#freeLabelObject').onclick=()=>openFreeLabel({type:'object',id:o.id,name:o.name,photo:o.photo||'',spare:Boolean(o.spare)})
   $('#audioMemo').onclick=e=>captureAudioMemo(o,e.currentTarget)
   const player=$('#audioMemoPlayer')
   if(player){
@@ -1045,8 +1191,16 @@ function openObject(p={}){
     if(previousCase!==nextCase)o.locationHistory=[...(o.locationHistory||[]),{at:new Date().toISOString(),from:previousCase,to:nextCase,method:'fiche'}]
     const previousSounds=o.sounds
     assignSoundFields(o,$('#fHear').value.trim(),$('#fImagine').value.trim())
+    const nick=$('#fNickname').value.trim()
+    const isSpare=Boolean($('#fSpare').checked)
+    const aliases=unique([...(o.aliases||[]),nick].filter(Boolean))
     Object.assign(o,{
       name:$('#fName').value.trim()||'Objet sans nom',
+      nickname:nick,
+      aliases,
+      spare:isSpare||/\bspare\b/i.test(nick)||/\bspare\b/i.test($('#fName').value),
+      quantity:Number($('#fQuantity').value)||1,
+      state:$('#fState').value||'Bon état',
       family:$('#fFamily').value,
       device:$('#fDevice').value.trim(),
       notes:$('#fNotes').value.trim(),
@@ -1063,17 +1217,18 @@ function openObject(p={}){
 $('#addObject').onclick=()=>openObject()
 
 function openCase(c){
-  c=c||{id:uid('case'),name:'',part:null,total:null,type:'Valise'}
+  c=c||{id:uid('case'),name:'',part:null,total:null,type:'Valise',parentId:null}
   const m=$('#modal')
   m.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><b>${caseBy(c.id)?'Modifier':'Créer'} un contenant</b><button value="cancel" class="ghost">×</button></div>
-  <label>Nom<input id="cName" value="${esc(c.name)}" placeholder="Vie quotidienne"></label>
+  <label>Nom<input id="cName" value="${esc(c.name)}" placeholder="CAISSE ROSE, Boîte micros…"></label>
+  <label>Contenant parent (optionnel, pour sous-contenant)<select id="cParent"><option value="">Aucun (contenant racine)</option>${cases.filter(x=>x.id!==c.id).map(x=>`<option value="${x.id}" ${c.parentId===x.id?'selected':''}>${esc(casePathString(x.id, cases) || caseDisplayName(x))}</option>`).join('')}</select></label>
   <div class="grid2"><label>N° série<input id="cPart" type="number" min="1" value="${c.part||''}" placeholder="1"></label><label>Total<input id="cTotal" type="number" min="1" value="${c.total||''}" placeholder="3"></label></div>
-  <label>Type<select id="cType">${['Caisse','Valise','Boîte','Bac','Sac','Flight-case','Trousse'].map(x=>`<option ${norm(c.type)===norm(x)?'selected':''}>${x}</option>`)}</select></label>
+  <label>Type<select id="cType">${['Caisse','Valise','Boîte','Pochette','Trousse','Bac','Sac','Flight-case','Contenant'].map(x=>`<option ${norm(c.type)===norm(x)?'selected':''}>${x}</option>`)}</select></label>
   <button id="saveCase">Enregistrer</button></form>`
   m.showModal()
   $('#saveCase').onclick=async e=>{
     e.preventDefault()
-    Object.assign(c,{name:$('#cName').value.trim()||'Contenant',part:+$('#cPart').value||null,total:+$('#cTotal').value||null,type:$('#cType').value})
+    Object.assign(c,{name:$('#cName').value.trim()||'Contenant',parentId:$('#cParent').value||null,part:+$('#cPart').value||null,total:+$('#cTotal').value||null,type:$('#cType').value})
     await db.put('cases',c);scheduleDriveSync();m.close();await refresh();render();toast(caseName(c)+' enregistré')
   }
 }
@@ -1087,15 +1242,20 @@ async function showCase(id){
   const mise=miseBy(activeMise)
   const missing=mise?(mise.objectIds||[]).map(objectBy).filter(o=>o&&(o.caseId||o.container_id)!==id):[]
   const elsewhere=objects.filter(o=>(o.caseId||o.container_id)!==id)
+  const subs=directSubContainers(id, cases)
+  const stats=containerStats(id, cases, objects)
+  const path=casePathString(id, cases)
   const m=$('#modal')
-  m.innerHTML=`<div class="caseView"><div class="dialoghead"><div><b>${esc(caseName(c))}</b><small>${items.length} objet${items.length>1?'s':''}</small></div><button class="ghost" id="closeCase">×</button></div>
+  m.innerHTML=`<div class="caseView"><div class="dialoghead"><div><b>${esc(caseDisplayName(c))}</b><small>${stats.directCount} direct${stats.directCount>1?'s':''} · ${stats.totalCount} au total (avec ${subs.length} sous-contenant${subs.length>1?'s':''})</small></div><button class="ghost" id="closeCase">×</button></div>
+  ${path ? `<p class="caseBreadcrumb"><strong>Chemin :</strong> ${esc(path)}</p>` : ''}
   <img class="qr" src="${qr}" alt="QR de ${esc(caseName(c))}"><p class="hint">Ce QR rouvre cette caisse dans MISES!.</p>
-  <div class="miniList">${items.map(o=>`<span>${esc(o.name)} <button type="button" data-remove-object="${o.id}" class="ghost">Retirer</button></span>`).join('')||'<span>Aucun objet dans cette caisse.</span>'}</div>
-  <label>Ajouter un objet<select id="caseAddObject"><option value="">Choisir</option>${elsewhere.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join('')}</select></label>
+  ${subs.length ? `<div class="subContainersBox"><b>Sous-contenants (${subs.length}) :</b>${subs.map(s=>`<div class="subContainerRow"><button type="button" class="breadcrumbLink" data-opensub="${s.id}">📁 ${esc(caseDisplayName(s))}</button><small>${objects.filter(o=>(o.caseId||o.container_id)===s.id).length} objet(s)</small></div>`).join('')}</div>` : ''}
+  <div class="miniList">${items.map(o=>`<span>${esc(o.name)}${o.nickname?` (${esc(o.nickname)})`:''}${o.spare?' [SPARE]':''} <button type="button" data-remove-object="${o.id}" class="ghost">Retirer</button></span>`).join('')||'<span>Aucun objet direct dans ce contenant.</span>'}</div>
+  <label>Ajouter un objet existant<select id="caseAddObject"><option value="">Choisir</option>${elsewhere.map(o=>`<option value="${o.id}">${esc(o.name)}</option>`).join('')}</select></label>
   <p class="hint">${missing.length?`Dans la mise active, pas dans cette caisse : ${missing.map(o=>`${esc(o.name)} (${esc(caseName(caseBy(o.caseId||o.container_id)))})`).join(', ')}`:'Contrôle : rien de la mise active ne manque ici, ou aucune mise n’est active.'}</p>
   <p class="playStats" id="casePlayStats"></p>
   <div class="row playCtas"><button type="button" id="casePlay">Jouer</button><button type="button" id="caseWorkshop">Atelier</button><button type="button" id="caseDefi" class="ghost">Défi</button><button type="button" id="caseSurprise" class="ghost">Surprise</button></div>
-  <div class="row"><button id="caseCreator">Avec ce que j’ai ici</button><button id="printLabel">Créer / imprimer le QR</button><button id="freeLabelCase" class="ghost">Créer une étiquette libre</button><button id="scanNext" type="button" class="ghost">Scanner le suivant</button><button id="editCase" class="ghost">Modifier</button></div></div>`
+  <div class="row"><button id="quickAddHere" class="ctaBig">⚡ Ajout rapide ici</button><button id="addSubCase" class="ghost">+ Sous-contenant</button><button id="caseCreator" class="ghost">Avec ce que j’ai ici</button><button id="printLabel">Créer / imprimer le QR</button><button id="freeLabelCase" class="ghost">Étiquette libre</button><button id="scanNext" type="button" class="ghost">Scanner le suivant</button><button id="editCase" class="ghost">Modifier</button></div></div>`
   m.showModal()
   {const sum=summarizeInventory(currentGameGraph(),{containerId:id});const el=$('#casePlayStats');if(el)el.innerHTML=`<b>${sum.foleyCount}</b> bruitage${sum.foleyCount>1?'s':''} et <b>${sum.gameTypeCount}</b> type${sum.gameTypeCount>1?'s':''} de jeu avec cette valise · ${sum.objectCount} objet${sum.objectCount>1?'s':''} dispo`}
   $('#closeCase').onclick=()=>m.close()
@@ -1108,6 +1268,9 @@ async function showCase(id){
   $('#freeLabelCase').onclick=()=>openFreeLabel({type:'case',id:c.id,name:caseName(c)})
   $('#scanNext').onclick=()=>{m.close();startScan()}
   $('#editCase').onclick=()=>{m.close();openCase(c)}
+  $('#addSubCase').onclick=()=>{m.close();openCase({parentId:id})}
+  $('#quickAddHere').onclick=()=>{m.close();openQuickAddFlow('', id)}
+  $$('[data-opensub]',m).forEach(btn=>btn.onclick=()=>{m.close();showCase(btn.dataset.opensub)})
   $('#caseAddObject').onchange=async event=>{
     const o=objectBy(event.target.value);if(!o)return
     const from=o.caseId||o.container_id||''
@@ -1301,6 +1464,7 @@ async function pairPrinter(){
 }
 
 function parseScannedTarget(text){
+  text = String(text || '').trim()
   const parsed=readEntityUrl(text)
   if(parsed&&(parsed.caseId||parsed.objectId||parsed.kitId||parsed.miseId)) return {...parsed,text}
   let caseId='',objectId='',kitId='',miseId=''
@@ -1308,6 +1472,15 @@ function parseScannedTarget(text){
   else if(objectBy(text))objectId=text
   else if(kitBy(text))kitId=text
   else if(miseBy(text))miseId=text
+  else {
+    const normText = text.toLowerCase()
+    const foundCase = cases.find(c => c.id === text || shortId(c.id).toLowerCase() === normText || String(c.name||'').toLowerCase() === normText)
+    if(foundCase) caseId = foundCase.id
+    else {
+      const foundObj = objects.find(o => o.id === text || shortId(o.id).toLowerCase() === normText || String(o.nickname||'').toLowerCase() === normText || String(o.name||'').toLowerCase() === normText)
+      if(foundObj) objectId = foundObj.id
+    }
+  }
   return {caseId,objectId,kitId,miseId,text}
 }
 async function handleScanTarget(target){
@@ -1396,6 +1569,15 @@ function stopScan(){
 }
 $('#stopScan').onclick=()=>{stopScan();if(scanPurpose==='move'){scanPurpose='browse';moveScanState=null;toast('Déplacement annulé')}}
 $('#scanObjects').onclick=()=>captureScanFrame()
+const triggerManualScan = () => {
+  const val = $('#manualScanInput')?.value.trim()
+  if (!val) { toast('Saisis un identifiant ou code'); return }
+  const target = parseScannedTarget(val)
+  stopScan()
+  void handleScanTarget(target)
+}
+$('#manualScanGo')?.addEventListener('click', triggerManualScan)
+$('#manualScanInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') triggerManualScan() })
 
 function startVoice(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition
@@ -1623,8 +1805,99 @@ if(isIOS&&!isStandalone){$('#goalIosInstall').hidden=false;$('#goalIosInstall').
 if(isIOS&&isStandalone){setTimeout(async()=>{const account=await db.get('settings','google-account');if(!account&&!objects.length&&!cases.length)toast('MISES! installée · reconnecte Google ou importe ta sauvegarde si tu en avais une dans Safari')},700)}
 updatePrinterStatus();updateAccountStatus()
 
+let spareFilterActive = false
+
+function openQuickAddFlow(photoDataUrl = '', defaultCaseId = '') {
+  openQuickAddObject({
+    photoDataUrl,
+    allObjects: objects,
+    allCases: cases,
+    defaultCaseId,
+    db,
+    onSaved: async (newObj) => {
+      await refresh()
+      render()
+      scheduleDriveSync()
+      toast(`Objet enregistré : ${newObj.name}`)
+    },
+    onNextPhoto: () => {
+      $('#quickAddPhotoInput').click()
+    }
+  })
+}
+
+function openVoiceLabelFlow() {
+  openVoiceLabelCreator({
+    db,
+    allCases: cases,
+    allObjects: objects,
+    origin: location.href,
+    onPrint: () => {
+      window.print()
+    },
+    onSave: async (label) => {
+      await refresh()
+      render()
+      scheduleDriveSync()
+      toast(`Enregistré : ${label.lines[0]}`)
+    }
+  })
+}
+
+$('#quickAddPhotoInput').onchange = async e => {
+  const file = e.target.files?.[0]
+  e.target.value = ''
+  if (!file) return
+  const photoDataUrl = await resizePhoto(file)
+  openQuickAddFlow(photoDataUrl)
+}
+
+$('#casePhotoInput').onchange = async e => {
+  const file = e.target.files?.[0]
+  e.target.value = ''
+  if (!file) return
+  const photoDataUrl = await resizePhoto(file)
+  openCasePhotoCreator({
+    file,
+    photoDataUrl,
+    allCases: cases,
+    db,
+    onCreated: async (c) => {
+      await refresh()
+      render()
+      scheduleDriveSync()
+      toast(`Caisse créée : ${c.name}`)
+    },
+    onAddObjects: (c) => {
+      openQuickAddFlow('', c.id)
+    },
+    onPrintLabel: (c) => {
+      openEntityLabel('case', c)
+    },
+    onShowCase: (caseId) => {
+      showCase(caseId)
+    }
+  })
+}
+
+$('#goalQuickAdd')?.addEventListener('click', ()=>openQuickAddFlow())
+$('#goalCasePhoto')?.addEventListener('click', ()=>$('#casePhotoInput').click())
+$('#goalVoiceLabel')?.addEventListener('click', ()=>openVoiceLabelFlow())
+$('#quickAddObjectBtn')?.addEventListener('click', ()=>openQuickAddFlow())
+$('#goalPedagogySpaces')?.addEventListener('click', ()=>openPedagogyModal('atelier'))
+$('#addCasePhotoBtn')?.addEventListener('click', ()=>$('#casePhotoInput').click())
+$('#filterSpareBtn')?.addEventListener('click', ()=>{
+  spareFilterActive = !spareFilterActive
+  const btn = $('#filterSpareBtn')
+  if (btn) btn.textContent = spareFilterActive ? '★ Tous les objets' : 'Filtrer SPARE'
+  render()
+})
+
 $$('[data-action]').forEach(b=>b.onclick=()=>{
   const a=b.dataset.action
+  if(a==='quick-add')openQuickAddFlow()
+  if(a==='case-photo')$('#casePhotoInput').click()
+  if(a==='voice-label')openVoiceLabelFlow()
   if(a==='photo')pickPhoto('photoInput')
   if(a==='scan')startScan()
   if(a==='inventory')$('#inventoryInput').click()
@@ -1650,11 +1923,16 @@ function renderCreator(){
 function render(){
   renderSearch()
   renderPublicSections()
-  $('#objectCards').innerHTML=objects.length?objects.slice().sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'fr')).map(o=>`<button class="card objectCard" data-object="${o.id}">
-    <b>${o.favorite?'★ ':''}${esc(o.name)}</b><span>${esc(soundSummary(o)||'Son à préciser')}</span><small>${esc(caseName(caseBy(o.caseId||o.container_id)))}${o.audioMemo?' · mémo sonore':''} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></button>`).join(''):'<div class="empty"><b>Aucun objet pour l’instant.</b><span>Importe tes Data Bruitage ou ajoute une fiche. Rien n’est inventé à ta place.</span></div>'
+  const displayObjects = spareFilterActive ? objects.filter(o => o.spare || /\bspare\b/i.test(o.nickname||'') || /\bspare\b/i.test(o.name)) : objects
+  $('#objectCards').innerHTML=displayObjects.length?displayObjects.slice().sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'fr')).map(o=>`<button class="card objectCard ${o.spare?'isSpareCard':''}" data-object="${o.id}">
+    <b>${o.favorite?'★ ':''}${esc(o.name)}${o.nickname?` <span class="nickBadge">${esc(o.nickname)}</span>`:''}${o.spare?' <span class="spareBadge">SPARE</span>':''}</b><span>${esc(soundSummary(o)||'Son à préciser')}</span><small>${esc(objectPathString(o, cases))}${o.state?` · ${esc(o.state)}`:''}${o.quantity>1?` · qté ${o.quantity}`:''}${o.audioMemo?' · mémo sonore':''} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></button>`).join(''):'<div class="empty"><b>Aucun objet pour l’instant.</b><span>Importe tes Data Bruitage ou ajoute une fiche. Rien n’est inventé à ta place.</span></div>'
   $$('[data-object]').forEach(b=>b.onclick=()=>openObject(objects.find(o=>o.id===b.dataset.object)))
 
-  $('#caseCards').innerHTML=cases.length?cases.map(c=>`<button class="card caseCard" data-case="${c.id}"><b>${esc(caseName(c))}</b><span>${objects.filter(o=>(o.caseId||o.container_id)===c.id).length} objets</span><small>QR prêt · ouvrir pour créer / imprimer</small></button>`).join(''):'<div class="empty"><b>Aucun contenant.</b><span>Crée une valise ou une caisse, puis crée / imprime son QR code.</span></div>'
+  $('#caseCards').innerHTML=cases.length?cases.map(c=>{
+    const stats = containerStats(c.id, cases, objects)
+    const countInfo = stats.subCasesCount > 0 ? `${stats.directCount} direct${stats.directCount > 1 ? 's' : ''} (${stats.totalCount} au total dans ${stats.subCasesCount} sous-contenant${stats.subCasesCount > 1 ? 's' : ''})` : `${stats.directCount} objet${stats.directCount > 1 ? 's' : ''}`
+    return `<button class="card caseCard" data-case="${c.id}"><b>${esc(caseDisplayName(c))}</b><span>${countInfo}</span><small>${c.parentId ? `Dans : ${esc(caseDisplayName(caseBy(c.parentId)))} · ` : ''}QR prêt · ouvrir pour voir / imprimer</small></button>`
+  }).join(''):'<div class="empty"><b>Aucun contenant.</b><span>Crée une valise ou une caisse, puis crée / imprime son QR code.</span></div>'
   $$('[data-case]').forEach(b=>b.onclick=()=>showCase(b.dataset.case))
 
   $('#kitCards').innerHTML=kits.length?kits.map(k=>`<article class="card"><b>${esc(k.name)}</b><span>${(k.objectIds||[]).length} objets · ${esc((k.contexts||[]).join(' · ')||'indépendant')}</span><small>${esc(k.source||'manuel')} · un kit n’est qu’une vue</small>
@@ -1723,4 +2001,4 @@ else if(params.get('case'))setTimeout(()=>showCase(params.get('case')),250)
 else if(params.get('kit'))setTimeout(()=>showKit(params.get('kit')),250)
 else if(params.get('mise'))setTimeout(()=>{const found=miseBy(params.get('mise'));if(found)openMise(found)},250)
 else if(params.get('object'))setTimeout(()=>{const o=objectBy(params.get('object'));if(o)openObject(o)},250)
-window.__mise={version:APP_VERSION,ingestQrImage,parseScannedTarget,handleBack:handleBackNavigation}
+window.__mise={version:APP_VERSION,ingestQrImage,parseScannedTarget,handleBack:handleBackNavigation,openPedagogyModal}

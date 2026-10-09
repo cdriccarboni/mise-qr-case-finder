@@ -321,3 +321,76 @@ html[data-display=mobile] .shareAppActions{grid-template-columns:1fr}
 .publicTechniqueSheet{align-items:stretch}
 .techniqueTarget{display:flex;gap:.65rem;align-items:center;flex-wrap:wrap}
 .techniqueText{font-size:1.02rem;line-height:1.55;margin:.35rem 0 .7rem}
+
+/* Quick Access Buttons (Section 10) */
+.mainQuickBar{display:grid;grid-template-columns:repeat(5,1fr);gap:.45rem;margin-top:.65rem;margin-bottom:.45rem}
+.quickActionBtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;min-height:64px;padding:.5rem .25rem;border-radius:14px;background:var(--surface-2,#202026);color:var(--text,#fff);border:1px solid var(--line,#383842);font-weight:800;font-size:.75rem;text-align:center}
+.quickActionBtn:active{background:var(--ink,#D12A74);color:#fff;border-color:var(--ink,#D12A74)}
+.quickIcon{font-size:1.25rem;line-height:1}
+@media(max-width:620px){.mainQuickBar{grid-template-columns:repeat(5,1fr);gap:.35rem}.quickActionBtn{font-size:.65rem;min-height:58px;padding:.4rem .15rem}.quickIcon{font-size:1.1rem}}
+
+/* SPARE badge (Section 6) */
+.spareBadge{display:inline-flex;align-items:center;justify-content:center;background:var(--ink,#D12A74);color:#fff;font-weight:900;font-size:.72rem;letter-spacing:.08em;padding:.18rem .52rem;border-radius:999px;text-transform:uppercase;margin-left:.35rem;box-shadow:0 1px 4px rgba(0,0,0,.25);vertical-align:middle}
+.nickBadge{display:inline-flex;align-items:center;padding:.15rem .45rem;border-radius:4px;font-size:.75rem;font-weight:700;background:rgba(255,255,255,.12);color:var(--text,#fff);letter-spacing:.04em;margin-left:.3rem;text-transform:uppercase}
+.isSpareResult,.isSpareCard{border-left:4px solid var(--ink,#D12A74)!important}
+
+/* Breadcrumb navigation (Section 5) */
+.caseBreadcrumb{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;padding:.45rem .6rem;background:var(--surface-2,#18181e);border-radius:8px;font-size:.8rem;color:var(--muted,#aaa);margin-bottom:.5rem}
+.breadcrumbLink{color:var(--ink,#D12A74);font-weight:700;cursor:pointer;border:0;background:transparent;padding:0;min-height:auto}
+
+/* Sub-containers list (Section 5) */
+.subContainersBox{margin:.6rem 0;padding:.6rem;border:1px dashed var(--line,#383842);border-radius:10px;background:var(--surface,#141418)}
+.subContainerRow{display:flex;justify-content:space-between;align-items:center;padding:.4rem .2rem;border-bottom:1px solid var(--surface-2,#24242a)}
+
+/* Voice label creation dialog (Section 1) */
+.voiceLabelDialog,.casePhotoDialog,.quickAddDialog{width:min(640px,94vw)}
+.voiceLabelContainer{display:flex;flex-direction:column;gap:.85rem}
+.voicePromptHero{text-align:center;background:var(--surface-2,#1b1b22);padding:.85rem;border-radius:12px;border:1px solid var(--line,#303038)}
+.voiceInstruction{margin:0 0 .6rem;font-size:.88rem}
+.voiceMicButton{display:inline-flex;align-items:center;gap:.5rem;min-height:52px;padding:.7rem 1.4rem;border-radius:999px;background:var(--ink,#D12A74);color:#fff;font-weight:800;font-size:.95rem;border:0}
+.voiceMicButton.listening{animation:pulse 1s infinite;background:#ff2222}
+.micIcon{font-size:1.3rem}
+.voiceLabelCard{background:#fff;color:#000;border-radius:12px;padding:.9rem;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 4px 18px rgba(0,0,0,.3);margin:auto;width:min(340px,86vw)}
+.voiceLabelCard.isSpare{border:4px solid var(--ink,#D12A74)}
+.voiceLabelHeader{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #000;padding-bottom:.25rem}
+.voiceLabelBrand{font-weight:900;font-size:1.15rem;letter-spacing:-.04em}
+.voiceLabelId{font-size:.78rem;font-weight:700}
+.voiceLabelBody{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.6rem 0}
+.voiceLabelLines{display:flex;flex-direction:column;gap:.25rem;flex:1}
+.voiceLabelLine{font-weight:900;font-size:1.05rem;line-height:1.1;text-transform:uppercase}
+.voiceLabelQrImg{width:90px;height:90px;display:block}
+.voiceLabelFooter{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #ccc;padding-top:.35rem;font-size:.72rem;font-weight:700}
+.voiceActionsRow{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.5rem}
+.ctaBig{min-height:54px;font-size:1rem;font-weight:800}
+
+/* Planche A4 preview */
+.a4SheetPreview{background:#fff;color:#000;padding:1rem;border-radius:10px;text-align:center}
+.a4Grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:280px;overflow:auto;padding:6px;background:#eee;border-radius:8px}
+.a4MiniLabel{background:#fff;border:1px solid #000;padding:4px;display:flex;align-items:center;justify-content:space-between;font-size:.6rem}
+.a4MiniLabel.isSpare{border-color:var(--ink,#D12A74);border-width:2px}
+.a4LabelQr{width:32px;height:32px}
+
+/* Interactive Box toolbar in vision frame (Section 3) */
+.boxToolbar{display:flex;align-items:center;gap:.5rem;padding:.4rem .2rem;flex-wrap:wrap}
+.visionBox.selected{outline:3px solid #ffeb3b!important;background:rgba(255,235,59,.25)!important;z-index:10}
+.visionProposal.selectedRow{border-color:#ffeb3b!important}
+
+/* Quick add form */
+.inputWithVoice{display:flex;gap:.4rem}
+.inputWithVoice input{flex:1}
+.voiceButton{width:46px;height:46px;min-height:46px;padding:0;font-size:1.25rem}
+.quickPhotoThumb{max-height:160px;width:100%;object-fit:cover;border-radius:12px}
+
+/* Pedagogy & 10 sound games hub */
+.pedagogyHub{display:flex;flex-direction:column;gap:.85rem}
+.pedagogyTabs{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.4rem;border-bottom:1px solid var(--line,#2c2c34)}
+.pedTabBtn{background:#18181e;border:1px solid #32323a;color:#ccc;padding:.55rem .85rem;border-radius:8px;font-size:.82rem;font-weight:700;white-space:nowrap}
+.pedTabBtn.active{background:var(--ink,#D12A74);color:#fff;border-color:var(--ink,#D12A74)}
+.pedCards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem}
+.pedCard{background:#15151b;border:1px solid #2b2b33;border-radius:10px;padding:.85rem;display:flex;flex-direction:column;gap:.4rem}
+.badgeEasy{background:#1e3a24;color:#7ee787;padding:.15rem .45rem;border-radius:999px;font-size:.68rem;font-weight:700}
+.badgeMedium{background:#3b2d18;color:#f3b63a;padding:.15rem .45rem;border-radius:999px;font-size:.68rem;font-weight:700}
+.provenanceTag{color:#888;font-size:.68rem;margin-top:auto;display:block}
+.miniActionBtn{font-size:.78rem;padding:.45rem .8rem;border-radius:7px}
+
+

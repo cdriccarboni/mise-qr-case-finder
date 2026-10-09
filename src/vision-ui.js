@@ -6,6 +6,8 @@ import { FAMILIES } from './constants.js'
 import { newLearning } from './learning.js'
 import { handsChallenges, generateExercises, sightUniverses } from './exercise-engine.js'
 import { visualReference } from './vision-engine.js'
+import { casePathString, caseDisplayName } from './containers.js'
+import { findSmartCompletions } from './quick-add.js'
 
 const TITLES = {
   inventory: ['Inventaire rapide', 'Photo, fiche, QR, objet suivant'],
@@ -29,6 +31,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
   const creative = mode === 'hands' || mode === 'universe' || mode === 'group'
   dialog.innerHTML = `<div class="form ${creative ? 'playful' : ''}"><div class="dialoghead"><div><b>${mise && mode === 'control' ? 'Contrôle photo de mise' : esc(heading[0])}</b><small>${esc(mise?.name || heading[1])}</small></div><button data-close class="ghost">Fermer</button></div>
     <div class="visionFrame"><img data-photo class="photoPreview" alt="Photo à analyser"><div data-boxes></div></div>
+    <div class="boxToolbar"><button type="button" data-add-box class="ghost">+ Rectangle</button><button type="button" data-del-box class="ghost">✕ Supprimer rectangle</button><small class="hint">Touchez un rectangle sur la photo pour le renseigner ou le modifier.</small></div>
     <p class="hint" data-honest>${esc(PHOTO_PROPOSAL_HINT)} La catégorie affichée est un nom général (une bouteille d’eau, une tasse…). Les boutons proposent des fiches de ta base : choisis-en une, ou cherche le nom exact. Rien n’est enregistré tant que tu n’as pas confirmé.</p>
     <p data-status role="status">Analyse de la photo sur cet appareil… Vous pouvez déjà saisir un objet.</p>
     <div data-creative hidden></div>
@@ -45,8 +48,16 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
   const checked = () => $$('[data-expected]:checked').map(input => input.value)
   function collect() {
     return proposals.map((p, i) => {
-      const row = $(`[data-row="${i}"]`), objectId = row.querySelector('[data-match]').value
+      const row = $(`[data-row="${i}"]`)
+      if (!row) return p
+      const objectId = row.querySelector('[data-match]').value
+      const nickname = row.querySelector('[data-nickname]')?.value.trim() || ''
+      const isSpare = Boolean(row.querySelector('[data-spare]')?.checked)
+      const quantity = Number(row.querySelector('[data-quantity]')?.value) || 1
+      const state = row.querySelector('[data-state]')?.value || 'Bon état'
       return { ...p, objectId: objectId === '__reject' ? '' : objectId, label: row.querySelector('[data-name]').value.trim(),
+        nickname, spare: isSpare || /\bspare\b/i.test(nickname) || /\bspare\b/i.test(row.querySelector('[data-name]').value),
+        quantity, state,
         sounds: row.querySelector('[data-sounds]').value.split(';').map(s => s.trim()).filter(Boolean),
         hear: row.querySelector('[data-hear]').value.trim(), imagine: row.querySelector('[data-imagine]').value.trim(),
         family: row.querySelector('[data-family]').value, notes: row.querySelector('[data-notes]').value.trim(),
@@ -62,6 +73,8 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
   function fillFromObject(row, object) {
     if (!object) return
     row.querySelector('[data-name]').value = object.name
+    if (row.querySelector('[data-nickname]')) row.querySelector('[data-nickname]').value = object.nickname || ''
+    if (row.querySelector('[data-spare]')) row.querySelector('[data-spare]').checked = Boolean(object.spare)
     row.querySelector('[data-sounds]').value = (object.sounds || []).join('; ')
     row.querySelector('[data-hear]').value = object.hear || ''
     row.querySelector('[data-imagine]').value = object.imagine || ''
@@ -79,15 +92,57 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
       <label>Chercher dans ta base<input data-fiche-search type="search" placeholder="Le nom de ta fiche" ${p.rawLabel ? '' : 'hidden'}></label>
       <div class="fichePicks" data-fiche-results></div>
       <label>Correspondance<select data-match><option value="">Nouvel objet / inconnu</option><option value="__reject" ${p.rejected ? 'selected' : ''}>Fausse détection · écarter</option>${catalogue.map(o => `<option value="${esc(o.id)}" ${p.objectId === o.id ? 'selected' : ''}>${esc(o.name)}</option>`).join('')}</select></label>
-      <label>Nom corrigé<input data-name value="${esc(p.label || '')}"></label>
+      <label>Nom corrigé<div class="row"><input data-name value="${esc(p.label || '')}" style="flex:1"><button type="button" data-name-mic class="ghost" title="Dicter">🎙</button></div></label>
+      <div class="grid2">
+        <label>Surnom / Alias (ex : ELVIS)<input data-nickname value="${esc(p.nickname || '')}" placeholder="ELVIS, PETITE DI, SPARE…"></label>
+        <label>État<select data-state><option ${(p.state||'Bon état')==='Bon état'?'selected':''}>Bon état</option><option ${p.state==='Neuf'?'selected':''}>Neuf</option><option ${p.state==='Usagé'?'selected':''}>Usagé</option><option ${p.state==='À réparer'?'selected':''}>À réparer</option><option ${p.state==='Hors service'?'selected':''}>Hors service</option></select></label>
+      </div>
+      <div class="grid2">
+        <label>Quantité<input data-quantity type="number" min="1" value="${p.quantity || 1}"></label>
+        <label class="check"><input data-spare type="checkbox" ${p.spare || /\bspare\b/i.test(p.nickname||'') || /\bspare\b/i.test(p.label||'') ? 'checked' : ''}><span>Statut SPARE</span></label>
+      </div>
       <div class="grid2"><label>Son à entendre<input data-hear value="${esc(object?.hear || '')}"></label><label>Son à imaginer<input data-imagine value="${esc(object?.imagine || '')}"></label></div>
       <label>Usages (séparés par ;)<input data-sounds value="${esc((object?.sounds || []).join('; '))}"></label>
       <div class="grid2"><label>Famille<select data-family>${FAMILIES.map(family => `<option ${((object?.family || 'À classer') === family) ? 'selected' : ''}>${family}</option>`).join('')}</select></label>
-      <label>Contenant<select data-case><option value="">Sans contenant</option>${(data.cases || []).map(c => `<option value="${esc(c.id)}" ${(object?.caseId || object?.container_id) === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label></div>
+      <label>Contenant<select data-case><option value="">Sans contenant</option>${(data.cases || []).map(c => `<option value="${esc(c.id)}" ${(object?.caseId || object?.container_id) === c.id ? 'selected' : ''}>${esc(casePathString(c.id, data.cases) || caseDisplayName(c))}</option>`).join('')}</select></label></div>
       <label>Notes<textarea data-notes rows="2">${esc(object?.notes || '')}</textarea></label>
       <label class="check"><input data-confirm type="checkbox"><span>${mise ? 'Confirmer et ajouter à la checklist' : 'Confirmer cet objet'}</span></label>
       <label class="check"><input data-learn type="checkbox" ${p.rawLabel ? '' : 'disabled'} ${mode === 'inventory' && p.rawLabel ? 'checked' : ''}><span>Mémoriser cette correction pour la prochaine photo</span></label>`
     $('[data-proposals]').append(row)
+    const nameInput = row.querySelector('[data-name]')
+    const nickInput = row.querySelector('[data-nickname]')
+    const micBtn = row.querySelector('[data-name-mic]')
+    if (micBtn && (window.SpeechRecognition || window.webkitSpeechRecognition)) {
+      micBtn.onclick = () => {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+        const r = new SR(); r.lang = 'fr-FR'; r.interimResults = false
+        micBtn.classList.add('listening')
+        r.onresult = e => {
+          const t = e.results[0][0].transcript.trim()
+          nameInput.value = t
+          const smart = findSmartCompletions(t, catalogue, data.cases)
+          if (smart) {
+            if (smart.nickname && !nickInput.value) nickInput.value = smart.nickname
+            if (smart.caseId) row.querySelector('[data-case]').value = smart.caseId
+            if (smart.spare) row.querySelector('[data-spare]').checked = true
+          }
+        }
+        r.onend = () => micBtn.classList.remove('listening')
+        r.onerror = () => micBtn.classList.remove('listening')
+        r.start()
+      }
+    } else if (micBtn) {
+      micBtn.hidden = true
+    }
+    nickInput.oninput = () => {
+      const nv = nickInput.value.trim()
+      const smart = findSmartCompletions(nv, catalogue, data.cases)
+      if (smart) {
+        if (!nameInput.value || nameInput.value === p.label) nameInput.value = smart.name
+        if (smart.caseId) row.querySelector('[data-case]').value = smart.caseId
+        if (smart.spare) row.querySelector('[data-spare]').checked = true
+      }
+    }
     const choose = async objectId => {
       const object = catalogue.find(item => item.id === objectId)
       if (!object) return
@@ -149,9 +204,17 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
         p.objectId = existing?.id || newId('obj')
         const previousCase = existing?.caseId || existing?.container_id || ''
         const caseId = forceCase || p.caseId || ''
+        const existingAliases = existing?.aliases || []
+        const aliases = unique([...existingAliases, ...(existing?.tags || []), p.nickname].filter(Boolean))
         const row = {
           ...(existing || { id: p.objectId, photo, owned: true, tags: [], contexts: [], source: 'photo locale', provenance: 'user-document' }),
-          name: p.label, sounds: p.sounds, hear: p.hear, imagine: p.imagine, family: p.family, notes: p.notes,
+          name: p.label,
+          nickname: p.nickname || existing?.nickname || '',
+          aliases,
+          spare: Boolean(p.spare !== undefined ? p.spare : existing?.spare),
+          quantity: p.quantity || existing?.quantity || 1,
+          state: p.state || existing?.state || 'Bon état',
+          sounds: p.sounds, hear: p.hear, imagine: p.imagine, family: p.family, notes: p.notes,
           caseId, container_id: caseId, humanValidated: true, owned: true,
           provenance: existing?.provenance && existing.provenance !== 'generated' ? existing.provenance : 'user-document',
           detectedName: p.rawLabel || existing?.detectedName || '',
@@ -220,14 +283,68 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
     if (closed || saving) return
     analysisState = 'available'
     const matches = matchDetections(detections, data, context, learnings)
-    for (const p of matches) {
-      appendProposal(p)
-      if (p.bbox) {
-        const [x, y, width, height] = p.bbox, box = document.createElement('div'); box.className = 'visionBox'
-        Object.assign(box.style, { left: `${x / image.naturalWidth * 100}%`, top: `${y / image.naturalHeight * 100}%`, width: `${width / image.naturalWidth * 100}%`, height: `${height / image.naturalHeight * 100}%` })
-        box.textContent = proposals.length; $('[data-boxes]').append(box)
+    let selectedBox = null
+    function selectBox(index) {
+      selectedBox = index
+      $$('.visionBox').forEach((b, i) => b.classList.toggle('selected', i === index))
+      $$('.visionProposal').forEach((r, i) => r.classList.toggle('selectedRow', i === index))
+      const row = $(`[data-row="${index}"]`)
+      if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      const delBtn = $('[data-del-box]')
+      if (delBtn) delBtn.disabled = (selectedBox === null)
+    }
+    function renderBoxElements() {
+      const boxContainer = $('[data-boxes]')
+      if (!boxContainer) return
+      boxContainer.innerHTML = ''
+      proposals.forEach((p, idx) => {
+        if (!p.bbox) return
+        const [x, y, width, height] = p.bbox
+        const box = document.createElement('div')
+        box.className = 'visionBox' + (selectedBox === idx ? ' selected' : '')
+        Object.assign(box.style, {
+          left: `${(x / image.naturalWidth) * 100}%`,
+          top: `${(y / image.naturalHeight) * 100}%`,
+          width: `${(width / image.naturalWidth) * 100}%`,
+          height: `${(height / image.naturalHeight) * 100}%`
+        })
+        box.textContent = idx + 1
+        box.onclick = (e) => {
+          e.stopPropagation()
+          selectBox(idx)
+        }
+        boxContainer.append(box)
+      })
+    }
+    const addBoxBtn = $('[data-add-box]')
+    if (addBoxBtn) {
+      addBoxBtn.onclick = () => {
+        const w = Math.round(image.naturalWidth * 0.25) || 120
+        const h = Math.round(image.naturalHeight * 0.25) || 120
+        const x = Math.round((image.naturalWidth - w) / 2) || 20
+        const y = Math.round((image.naturalHeight - h) / 2) || 20
+        const newP = { label: '', quantity: 1, validated: false, bbox: [x, y, w, h] }
+        appendProposal(newP)
+        renderBoxElements()
+        selectBox(proposals.length - 1)
       }
     }
+    const delBoxBtn = $('[data-del-box]')
+    if (delBoxBtn) {
+      delBoxBtn.onclick = () => {
+        if (selectedBox === null || !proposals[selectedBox]) return
+        const row = $(`[data-row="${selectedBox}"]`)
+        if (row) row.remove()
+        proposals.splice(selectedBox, 1)
+        selectedBox = null
+        renderBoxElements()
+        summarize()
+      }
+    }
+    for (const p of matches) {
+      appendProposal(p)
+    }
+    renderBoxElements()
     const visible = matches.filter(item => !item.rejected).map(item => item.objectId ? item.label : translateLabel(item.rawLabel))
     const creativeBox = $('[data-creative]')
     if (mode === 'hands' || mode === 'universe' || mode === 'group') {
