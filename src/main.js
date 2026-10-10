@@ -1496,61 +1496,111 @@ async function openPromoStickerDialog(){
   $('#systemPromoPrint').onclick=()=>window.print()
   $('#promoPrinterHelp').onclick=()=>openDesktopPrinterHelp()
 }
-async function openNativePrinterDialog(){
-  if(!hasNativePrinter())return openDesktopPrinterHelp()
+
+async function openDesktopPrinterDialog(initialId='mises'){
+  let id=getPromoSticker(initialId).id
+  const d=$('#modal')
+  if(d.open)d.close()
+  const image=await makePromoStickerImage(id)
+  const transferQr=await QRCode.toDataURL(promoTransferCode(id),{width:190,margin:3})
+  const ready=await macPrinterHealth()
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Mini-imprimante · Mac</b><small>YHK / WalkPrint · fenêtre dédiée · jamais Epson</small></div><button id="closeDesktopPrint" class="ghost">×</button></div>
+    <p id="desktopPrintState" class="hint" role="status">${ready?'✓ Compagnon Mac prêt · impression directe':'Compagnon non détecté. Ouvre Applications → MISES Mini Printer.app sur ce Mac, puis actualise.'}</p>
+    <div class="row"><button id="refreshDesktopPrint" class="ghost">Vérifier la connexion</button><button id="desktopTestPrint" ${ready?'':'disabled'}>Tester logo + QR</button></div>
+    <label>Sticker<select id="desktopPromoTarget">${PROMO_STICKERS.map(item=>`<option value="${item.id}" ${item.id===id?'selected':''}>${esc(item.label)}</option>`).join('')}</select></label>
+    <div class="labelPreview"><img id="desktopPromoPreview" src="${image}" alt="Sticker QR à imprimer"><small id="desktopPromoURL">${esc(getPromoSticker(id).url)}</small></div>
+    <div class="row"><button id="desktopPrintOne" ${ready?'':'disabled'}>Imprimer 1 sticker</button><button id="desktopPrintThree" ${ready?'':'disabled'}>Imprimer 3 stickers</button><button id="desktopPromoExport" class="ghost">Exporter PNG</button></div>
+    <details><summary>Passer au téléphone (facultatif)</summary><p class="hint">Dans MISES! Android, utilise Scanner un QR : il ouvrira le même modèle sans imprimer automatiquement. Le Mac imprime directement, sans téléphone.</p><img id="desktopTransferQr" width="140" height="140" src="${transferQr}" alt="QR transfert de modèle vers MISES! Android"></details>
+    <p class="hint">La fenêtre macOS « MISES Mini Printer » doit rester ouverte. Aucun bouton ici n’appelle l’impression système.</p></div>`
+  d.showModal()
+  $('#closeDesktopPrint').onclick=()=>d.close()
+  $('#refreshDesktopPrint').onclick=async()=>{
+    const connected=await macPrinterHealth()
+    $('#desktopPrintState').textContent=connected?'✓ Compagnon Mac prêt · impression directe':'Ouvre Applications → MISES Mini Printer.app, puis réessaie.'
+    for(const selector of ['#desktopTestPrint','#desktopPrintOne','#desktopPrintThree'])$(selector).disabled=!connected
+    await updatePrinterStatus()
+  }
+  $('#desktopPromoTarget').onchange=async event=>{
+    id=event.target.value
+    $('#desktopPromoPreview').src=await makePromoStickerImage(id)
+    $('#desktopPromoURL').textContent=getPromoSticker(id).url
+    $('#desktopTransferQr').src=await QRCode.toDataURL(promoTransferCode(id),{width:190,margin:3})
+  }
+  const run=async(button,images,label)=>{
+    button.disabled=true
+    try{
+      if(!(await macPrinterHealth()))throw Error('MISES Mini Printer.app est fermée')
+      for(const png of images)await sendMacThermalPrint(png,label)
+      $('#desktopPrintState').textContent='✓ Étiquettes transmises au compagnon Mac · contrôle la sortie papier'
+    }catch(error){$('#desktopPrintState').textContent='Impression impossible : '+String(error?.message||error)}
+    finally{button.disabled=false}
+  }
+  $('#desktopTestPrint').onclick=async()=>{
+    const button=$('#desktopTestPrint')
+    const images=await makePrinterTestImages()
+    await run(button,images,'MISES! · Test')
+  }
+  $('#desktopPrintOne').onclick=async()=>{
+    const button=$('#desktopPrintOne'),png=await makePromoStickerImage(id)
+    await run(button,[png],getPromoSticker(id).label)
+  }
+  $('#desktopPrintThree').onclick=async()=>{
+    const button=$('#desktopPrintThree'),png=await makePromoStickerImage(id)
+    await run(button,[png,png,png],getPromoSticker(id).label)
+  }
+  $('#desktopPromoExport').onclick=async()=>downloadLabelPng(await makePromoStickerImage(id),getPromoSticker(id).fileName+'-QR-Promo')
+}
+
+async function openNativePrinterDialog(initialId='mises'){
+  if(!hasNativePrinter())return openDesktopPrinterDialog(initialId)
+  let promoId=getPromoSticker(initialId).id
   const d=$('#modal'),devices=nativePrinterDevices(),saved=await db.get('settings','printer')
   const selected=Boolean(saved?.native&&devices.some(device=>device.address===saved.deviceId))
-  const promoQr=await QRCode.toDataURL(PUBLIC_PWA_URL,{width:260,margin:2,errorCorrectionLevel:'M'})
+  const promoImage=await makePromoStickerImage(promoId)
   if(d.open)d.close()
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Mini-imprimante Bluetooth</b><small>WalkPrint / YHK · connexion directe Android</small></div><button id="closeNativePrinter" class="ghost" type="button" aria-label="Fermer">×</button></div>
-    <p class="hint">Pas besoin d'inventaire ni de l'imprimante Epson : sélectionne ta mini-imprimante Bluetooth déjà associée au téléphone, puis teste l'impression directe.</p>
-    <div class="printerDevices">${devices.map(device=>`<button type="button" class="printerDevice ${selected&&saved.deviceId===device.address?'selected':''}" data-native-printer="${esc(device.address)}" data-native-name="${esc(device.name)}"><b>${device.likelyPrinter?'● ':''}${esc(device.name)}</b><small>${esc(device.address)}${device.likelyPrinter?' · modèle probable WalkPrint/YHK':' · vérifier le modèle avant de choisir'}</small></button>`).join('')||'<div class="empty">Aucun périphérique Bluetooth associé détecté. Allume la mini-imprimante, associe-la dans les réglages du téléphone puis actualise cette fenêtre.</div>'}</div>
-    <p id="nativePrinterChoice" class="hint" role="status">${selected?'Mini-imprimante sélectionnée : '+esc(saved.name):'Choisis une imprimante ci-dessus pour activer les tests.'}</p>
-    <div class="row"><button id="openBtSettings" type="button" class="ghost">Bluetooth Android</button><button id="refreshNativePrinters" type="button" class="ghost">Actualiser</button></div>
-    <div class="printerTest"><b>1 · Retrouver le test d’origine</b><span>Imprime 2 étiquettes : logo MISES! puis logo + flash code. Aucun objet à créer.</span><button id="runPrinterTest" type="button" ${!selected?'disabled':''}>Imprimer les 2 étiquettes test</button></div>
-    <div class="printerTest"><b>2 · Stickers QR promotionnels</b><span>Ce QR ouvre la PWA publique de MISES! sur n’importe quel téléphone, pas l’adresse interne de l’application Android.</span>
-      <div class="labelPreview"><img src="${promoQr}" alt="QR vers la PWA publique MISES!"><small>${esc(PUBLIC_PWA_URL)}</small></div>
-      <div class="row"><button id="printPromoOne" type="button" ${!selected?'disabled':''}>1 sticker</button><button id="printPromoThree" type="button" ${!selected?'disabled':''}>3 stickers</button><button id="savePromoPng" type="button" class="ghost">Exporter PNG</button></div>
-    </div><p class="hint">« Impression système » est un autre mode : il peut afficher l’Epson. Ici, les étiquettes sont envoyées au pilote Bluetooth direct de MISES! ; vérifie la sortie papier après chaque test.</p></div>`
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Mini-imprimante · Android</b><small>WalkPrint / YHK · directe, sans Epson</small></div><button id="closeNativePrinter" class="ghost" type="button">×</button></div>
+    <p class="hint">Choisis la mini-imprimante Bluetooth appairée. Pas besoin d'inventaire et aucune fenêtre d'impression système.</p>
+    <div class="printerDevices">${devices.map(device=>`<button type="button" class="printerDevice ${selected&&saved.deviceId===device.address?'selected':''}" data-native-printer="${esc(device.address)}" data-native-name="${esc(device.name)}"><b>${device.likelyPrinter?'● ':''}${esc(device.name)}</b><small>${esc(device.address)}${device.likelyPrinter?' · probable WalkPrint/YHK':' · vérifier le modèle'}</small></button>`).join('')||'<div class="empty">Aucun appareil appairé. Allume la mini-imprimante puis associe-la dans Bluetooth Android.</div>'}</div>
+    <p class="hint" id="nativePrinterChoice" role="status">${selected?'Mini-imprimante choisie : '+esc(saved.name):'Choisis ta mini-imprimante ci-dessus.'}</p>
+    <div class="row"><button id="openBtSettings" class="ghost">Bluetooth Android</button><button id="refreshNativePrinters" class="ghost">Actualiser</button><button id="runPrinterTest" ${selected?'':'disabled'}>Test logo + QR</button></div>
+    <label>Stickers QR<select id="nativePromoTarget">${PROMO_STICKERS.map(item=>`<option value="${item.id}" ${item.id===promoId?'selected':''}>${esc(item.label)}</option>`).join('')}</select></label>
+    <div class="labelPreview"><img id="nativePromoPreview" src="${promoImage}" alt="Sticker QR prévisualisé"><small id="nativePromoURL">${esc(getPromoSticker(promoId).url)}</small></div>
+    <div class="row"><button id="printPromoOne" ${selected?'':'disabled'}>1 sticker</button><button id="printPromoThree" ${selected?'':'disabled'}>3 stickers</button><button id="savePromoPng" class="ghost">Exporter PNG</button></div>
+    <p class="hint">Le pilote envoie les données uniquement à l’appareil Bluetooth choisi. La fenêtre Epson n’est jamais ouverte.</p></div>`
   d.showModal()
   $('#closeNativePrinter').onclick=()=>d.close()
   $('#openBtSettings').onclick=()=>window.MisesAndroidPrinter.openBluetoothSettings()
-  $('#refreshNativePrinters').onclick=()=>{d.close();void openNativePrinterDialog()}
+  $('#refreshNativePrinters').onclick=()=>{d.close();void openNativePrinterDialog(promoId)}
   $$('[data-native-printer]',d).forEach(button=>button.onclick=async()=>{
     await db.put('settings',{id:'printer',name:button.dataset.nativeName,deviceId:button.dataset.nativePrinter,native:true,pairedAt:new Date().toISOString()})
     await updatePrinterStatus()
     d.close()
-    void openNativePrinterDialog()
+    void openNativePrinterDialog(promoId)
   })
-  const run=async (button,images)=>{
+  $('#nativePromoTarget').onchange=async event=>{
+    promoId=event.target.value
+    $('#nativePromoPreview').src=await makePromoStickerImage(promoId)
+    $('#nativePromoURL').textContent=getPromoSticker(promoId).url
+  }
+  const run=async(button,images)=>{
     const current=await db.get('settings','printer')
-    if(!current?.native||!devices.some(device=>device.address===current.deviceId)){toast('Choisis d’abord ta mini-imprimante');return}
+    if(!current?.native||!devices.some(device=>device.address===current.deviceId)){toast('Choisis d’abord la mini-imprimante');return}
     button.disabled=true
     try{await nativePrint(current.deviceId,images)}
-    catch(error){toast('Préparation de l’étiquette impossible')}
+    catch(error){toast('Étiquette impossible : '+String(error?.message||error))}
     finally{button.disabled=false}
   }
-  $('#runPrinterTest').onclick=async()=>{
-    const button=$('#runPrinterTest');button.disabled=true
-    try{
-      const images=await makePrinterTestImages()
-      await run(button,images)
-    }catch(error){toast('Test impossible : '+(error?.message||'erreur de préparation'))}
-    finally{button.disabled=false}
-  }
+  $('#runPrinterTest').onclick=async()=>run($('#runPrinterTest'),await makePrinterTestImages())
   const printPromo=async count=>{
     const button=count===1?$('#printPromoOne'):$('#printPromoThree')
-    button.disabled=true
-    try{
-      const image=await makePromoStickerImage()
-      await run(button,Array.from({length:count},()=>image))
-    }catch(error){toast('Sticker impossible : '+(error?.message||'erreur de préparation'))}
-    finally{button.disabled=false}
+    const png=await makePromoStickerImage(promoId)
+    await run(button,Array.from({length:count},()=>png))
   }
   $('#printPromoOne').onclick=()=>printPromo(1)
   $('#printPromoThree').onclick=()=>printPromo(3)
-  $('#savePromoPng').onclick=async()=>downloadLabelPng(await makePromoStickerImage(),'MISES-QR-Promo')
+  $('#savePromoPng').onclick=async()=>downloadLabelPng(await makePromoStickerImage(promoId),getPromoSticker(promoId).fileName+'-QR-Promo')
 }
+
 async function printCaseNative(c,qr){
   const saved=await db.get('settings','printer');if(!saved?.native||!hasNativePrinter()||!nativePrinterDevices().some(device=>device.address===saved.deviceId)){await openNativePrinterDialog();return}
   const image=await makeThermalLabel({title:caseName(c),qrDataUrl:qr,subtitle:c.id});await nativePrint(saved.deviceId,[image])
@@ -1624,8 +1674,7 @@ function openDesktopPrinterHelp(){
   $('#closeDesktopPrinterBottom').onclick=()=>d.close()
 }
 async function pairPrinter(){
-  if(hasNativePrinter())return openNativePrinterDialog()
-  openDesktopPrinterHelp()
+  return hasNativePrinter()?openNativePrinterDialog():openDesktopPrinterDialog()
 }
 
 function parseScannedTarget(text){
@@ -1649,6 +1698,11 @@ function parseScannedTarget(text){
   return {caseId,objectId,kitId,miseId,text}
 }
 async function handleScanTarget(target){
+  const promo=parsePromoTransferCode(target?.text)
+  if(scanPurpose!=='move'&&promo){
+    toast('Sticker reçu : '+promo.label)
+    return hasNativePrinter()?openNativePrinterDialog(promo.id):openDesktopPrinterDialog(promo.id)
+  }
   if(scanPurpose!=='move'){
     if(target.caseId&&caseBy(target.caseId))return showCase(target.caseId)
     if(target.objectId&&objectBy(target.objectId))return openObject(objectBy(target.objectId))
