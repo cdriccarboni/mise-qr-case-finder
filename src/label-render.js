@@ -1,5 +1,6 @@
 import QRCode from 'qrcode'
 import { shortId } from './qr-link.js'
+import { parseInk } from './ink.js'
 import { WORDMARK_BITMAP } from './wordmark-bitmap.js'
 
 const INK = [16, 8, 12, 255]
@@ -139,18 +140,27 @@ export function renderLabelRgba(spec) {
   const width = 384
   const nameLines = wrap(spec.name || 'MISES', 3, 360)
   const isSpare = Boolean(spec.spare || spec.isSpare)
-  const extra = [spec.location, spec.category, isSpare ? 'SPARE (SECOURS)' : ''].filter(Boolean)
-  const height = 150 + nameLines.length * 28 + 280 + extra.length * 22 + 36
+  const extra = [spec.location, spec.category, isSpare && !/\bSPARE\b/i.test(spec.name||'') ? 'SPARE (SECOURS)' : ''].filter(Boolean)
+  const height = 144 + nameLines.length * 28 + 320 + extra.length * 22 + 36
   const img = createImage(width, height, PAPER)
   blitWordmark(img, Math.round((width - WORDMARK_BITMAP.width) / 2), 16, INK)
   img.fillRect(20, 78, 344, 3, INK)
   let y = 92
   for (const line of nameLines) { drawText(img, line, width / 2, y, 3, INK, 'center'); y += 28 }
-  const qrSize = paintQr(img, spec.qrText, Math.round((width - 280) / 2), y + 8, 280)
+  const qrSize = paintQr(img, spec.qrText, Math.round((width - 320) / 2), y + 5, 320)
   y += qrSize + 16
   drawText(img, spec.shortId || shortId(spec.id), width / 2, y, 2, INK, 'center')
   y += 20
-  for (const line of extra) { drawText(img, line, width / 2, y, 2, INK, 'center'); y += 20 }
+  for (const line of extra) {
+    // Respect the UI preference for SPARE tint in the generated PNG.
+    // Darken colors when necessary so a B/W thermal threshold keeps it legible.
+    const ink = parseInk(spec.ink)
+    let spareTint = ink ? [1,3,5].map(i => Number.parseInt(ink.slice(i,i+2),16)) : INK.slice(0,3)
+    const luma = spareTint[0]*.299+spareTint[1]*.587+spareTint[2]*.114
+    if(luma>125) spareTint=spareTint.map(v=>Math.round(v*120/luma))
+    drawText(img,line,width/2,y,2,line.startsWith('SPARE')?[...spareTint,255]:INK,'center')
+    y += 20
+  }
   return { rgba: img.rgba, width, height, qrText: spec.qrText }
 }
 

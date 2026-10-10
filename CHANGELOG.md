@@ -1,3 +1,10 @@
+## 0.4.0-beta.17 — 10 octobre 2026
+- Mac MISES Mini Printer: corrected disappearing printer popup; native floating NSPanel stays visible above Brave, port detected immediately without blocking Bluetooth; direct local PNG picker and dedicated print button as fallback when browser blocks loopback. Only YHK/WalkPrint ports, never Epson.
+- Visual search: Android / browser photo picker accepts multiple images from available local/Google Photos/Drive file providers; every selected photo is analysed and human-validated in sequence. Native Android WebView now reads multiple ClipData URIs.
+- Labels: remove unnecessary printed-size annotation and size picker in voice workflow; enlarge QR from 280 to 320 dots on 384-dot roll; display SPARE in chosen app color, convert to dark high-contrast ink for B/W thermal printing.
+- Fix voice-label Print path: produce the actual PNG QR sticker instead of trying to print an HTML preview.
+- No inventory data migration, no system Epson print dialog, Android Play releases stay on internal test track.
+
 ## 0.4.0-beta.16 — 2026-10-10 (impression directe Mac + Android / import photo)
 
 - Impression des étiquettes et QR : **aucun appel à la fenêtre d’impression système/Epson** dans l’interface principale et l’éditeur ; priorité au pilote WalkPrint/YHK Android ou au compagnon local Mac.

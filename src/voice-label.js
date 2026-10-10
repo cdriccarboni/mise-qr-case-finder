@@ -230,7 +230,6 @@ export function openVoiceLabelCreator({ db, allCases = [], allObjects = [], onPr
         </div>
         <div class="voiceLabelFooter">
           ${currentLabel.isSpare ? '<span class="spareBadge">SPARE</span>' : ''}
-          <span class="voiceLabelDim">${format.w} × ${format.h} mm</span>
         </div>
       </div>
     `
@@ -291,12 +290,6 @@ export function openVoiceLabelCreator({ db, allCases = [], allObjects = [], onPr
                 <select data-parent-case>
                   <option value="">Aucun (racine)</option>
                   ${allCases.map(c => `<option value="${c.id}" ${c.id === currentLabel.parentCaseId ? 'selected' : ''}>${esc(c.name || 'Contenant')}</option>`).join('')}
-                </select>
-              </label>
-              <label>
-                Format d’étiquette :
-                <select data-format-select>
-                  ${LABEL_FORMATS.map(f => `<option value="${f.id}" ${f.id === currentLabel.format ? 'selected' : ''}>${esc(f.name)} (${f.w}×${f.h}mm)</option>`).join('')}
                 </select>
               </label>
             </div>

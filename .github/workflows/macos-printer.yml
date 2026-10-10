@@ -1,0 +1,49 @@
+name: Build universal Mac Mini Printer
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mac/mini-printer/**'
+      - '.github/workflows/macos-printer.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mac/mini-printer/**'
+      - '.github/workflows/macos-printer.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-universal:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile macOS 13+ universal app (arm64 and x86_64)
+        shell: zsh {0}
+        run: |
+          zsh mac/mini-printer/package-mac-printer.sh
+          file out/mac/MISES-Mini-Printer-Mac-Universal.zip
+          ditto -x -k out/mac/MISES-Mini-Printer-Mac-Universal.zip /tmp/mises-mac-smoke
+          lipo -archs '/tmp/mises-mac-smoke/MISES Mini Printer.app/Contents/MacOS/MISES-Mini-Printer' | grep -q arm64
+          lipo -archs '/tmp/mises-mac-smoke/MISES Mini Printer.app/Contents/MacOS/MISES-Mini-Printer' | grep -q x86_64
+          codesign --verify --deep --strict '/tmp/mises-mac-smoke/MISES Mini Printer.app'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MISES-Mini-Printer-Mac-Universal
+          path: out/mac/MISES-Mini-Printer-Mac-Universal.zip
+      - name: Publish Mac installer to same versioned public GitHub release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' mac/mini-printer/Info.plist)"
+          TAG="v${VERSION}"
+          ASSET="out/mac/MISES-Mini-Printer-Mac-Universal.zip"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ASSET" --clobber
+          else
+            gh release create "$TAG" "$ASSET" --prerelease --title "MISES ! ${VERSION} — macOS universel" --notes "Compagnon mini-imprimante pour Mac Intel et Apple Silicon M1/M4, macOS 13+. Application à installer sur chaque Mac ; impression locale YHK/WalkPrint, sans Epson. GitHub héberge aussi les APK de test Android lorsqu'ils sont compilés."
+          fi

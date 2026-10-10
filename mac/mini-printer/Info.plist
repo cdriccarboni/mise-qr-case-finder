@@ -6,8 +6,8 @@
 <key>CFBundleDisplayName</key><string>MISES! · Mini-imprimante</string>
 <key>CFBundleExecutable</key><string>MISES-Mini-Printer</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.4.0-beta.16</string>
-<key>CFBundleVersion</key><string>27</string>
+<key>CFBundleShortVersionString</key><string>0.4.0-beta.17</string>
+<key>CFBundleVersion</key><string>28</string>
 <key>LSMinimumSystemVersion</key><string>13.0</string>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSBluetoothAlwaysUsageDescription</key><string>MISES utilise le Bluetooth pour imprimer uniquement sur votre mini-imprimante thermique déjà associée.</string>

@@ -1,0 +1,31 @@
+MISES! · Mini-imprimante Bluetooth YHK / WalkPrint
+Version 0.4.0-beta.17 · macOS 13 ou plus récent · Apple Silicon M1/M4 et Intel
+
+INSTALLATION (une fois sur CHAQUE Mac)
+1. Decompressez MISES-Mini-Printer-Mac-Universal.zip.
+2. Glissez MISES Mini Printer.app dans le dossier Applications du Mac.
+3. Dans Reglages Systeme > Bluetooth, associez la mini-imprimante YHK / WalkPrint
+   a CE Mac (ne depend pas de l'autre ordinateur ni du telephone).
+4. Double-cliquez sur MISES Mini Printer.app.
+   Si macOS bloque une application non notarisee : Reglages Systeme >
+   Confidentialite et securite > Ouvrir quand meme. Ne desactivez pas Gatekeeper.
+5. Dans MISES! en ligne : Partager > Imprimante.
+   Autorisez l'acces au reseau local (localhost) si le navigateur le demande.
+6. Testez UNE etiquette. L'impression est directe sans boite Epson.
+
+Si le navigateur ne peut pas contacter le compagnon :
+- Depuis MISES! : Exporter PNG de l'etiquette.
+- Depuis la fenetre MISES Mini Printer : Choisir un PNG de MISES!
+  > Imprimer le PNG choisi. Cela fonctionne sans navigateur ni Epson.
+
+POUR PASSER DU MAC M1 AU M4
+- Installez la meme application sur chacun et associez la YHK a chacun.
+- Chaque Mac imprime independamment; gardez la mini-imprimante allumee et
+  disponible, sans connexion Bluetooth concurrente depuis l'autre Mac.
+- Les donnees d'inventaire sont gerees par MISES! / sa synchronisation,
+  pas par l'application compagnon. Aucun inventaire n'est transfere via
+  le Bluetooth ou le compagnon.
+
+Technique : port local 127.0.0.1:39381, port serie Bluetooth /dev/cu.*;
+le compagnon ne transmet pas les etiquettes sur Internet.
+Le code et les issues : https://github.com/cdriccarboni/mise-qr-case-finder
