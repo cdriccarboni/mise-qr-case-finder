@@ -27,7 +27,7 @@ test('label editor uses mini-printer only, import surface and index diagnostics'
   await editor.locator('[data-orientation]').selectOption('vertical')
   await expect(editor.locator('canvas')).toBeVisible()
   await editor.locator('[data-print]').click()
-  await expect(page.locator('#modal')).toContainText('Mini-imprimante · Android')
+  await expect(page.locator('#printerDlg')).toContainText('Mini-imprimante · Android')
   await expect(page.locator('#systemPrint')).toHaveCount(0)
   expect(await page.evaluate(()=>window.__prints.length)).toBe(0) // no Epson/system print
   await page.locator('#closeNativePrinter').click()
