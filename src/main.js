@@ -1025,6 +1025,7 @@ $('#app').innerHTML=`
 <dialog id="modal"></dialog>
 <dialog id="scanDlg"><div class="dialoghead"><strong id="scanTitle">Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline muted></video><p id="scanFeedback" class="scanFeedback" role="status">Cadre un QR. La lecture est continue, sans bouton déclencheur.</p><div class="row manualScanRow"><input id="manualScanInput" placeholder="Ou saisis/colle un identifiant en secours..." style="flex:1"><button id="manualScanGo" type="button" class="ghost">Ouvrir</button></div><div class="row"><button id="scanObjects" type="button">Analyser les objets</button></div></dialog>
 <dialog id="printDlg"></dialog>
+<dialog id="printerDlg"></dialog>
 <dialog id="preferencesDlg"><div class="form"><div class="dialoghead"><div><b>Préférences</b><small>Affichage · connexions · données</small></div><button id="closePreferences" class="ghost" type="button">×</button></div>
   <div class="grid2"><label><span>Interface</span><select id="interfaceMode"><option value="foley">Bruitages & pédagogie</option><option value="inventory">Inventaire / régie</option></select></label><label><span>Affichage</span><select id="displayMode"><option value="auto">Auto</option><option value="desktop">Ordinateur</option><option value="mobile">Mobile</option></select></label><label><span>Thème</span><select id="themeMode"><option value="system">Système</option><option value="dark">Sombre</option><option value="light">Clair</option><option value="regie">Mode régie</option></select></label></div><label><span>Catégories personnalisées</span><textarea id="customCategories" rows="3" placeholder="Costumes, accessoires, câbles, consommables…"></textarea></label>
   <fieldset class="inkPicker"><legend>Encre</legend><div id="inkSwatches" class="inkSwatches"></div><label>Couleur libre<input id="inkCustom" type="color" value="${DEFAULT_INK}"></label><button id="inkDefault" type="button" class="ghost">Couleur par défaut</button></fieldset>
@@ -1475,7 +1476,7 @@ async function openPromoStickerDialog(){return pairPrinter()}
 
 async function openDesktopPrinterDialog(initialId='mises'){
   let id=getPromoSticker(initialId).id
-  const d=$('#modal')
+  const d=$('#printerDlg')
   if(d.open)d.close()
   const image=await makePromoStickerImage(id)
   const transferQr=await QRCode.toDataURL(promoTransferCode(id),{width:190,margin:3})
@@ -1530,7 +1531,7 @@ async function openDesktopPrinterDialog(initialId='mises'){
 async function openNativePrinterDialog(initialId='mises'){
   if(!hasNativePrinter())return openDesktopPrinterDialog(initialId)
   let promoId=getPromoSticker(initialId).id
-  const d=$('#modal'),devices=nativePrinterDevices(),saved=await db.get('settings','printer')
+  const d=$('#printerDlg'),devices=nativePrinterDevices(),saved=await db.get('settings','printer')
   const selected=Boolean(saved?.native&&devices.some(device=>device.address===saved.deviceId))
   const promoImage=await makePromoStickerImage(promoId)
   if(d.open)d.close()
@@ -1634,7 +1635,7 @@ window.addEventListener('mises-native-printer-status',event=>{const message=Stri
 // Android bridge, while browser Web Bluetooth only implements BLE/GATT. Do not
 // record a random BLE device as a usable printer or claim it is connected.
 function openDesktopPrinterHelp(){
-  const d=$('#modal')
+  const d=$('#printerDlg')
   if(d.open)d.close()
   d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Imprimer depuis l’ordinateur</b><small>MISES! · WalkPrint / YHK · 384 pixels</small></div><button id="closeDesktopPrinter" class="ghost" type="button" aria-label="Fermer">×</button></div>
     <p>Pour les mini-imprimantes WalkPrint / YHK utilisant Bluetooth Classic (SPP), le Bluetooth du navigateur ne suffit pas à imprimer. La détection d’un appareil ne garantit pas l’impression.</p>
