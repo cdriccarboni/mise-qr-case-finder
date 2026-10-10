@@ -1,3 +1,11 @@
+## 0.4.0-beta.16 — 2026-10-10 (impression ordinateur / WalkPrint)
+
+- Étiquettes objets, caisses et préparations de série : export PNG thermique 384 px directement depuis MISES! ; nom de fichier sûr.
+- Page d’aide Mac/ordinateur : explication de l’impression système et du transfert PNG, pas de fausse connexion BLE/GATT lorsque le protocole requis est Bluetooth Classic SPP.
+- Bouton de statut imprimante : « Imprimer · Ordinateur » sans prétendre qu’un pilote natif est connecté.
+- Android : pilote SPP/RFCOMM conservé sans modification.
+- Version Android 27 ; cache service worker `mises-0.4.0-beta.16`.
+
 ## 0.4.0-beta.15 — 2026-10-10 (Halloween + synchronisation des gros inventaires)
 
 - Rubrique « Trouver → Halloween » : parcours de l’index local et des références existantes, avec 4 ambiances thématiques, filtre textuel et résultats progressifs, sans modifier le stock.
