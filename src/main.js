@@ -26,6 +26,9 @@ import { publicReferenceIdeas, generatePublicGame, randomPublicUniverse, publicA
 import { publicHubHtml, fabricationsHtml, activitiesHtml, publicGameHtml, publicWorkshopHtml } from './public-ui.js'
 import { openLabelEditor } from './label-editor.js'
 import { buildGlobalIndex, indexStats, diagnosticHtml, searchGlobalIndex } from './index-engine.js'
+import { HALLOWEEN_THEMES, halloweenMatches } from './halloween.js'
+import { labelPngFileName, printerDisplayState, macPrinterHealth, sendMacThermalPrint } from './desktop-print.js'
+import { PROMO_STICKERS, getPromoSticker, promoTransferCode, parsePromoTransferCode } from './promo-stickers.js'
 import { visionStatus, VISION_BENCHMARK_PLAN, buildVisionVocabulary } from './vision-engine.js'
 import { parseIntent, answerIntent } from './conversation.js'
 import { newLearning } from './learning.js'
@@ -662,25 +665,42 @@ function showObjectScanned(o){
   $('#scanAddList').onclick=()=>{d.close();addToActiveMise(o.id)}
 }
 function pageOrigin(){return location.href.split('?')[0].split('#')[0]}
-function sendSystemPrint(dataUrl, jobName){
-  if(window.MisesAndroidPrinter&&typeof window.MisesAndroidPrinter.printWithSystem==='function'){
-    window.MisesAndroidPrinter.printWithSystem(jobName||'MISES!', dataUrl)
-    toast('Impression Android lancée')
-    return 'android-print'
+function downloadLabelPng(dataUrl, name='Étiquette'){
+  if(!/^data:image\/png;base64,/.test(String(dataUrl||''))){toast('Image PNG indisponible');return false}
+  const a=document.createElement('a')
+  a.href=dataUrl
+  a.download=labelPngFileName(name)
+  document.body.append(a);a.click();a.remove()
+  return true
+}
+async function sendSystemPrint(dataUrl, jobName='MISES!'){
+  // Never open the macOS or Android system print dialog: it may select Epson.
+  if(hasNativePrinter()){
+    const saved=await db.get('settings','printer')
+    if(!saved?.native||!nativePrinterDevices().some(device=>device.address===saved.deviceId)){
+      await openNativePrinterDialog()
+      return 'choose-mini-printer'
+    }
+    return nativePrint(saved.deviceId,[dataUrl])
   }
-  window.print()
-  return 'window-print'
+  if(await macPrinterHealth()){
+    try{await sendMacThermalPrint(dataUrl,jobName);toast('Étiquette envoyée au compagnon Mac · vérifie la mini-imprimante');return 'mac-mini-printer'}
+    catch(error){toast('Impression Mac indisponible : '+String(error?.message||error));return 'mac-error'}
+  }
+  await openDesktopPrinterDialog()
+  toast('Compagnon Mac non détecté · ouvre MISES Mini Printer pour imprimer')
+  return 'mac-not-ready'
 }
 async function openEntityLabel(kind, entity, {next}={}){
   const name=kind==='case'?caseName(entity):(entity.name||'MISES!')
   const spec={name, shortId:shortId(entity.id), id:entity.id, qrText:entityUrl(pageOrigin(), kind, entity.id), location:kind==='object'?caseName(caseBy(entity.caseId||entity.container_id)):'', category:entity.family||entity.type||kind}
   const image=renderLabelDataUrl(spec)
   const d=$('#printDlg')
-  d.innerHTML=`<div class="labelPreview"><img alt="Étiquette ${esc(name)}" src="${image}"><small>${esc(name)} · ${esc(spec.shortId)}</small></div><div class="row"><button id="systemPrint">Imprimer</button><button id="btPrint" class="ghost">${hasNativePrinter()?'Mini-imprimante':'Bluetooth'}</button>${next?'<button id="labelNext" type="button">Objet suivant</button>':''}<button id="closePrint" class="ghost">Fermer</button></div><p class="hint">L’impression passe par le service d’impression du téléphone. La mini-imprimante WalkPrint / YHK reste un essai à part, seulement si elle est vraiment là.</p>`
+  d.innerHTML=`<div class="labelPreview"><img alt="Étiquette ${esc(name)}" src="${image}"><small>${esc(name)} · ${esc(spec.shortId)}</small></div><div class="row"><button id="btPrint" type="button">${hasNativePrinter()?'Mini-imprimante Bluetooth':'Aide mini-imprimante'}</button><button id="saveLabelPng" class="ghost" type="button">Exporter PNG 384 px</button>${next?'<button id="labelNext" type="button">Objet suivant</button>':''}<button id="closePrint" class="ghost">Fermer</button></div><p class="hint">${hasNativePrinter()?'Android : uniquement le pilote Bluetooth de la mini-imprimante ; jamais Epson.':'Mac : impression directe via la petite application MISES Mini Printer ; jamais de dialogue Epson.'}</p>`
   d.showModal()
   $('#closePrint').onclick=()=>d.close()
-  $('#systemPrint').onclick=()=>sendSystemPrint(image, name)
-  $('#btPrint').onclick=async()=>{if(!hasNativePrinter())return pairPrinter();const saved=await db.get('settings','printer');if(!saved?.deviceId)return openNativePrinterDialog();await nativePrint(saved.deviceId,[image])}
+  $('#saveLabelPng').onclick=()=>downloadLabelPng(image,name)
+  $('#btPrint').onclick=()=>sendSystemPrint(image,name)
   if(next) $('#labelNext').onclick=()=>{d.close();next()}
 }
 function scopedCaseSearch(c,q){
@@ -967,13 +987,14 @@ $('#app').innerHTML=`
   </div>
 </section>
 <div class="goalNav" aria-label="Navigation MISES">
- <details open><summary>Trouver</summary><div><button class="foleyOnly" data-tab="creator">Créateur d’ambiance</button><button class="foleyOnly" data-tab="vibe">Vibe bruitage</button></div></details>
+ <details open><summary>Trouver</summary><div><button data-tab="halloween">🎃 Halloween</button><button class="foleyOnly" data-tab="creator">Créateur d’ambiance</button><button class="foleyOnly" data-tab="vibe">Vibe bruitage</button></div></details>
  <details class="createGoals"><summary>Créer</summary><div><span class="inventoryNavGroup inventoryOnly"><button id="goalQuickAdd" type="button">⚡ Ajout rapide</button><button id="goalCasePhoto" type="button">📷 Caisse par photo</button><button id="goalVoiceLabel" type="button">🎙 Étiquette vocale</button><button id="goalAddObjectSimple" type="button">+ Objet</button><button id="goalAddCaseSimple" type="button">+ Contenant</button><button id="goalQrSimple" type="button">Étiquettes QR</button></span><button id="goalPlay" class="foleyOnly" type="button">Jouer</button><button id="goalWorkshop" class="foleyOnly" type="button">Préparer un atelier</button><button id="goalChallenge" class="foleyOnly" type="button">Défi bruitage</button><button id="goalPublic" class="foleyOnly" data-tab="publicLibrary" type="button">Bibliothèque publique</button><button id="goalFabrications" class="foleyOnly" data-tab="fabrications" type="button">Fabrications</button><button id="goalActivities" class="foleyOnly" data-tab="activities" type="button">Activités pédagogiques</button><button id="goalPedagogySpaces" class="foleyOnly" type="button">Atelier & 10 jeux</button><button id="goalRandomUniverse" class="foleyOnly" type="button">Univers aléatoire</button><button id="goalHands" class="foleyOnly" type="button">Crée ton bruitage</button><button id="goalExercise" class="foleyOnly" type="button">Exercice</button><button id="goalGroupPhoto" class="foleyOnly" type="button">Photo de groupe</button><button id="goalUniverse" class="foleyOnly" type="button">Univers d’une photo</button></div></details>
  <details><summary>Ranger</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
- <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
+ <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalPromoStickers" type="button">Stickers QR · MISES!</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><div class="row"><button id="filterSpareBtn" class="ghost" type="button">Filtrer SPARE</button><button id="quickAddObjectBtn" class="ghost" type="button">⚡ Ajout rapide</button><button id="addObject">+ Objet</button></div></div><div id="objectCards" class="cards"></div></section>
+<section id="halloween" class="tab"><div class="panel"><h2>🎃 Halloween · Explorer mes bruitages</h2><p class="hint">Cherche dans tes objets, contenants, kits, mises, sons et références déjà indexés. Aucune donnée n’est inventée ni ajoutée au stock.</p><div id="halloweenThemes" class="row" aria-label="Ambiances Halloween"></div><label>Affiner les résultats<input id="halloweenFilter" type="text" inputmode="search" placeholder="Ex. chaîne, porte, vent, fantôme…"></label><div id="halloweenResults" aria-live="polite"></div></div></section>
 <section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><div class="row"><button id="addCasePhotoBtn" class="ghost" type="button">📷 Caisse par photo</button><button id="addCase">+ Contenant</button></div></div><p class="hint">Crée une valise ou une caisse, puis ouvre-la pour créer / imprimer son QR code. Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
 <section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation : spectacle, atelier, tournée ou besoin ponctuel.</p><div id="kitCards" class="cards"></div></section>
 <section id="mises" class="tab"><div class="miseSectionHead"><div><small>MISES ET CONTRÔLE</small><h2>Mises et contrôle</h2><p>Préparer, ouvrir et vérifier la mise du spectacle.</p></div><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards miseCards"></div></section>
@@ -991,18 +1012,20 @@ $('#app').innerHTML=`
 </main>
 <footer class="appFooter" aria-label="Informations MISES"><span>MISES! · QR Case Finder · <b id="footerVersion">${APP_VERSION}</b> · © Cédric Carboni</span></footer>
 
-<input id="photoInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="quickAddPhotoInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="casePhotoInput" type="file" accept="image/*" capture="environment" hidden>
+<input id="photoInput" type="file" accept="image/*" hidden>
+<input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
+<input id="quickAddPhotoInput" type="file" accept="image/*" hidden>
+<input id="casePhotoInput" type="file" accept="image/*" hidden>
 <input id="galleryInput" type="file" accept="image/*" hidden>
-<input id="groupPhotoInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="inventoryInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="handsPhotoInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="universePhotoInput" type="file" accept="image/*" capture="environment" hidden>
+<input id="groupPhotoInput" type="file" accept="image/*" hidden>
+<input id="inventoryInput" type="file" accept="image/*" hidden>
+<input id="handsPhotoInput" type="file" accept="image/*" hidden>
+<input id="universePhotoInput" type="file" accept="image/*" hidden>
 <input id="restoreInput" type="file" accept=".json" hidden>
 <dialog id="modal"></dialog>
 <dialog id="scanDlg"><div class="dialoghead"><strong id="scanTitle">Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline muted></video><p id="scanFeedback" class="scanFeedback" role="status">Cadre un QR. La lecture est continue, sans bouton déclencheur.</p><div class="row manualScanRow"><input id="manualScanInput" placeholder="Ou saisis/colle un identifiant en secours..." style="flex:1"><button id="manualScanGo" type="button" class="ghost">Ouvrir</button></div><div class="row"><button id="scanObjects" type="button">Analyser les objets</button></div></dialog>
 <dialog id="printDlg"></dialog>
+<dialog id="printerDlg"></dialog>
 <dialog id="preferencesDlg"><div class="form"><div class="dialoghead"><div><b>Préférences</b><small>Affichage · connexions · données</small></div><button id="closePreferences" class="ghost" type="button">×</button></div>
   <div class="grid2"><label><span>Interface</span><select id="interfaceMode"><option value="foley">Bruitages & pédagogie</option><option value="inventory">Inventaire / régie</option></select></label><label><span>Affichage</span><select id="displayMode"><option value="auto">Auto</option><option value="desktop">Ordinateur</option><option value="mobile">Mobile</option></select></label><label><span>Thème</span><select id="themeMode"><option value="system">Système</option><option value="dark">Sombre</option><option value="light">Clair</option><option value="regie">Mode régie</option></select></label></div><label><span>Catégories personnalisées</span><textarea id="customCategories" rows="3" placeholder="Costumes, accessoires, câbles, consommables…"></textarea></label>
   <fieldset class="inkPicker"><legend>Encre</legend><div id="inkSwatches" class="inkSwatches"></div><label>Couleur libre<input id="inkCustom" type="color" value="${DEFAULT_INK}"></label><button id="inkDefault" type="button" class="ghost">Couleur par défaut</button></fieldset>
@@ -1041,6 +1064,29 @@ function setTab(t){
   render()
 }
 $$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
+let halloweenTheme='all',halloweenShown=80
+function renderHalloween(){
+  const root=$('#halloweenResults'),themes=$('#halloweenThemes')
+  if(!root||!themes)return
+  themes.innerHTML=HALLOWEEN_THEMES.map(theme=>`<button type="button" class="${halloweenTheme===theme.id?'active':'ghost'}" data-halloween-theme="${theme.id}" aria-pressed="${halloweenTheme===theme.id}">${esc(theme.label)}</button>`).join('')
+  const results=halloweenMatches(currentIndexRows(),{theme:halloweenTheme,query:$('#halloweenFilter').value})
+  const visible=results.slice(0,halloweenShown)
+  root.innerHTML=`<p class="hint">${results.length.toLocaleString('fr-FR')} référence(s) trouvée(s) · ${visible.length.toLocaleString('fr-FR')} affichée(s)</p>`+
+    (visible.length?`<div class="cards">${visible.map((row,i)=>`<button class="card" type="button" data-halloween-open="${i}"><b>${esc(row.label)}</b><span>${esc(row.kind==='objet'?'Mon inventaire':row.kind)}</span><small>Voir la fiche ou rechercher dans MISES!</small></button>`).join('')}</div>`:'<p class="empty">Aucun résultat dans les données actuellement disponibles pour ce filtre.</p>')+
+    (results.length>visible.length?`<button id="halloweenMore" type="button">Afficher 80 résultats supplémentaires (${results.length-visible.length} restants)</button>`:'')
+  $$('[data-halloween-theme]',themes).forEach(button=>button.onclick=()=>{halloweenTheme=button.dataset.halloweenTheme;halloweenShown=80;renderHalloween()})
+  $$('[data-halloween-open]',root).forEach(button=>button.onclick=()=>{
+    const row=visible[Number(button.dataset.halloweenOpen)]
+    if(!row)return
+    if(row.kind==='objet'){const object=objects.find(o=>o.id===row.id);if(object){openObject(object);return}}
+    if(row.kind==='contenant'){showCase(row.id);return}
+    if(row.kind==='kit'){showKit(row.id);return}
+    if(row.kind==='mise'){const mise=miseBy(row.id);if(mise){activeMise=mise.id;setTab('mises');openMise(mise);return}}
+    $('#q').value=row.label;setTab('search');$('#searchResults')?.scrollIntoView({block:'nearest'})
+  })
+  $('#halloweenMore')?.addEventListener('click',()=>{halloweenShown+=80;renderHalloween()})
+}
+$('#halloweenFilter').addEventListener('input',()=>{halloweenShown=80;renderHalloween()})
 
 function renderSearch(target='#searchResults'){
   const q=$('#q').value.trim(), own=searchOwned(q), ideas=isInventoryMode()?[]:searchExternal(q), entities=searchEntities(q)
@@ -1132,13 +1178,24 @@ async function photoFlow(file){
 $('#goalDataBruitage').onclick=()=>openDataBruitage({db,changed:async()=>{await refresh();render()}})
 $('#groupPhotoInput').onchange=e=>{const file=e.target.files?.[0];e.target.value='';if(file)groupPhotoFlow(file)}
 
-for(const id of ['photoInput','galleryInput']){
+for(const id of ['photoInput','galleryInput','cameraInput']){
   $("#"+id).onchange=e=>{const file=e.target.files[0];e.target.value='';if(file)photoFlow(file)}
   $("#"+id).addEventListener('cancel',()=>{photoTargetMiseId=null})
 }
 function pickPhoto(inputId,miseId=null){
   photoTargetMiseId=miseId
   $('#'+inputId).click()
+}
+function openPhotoImportChoice(miseId=null){
+  const d=$('#modal')
+  if(d.open)d.close()
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Analyser une photo</b><small>Galerie, Google Photos, Drive, Fichiers ou appareil photo</small></div><button id="closePhotoChoices" class="ghost" type="button">×</button></div>
+    <p class="hint">Tu peux importer une image déjà enregistrée sur le téléphone ou dans un fournisseur de fichiers. MISES! l’analyse localement après sélection.</p>
+    <div class="row"><button id="choosePhoneFiles" type="button">🖼 Galerie / Photos / Drive / Fichiers</button><button id="chooseTakePhoto" type="button" class="ghost">📷 Prendre une photo</button></div></div>`
+  d.showModal()
+  $('#closePhotoChoices').onclick=()=>d.close()
+  $('#choosePhoneFiles').onclick=()=>{d.close();pickPhoto('galleryInput',miseId)}
+  $('#chooseTakePhoto').onclick=()=>{d.close();pickPhoto('cameraInput',miseId)}
 }
 
 function openObject(p={}){
@@ -1174,7 +1231,7 @@ function openObject(p={}){
   <div class="row"><button type="button" id="pickGallery" class="ghost">Importer photo</button><button type="button" id="pickCamera" class="ghost">Appareil photo</button><button id="saveObject">Enregistrer</button></div></form>`
   m.showModal()
   $('#pickGallery').onclick=()=>pickPhoto('galleryInput')
-  $('#pickCamera').onclick=()=>pickPhoto('photoInput')
+  $('#pickCamera').onclick=()=>pickPhoto('cameraInput')
   $('#favObject').onclick=()=>{o.favorite=!o.favorite;$('#favObject').textContent=o.favorite?'★ Favori':'☆ Favori'}
   if($('#qrObject'))$('#qrObject').onclick=()=>showObjectQr(o)
   if($('#freeLabelObject'))$('#freeLabelObject').onclick=()=>openFreeLabel({type:'object',id:o.id,name:o.name,photo:o.photo||'',spare:Boolean(o.spare)})
@@ -1400,67 +1457,201 @@ async function makeThermalLabel({title='MISES!',qrDataUrl='',subtitle='',logoOnl
   return canvas.toDataURL('image/png')
 }
 async function makePrinterTestImages(){
-  const target=location.href.split('?')[0].split('#')[0]
-  const qr=await QRCode.toDataURL(target,{width:280,margin:1,errorCorrectionLevel:'M'})
+  const qr=await QRCode.toDataURL(PUBLIC_PWA_URL,{width:280,margin:1,errorCorrectionLevel:'M'})
   return [await makeThermalLabel({logoOnly:true}),await makeThermalLabel({title:'MISES!',qrDataUrl:qr,subtitle:'Scanne pour ouvrir MISES!'})]
 }
 async function nativePrint(address,images){
   if(!hasNativePrinter()){toast('Le pilote natif est disponible dans l’app Android MISES!');return false}
   if(!address){toast('Choisis d’abord une imprimante');return false}
-  try{window.MisesAndroidPrinter.printImages(address,JSON.stringify(images));return true}catch(error){toast('Impossible de lancer l’impression native');return false}
+  try{window.MisesAndroidPrinter.printImages(address,JSON.stringify(images));toast('Envoi Bluetooth lancé…');return true}catch(error){toast('Impossible de lancer l’impression Bluetooth');return false}
 }
-async function openNativePrinterDialog(){
-  const d=$('#modal'),devices=nativePrinterDevices(),saved=await db.get('settings','printer')
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Imprimante thermique</b><small>WalkPrint / YHK · pilote Android expérimental</small></div><button id="closeNativePrinter" class="ghost">×</button></div>
-  <p class="hint">Jumelle d’abord l’imprimante dans Android. Les modèles WalkPrint de cette famille apparaissent souvent comme « YHK-… » ou « Mini Printer ».</p>
-  <div class="printerDevices">${devices.map(device=>`<button class="printerDevice ${saved?.deviceId===device.address?'selected':''}" data-native-printer="${esc(device.address)}" data-native-name="${esc(device.name)}"><b>${device.likelyPrinter?'● ':''}${esc(device.name)}</b><small>${esc(device.address)}${device.likelyPrinter?' · profil probable WalkPrint/YHK':''}</small></button>`).join('')||'<div class="empty">Aucune imprimante appairée détectée.</div>'}</div>
-  <div class="row"><button id="openBtSettings" class="ghost">Réglages Bluetooth Android</button><button id="refreshNativePrinters" class="ghost">Actualiser</button></div>
-  <div class="printerTest"><b>Test prêt</b><span>Étiquette 1 : logo MISES! · Étiquette 2 : logo + trait + QR vers MISES!</span><button id="runPrinterTest" ${!saved?.deviceId?'disabled':''}>Imprimer les 2 étiquettes test</button></div></div>`
-  d.showModal();$('#closeNativePrinter').onclick=()=>d.close();$('#openBtSettings').onclick=()=>window.MisesAndroidPrinter.openBluetoothSettings();$('#refreshNativePrinters').onclick=()=>{d.close();setTimeout(openNativePrinterDialog,250)}
-  $$('[data-native-printer]',d).forEach(button=>button.onclick=async()=>{await db.put('settings',{id:'printer',name:button.dataset.nativeName,deviceId:button.dataset.nativePrinter,native:true,pairedAt:new Date().toISOString()});await updatePrinterStatus();d.close();setTimeout(openNativePrinterDialog,80);toast(`Imprimante choisie : ${button.dataset.nativeName}`)})
-  $('#runPrinterTest').onclick=async()=>{const current=await db.get('settings','printer');if(!current?.deviceId){toast('Choisis l’imprimante');return}toast('Préparation des 2 étiquettes test…');const images=await makePrinterTestImages();await nativePrint(current.deviceId,images)}
+// This is the same proven SPP/RFCOMM pathway used by the original WalkPrint test.
+// No stock data is needed: the logo, test and public promotional QR are generated locally.
+async function makePromoStickerImage(id='mises'){
+  const sticker=getPromoSticker(id)
+  const qr=await QRCode.toDataURL(sticker.url,{width:280,margin:2,errorCorrectionLevel:'M'})
+  return makeThermalLabel({title:sticker.printTitle,qrDataUrl:qr,subtitle:sticker.subtitle})
 }
+async function openPromoStickerDialog(){return pairPrinter()}
+
+async function openDesktopPrinterDialog(initialId='mises'){
+  let id=getPromoSticker(initialId).id
+  const d=$('#printerDlg')
+  if(d.open)d.close()
+  const image=await makePromoStickerImage(id)
+  const transferQr=await QRCode.toDataURL(promoTransferCode(id),{width:190,margin:3})
+  const ready=await macPrinterHealth()
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Mini-imprimante · Mac</b><small>YHK / WalkPrint · fenêtre dédiée · jamais Epson</small></div><button id="closeDesktopPrint" class="ghost">×</button></div>
+    <p id="desktopPrintState" class="hint" role="status">${ready?'✓ Compagnon Mac prêt · impression directe':'Compagnon non détecté. Ouvre Applications → MISES Mini Printer.app sur ce Mac, puis actualise.'}</p>
+    <div class="row"><button id="refreshDesktopPrint" class="ghost">Vérifier la connexion</button><button id="desktopTestPrint" ${ready?'':'disabled'}>Tester logo + QR</button></div>
+    <label>Sticker<select id="desktopPromoTarget">${PROMO_STICKERS.map(item=>`<option value="${item.id}" ${item.id===id?'selected':''}>${esc(item.label)}</option>`).join('')}</select></label>
+    <div class="labelPreview"><img id="desktopPromoPreview" src="${image}" alt="Sticker QR à imprimer"><small id="desktopPromoURL">${esc(getPromoSticker(id).url)}</small></div>
+    <div class="row"><button id="desktopPrintOne" ${ready?'':'disabled'}>Imprimer 1 sticker</button><button id="desktopPrintThree" ${ready?'':'disabled'}>Imprimer 3 stickers</button><button id="desktopPromoExport" class="ghost">Exporter PNG</button></div>
+    <details><summary>Passer au téléphone (facultatif)</summary><p class="hint">Dans MISES! Android, utilise Scanner un QR : il ouvrira le même modèle sans imprimer automatiquement. Le Mac imprime directement, sans téléphone.</p><img id="desktopTransferQr" width="140" height="140" src="${transferQr}" alt="QR transfert de modèle vers MISES! Android"></details>
+    <p class="hint">La fenêtre macOS « MISES Mini Printer » doit rester ouverte. Aucun bouton ici n’appelle l’impression système.</p></div>`
+  d.showModal()
+  $('#closeDesktopPrint').onclick=()=>d.close()
+  $('#refreshDesktopPrint').onclick=async()=>{
+    const connected=await macPrinterHealth()
+    $('#desktopPrintState').textContent=connected?'✓ Compagnon Mac prêt · impression directe':'Ouvre Applications → MISES Mini Printer.app, puis réessaie.'
+    for(const selector of ['#desktopTestPrint','#desktopPrintOne','#desktopPrintThree'])$(selector).disabled=!connected
+    await updatePrinterStatus()
+  }
+  $('#desktopPromoTarget').onchange=async event=>{
+    id=event.target.value
+    $('#desktopPromoPreview').src=await makePromoStickerImage(id)
+    $('#desktopPromoURL').textContent=getPromoSticker(id).url
+    $('#desktopTransferQr').src=await QRCode.toDataURL(promoTransferCode(id),{width:190,margin:3})
+  }
+  const run=async(button,images,label)=>{
+    button.disabled=true
+    try{
+      if(!(await macPrinterHealth()))throw Error('MISES Mini Printer.app est fermée')
+      for(const png of images)await sendMacThermalPrint(png,label)
+      $('#desktopPrintState').textContent='✓ Étiquettes transmises au compagnon Mac · contrôle la sortie papier'
+    }catch(error){$('#desktopPrintState').textContent='Impression impossible : '+String(error?.message||error)}
+    finally{button.disabled=false}
+  }
+  $('#desktopTestPrint').onclick=async()=>{
+    const button=$('#desktopTestPrint')
+    const images=await makePrinterTestImages()
+    await run(button,images,'MISES! · Test')
+  }
+  $('#desktopPrintOne').onclick=async()=>{
+    const button=$('#desktopPrintOne'),png=await makePromoStickerImage(id)
+    await run(button,[png],getPromoSticker(id).label)
+  }
+  $('#desktopPrintThree').onclick=async()=>{
+    const button=$('#desktopPrintThree'),png=await makePromoStickerImage(id)
+    await run(button,[png,png,png],getPromoSticker(id).label)
+  }
+  $('#desktopPromoExport').onclick=async()=>downloadLabelPng(await makePromoStickerImage(id),getPromoSticker(id).fileName+'-QR-Promo')
+}
+
+async function openNativePrinterDialog(initialId='mises'){
+  if(!hasNativePrinter())return openDesktopPrinterDialog(initialId)
+  let promoId=getPromoSticker(initialId).id
+  const d=$('#printerDlg'),devices=nativePrinterDevices(),saved=await db.get('settings','printer')
+  const selected=Boolean(saved?.native&&devices.some(device=>device.address===saved.deviceId))
+  const promoImage=await makePromoStickerImage(promoId)
+  if(d.open)d.close()
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Mini-imprimante · Android</b><small>WalkPrint / YHK · directe, sans Epson</small></div><button id="closeNativePrinter" class="ghost" type="button">×</button></div>
+    <p class="hint">Choisis la mini-imprimante Bluetooth appairée. Pas besoin d'inventaire et aucune fenêtre d'impression système.</p>
+    <div class="printerDevices">${devices.map(device=>`<button type="button" class="printerDevice ${selected&&saved.deviceId===device.address?'selected':''}" data-native-printer="${esc(device.address)}" data-native-name="${esc(device.name)}"><b>${device.likelyPrinter?'● ':''}${esc(device.name)}</b><small>${esc(device.address)}${device.likelyPrinter?' · probable WalkPrint/YHK':' · vérifier le modèle'}</small></button>`).join('')||'<div class="empty">Aucun appareil appairé. Allume la mini-imprimante puis associe-la dans Bluetooth Android.</div>'}</div>
+    <p class="hint" id="nativePrinterChoice" role="status">${selected?'Mini-imprimante choisie : '+esc(saved.name):'Choisis ta mini-imprimante ci-dessus.'}</p>
+    <div class="row"><button id="openBtSettings" class="ghost">Bluetooth Android</button><button id="refreshNativePrinters" class="ghost">Actualiser</button><button id="runPrinterTest" ${selected?'':'disabled'}>Test logo + QR</button></div>
+    <label>Stickers QR<select id="nativePromoTarget">${PROMO_STICKERS.map(item=>`<option value="${item.id}" ${item.id===promoId?'selected':''}>${esc(item.label)}</option>`).join('')}</select></label>
+    <div class="labelPreview"><img id="nativePromoPreview" src="${promoImage}" alt="Sticker QR prévisualisé"><small id="nativePromoURL">${esc(getPromoSticker(promoId).url)}</small></div>
+    <div class="row"><button id="printPromoOne" ${selected?'':'disabled'}>1 sticker</button><button id="printPromoThree" ${selected?'':'disabled'}>3 stickers</button><button id="savePromoPng" class="ghost">Exporter PNG</button></div>
+    <p class="hint">Le pilote envoie les données uniquement à l’appareil Bluetooth choisi. La fenêtre Epson n’est jamais ouverte.</p></div>`
+  d.showModal()
+  $('#closeNativePrinter').onclick=()=>d.close()
+  $('#openBtSettings').onclick=()=>window.MisesAndroidPrinter.openBluetoothSettings()
+  $('#refreshNativePrinters').onclick=()=>{d.close();void openNativePrinterDialog(promoId)}
+  $$('[data-native-printer]',d).forEach(button=>button.onclick=async()=>{
+    await db.put('settings',{id:'printer',name:button.dataset.nativeName,deviceId:button.dataset.nativePrinter,native:true,pairedAt:new Date().toISOString()})
+    await updatePrinterStatus()
+    d.close()
+    void openNativePrinterDialog(promoId)
+  })
+  $('#nativePromoTarget').onchange=async event=>{
+    promoId=event.target.value
+    $('#nativePromoPreview').src=await makePromoStickerImage(promoId)
+    $('#nativePromoURL').textContent=getPromoSticker(promoId).url
+  }
+  const run=async(button,images)=>{
+    const current=await db.get('settings','printer')
+    if(!current?.native||!devices.some(device=>device.address===current.deviceId)){toast('Choisis d’abord la mini-imprimante');return}
+    button.disabled=true
+    try{await nativePrint(current.deviceId,images)}
+    catch(error){toast('Étiquette impossible : '+String(error?.message||error))}
+    finally{button.disabled=false}
+  }
+  $('#runPrinterTest').onclick=async()=>run($('#runPrinterTest'),await makePrinterTestImages())
+  const printPromo=async count=>{
+    const button=count===1?$('#printPromoOne'):$('#printPromoThree')
+    const png=await makePromoStickerImage(promoId)
+    await run(button,Array.from({length:count},()=>png))
+  }
+  $('#printPromoOne').onclick=()=>printPromo(1)
+  $('#printPromoThree').onclick=()=>printPromo(3)
+  $('#savePromoPng').onclick=async()=>downloadLabelPng(await makePromoStickerImage(promoId),getPromoSticker(promoId).fileName+'-QR-Promo')
+}
+
 async function printCaseNative(c,qr){
-  const saved=await db.get('settings','printer');if(!saved?.deviceId||!hasNativePrinter()){await openNativePrinterDialog();return}
+  const saved=await db.get('settings','printer');if(!saved?.native||!hasNativePrinter()||!nativePrinterDevices().some(device=>device.address===saved.deviceId)){await openNativePrinterDialog();return}
   const image=await makeThermalLabel({title:caseName(c),qrDataUrl:qr,subtitle:c.id});await nativePrint(saved.deviceId,[image])
 }
 
 function openPrint(c,qr){
+  const image=renderLabelDataUrl({name:caseName(c),id:c.id,shortId:shortId(c.id),qrText:entityUrl(pageOrigin(),'case',c.id),category:c.type||'Contenant'})
   const d=$('#printDlg')
-  d.innerHTML=`<div class="labelPreview"><strong>${esc(caseName(c))}</strong><img src="${qr}"><small>${esc(c.id)}</small></div>
-  <div class="row"><button id="systemPrint">Impression système</button><button id="btPrint">${hasNativePrinter()?'Imprimer sur la mini-imprimante':'Bluetooth'}</button><button id="printerTestFromLabel" class="ghost">Test 2 étiquettes</button><button id="closePrint" class="ghost">Fermer</button></div>
-  <p class="hint">${hasNativePrinter()?'Android : pilote direct WalkPrint / YHK expérimental, 384 px.':'PWA : impression système ; le pilote direct WalkPrint / YHK est disponible dans l’app Android.'}</p>`
+  d.innerHTML=`<div class="labelPreview"><strong>${esc(caseName(c))}</strong><img src="${image}" alt="Étiquette QR de ${esc(caseName(c))}"><small>${esc(c.id)}</small></div>
+  <div class="row"><button id="btPrint">${hasNativePrinter()?'Mini-imprimante Bluetooth':'Aide mini-imprimante'}</button><button id="saveCaseLabelPng" type="button" class="ghost">Exporter PNG 384 px</button><button id="printerTestFromLabel" class="ghost">${hasNativePrinter()?'Test 2 étiquettes':'Comment imprimer sur Mac ?'}</button><button id="closePrint" class="ghost">Fermer</button></div>
+  <p class="hint">${hasNativePrinter()?'Android : pilote direct WalkPrint / YHK expérimental, 384 px.':'Mac : utilise MISES Mini Printer pour la connexion directe YHK. Epson n’est jamais proposé.'}</p>`
   d.showModal()
   $('#closePrint').onclick=()=>d.close()
-  $('#systemPrint').onclick=()=>window.print()
-  $('#btPrint').onclick=()=>hasNativePrinter()?printCaseNative(c,qr):pairPrinter()
-  $('#printerTestFromLabel').onclick=openNativePrinterDialog
+  $('#saveCaseLabelPng').onclick=()=>downloadLabelPng(image,caseName(c))
+  $('#btPrint').onclick=()=>sendSystemPrint(image,caseName(c))
+  $('#printerTestFromLabel').onclick=()=>hasNativePrinter()?openNativePrinterDialog():openDesktopPrinterDialog()
 }
 async function openBatchPrint(){
   const d=$('#printDlg')
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Créer / imprimer des QR</b><small>Flash codes pour valises et caisses</small></div><button id="closeBatch" class="ghost">×</button></div><p class="hint">Coche les contenants, prépare les étiquettes QR, puis imprime. Chaque flash code rouvre la valise dans MISES!.</p><div class="checklist">${cases.map(c=>`<label class="check"><input type="checkbox" data-print-case value="${c.id}" checked><span>${esc(caseName(c))}</span></label>`).join('')||'<p>Aucun contenant.</p>'}</div><button id="makeBatch">Créer les QR / préparer l’impression</button><div id="batchLabels" class="batchLabels"></div></div>`
-  d.showModal();$('#closeBatch').onclick=()=>d.close();$('#makeBatch').onclick=async()=>{const ids=$$('[data-print-case]:checked',d).map(x=>x.value),selected=cases.filter(c=>ids.includes(c.id));if(!selected.length){toast('Sélectionne au moins une valise');return}const labels=[];for(const c of selected){const url=location.href.split('?')[0]+'?case='+encodeURIComponent(c.id),qr=await QRCode.toDataURL(url,{width:420,margin:2,errorCorrectionLevel:'M'});labels.push(`<div class="labelPreview batchLabel"><strong>${esc(caseName(c))}</strong><img src="${qr}"><small>${esc(c.id)}</small></div>`)}$('#batchLabels').innerHTML=labels.join('')+`<div class="row"><button id="printBatchNow">Impression système</button></div>`;$('#printBatchNow').onclick=()=>window.print()}
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Créer / imprimer des QR</b><small>Étiquettes pour valises et caisses</small></div><button id="closeBatch" class="ghost">×</button></div><p class="hint">Coche les contenants puis prépare leurs QR. Tu peux imprimer la planche ou exporter chaque étiquette en PNG 384 px, même sans pilote Bluetooth sur l’ordinateur.</p><div class="checklist">${cases.map(c=>`<label class="check"><input type="checkbox" data-print-case value="${c.id}" checked><span>${esc(caseName(c))}</span></label>`).join('')||'<p>Aucun contenant.</p>'}</div><button id="makeBatch">Créer les QR / préparer l’impression</button><div id="batchLabels" class="batchLabels"></div></div>`
+  d.showModal()
+  $('#closeBatch').onclick=()=>d.close()
+  $('#makeBatch').onclick=async()=>{
+    const ids=$$('[data-print-case]:checked',d).map(x=>x.value),selected=cases.filter(c=>ids.includes(c.id))
+    if(!selected.length){toast('Sélectionne au moins une valise');return}
+    const button=$('#makeBatch')
+    button.disabled=true
+    const prepared=[]
+    try{
+      for(let i=0;i<selected.length;i++){
+        const box=selected[i]
+        prepared.push({box,image:renderLabelDataUrl({name:caseName(box),id:box.id,shortId:shortId(box.id),qrText:entityUrl(pageOrigin(),'case',box.id),category:box.type||'Contenant'})})
+        if(i%12===11)await new Promise(resolve=>setTimeout(resolve,0))
+      }
+      $('#batchLabels').innerHTML=prepared.map(({box,image},i)=>`<div class="labelPreview batchLabel"><strong>${esc(caseName(box))}</strong><img src="${image}" alt="Étiquette QR de ${esc(caseName(box))}"><small>${esc(box.id)}</small><button type="button" class="ghost" data-save-batch="${i}">Exporter PNG</button></div>`).join('')+`<div class="row"><button id="printBatchNow" type="button">Mini-imprimante · étiquettes</button></div>`
+      $$('[data-save-batch]',d).forEach(item=>item.onclick=()=>{
+        const entry=prepared[Number(item.dataset.saveBatch)]
+        if(entry)downloadLabelPng(entry.image,caseName(entry.box))
+      })
+      $('#printBatchNow').onclick=async()=>{if(!prepared.length)return;if(hasNativePrinter()){const saved=await db.get('settings','printer');if(!saved?.native)return openNativePrinterDialog();await nativePrint(saved.deviceId,prepared.map(e=>e.image));return}if(!(await macPrinterHealth()))return openDesktopPrinterDialog();for(const entry of prepared)await sendMacThermalPrint(entry.image,caseName(entry.box));toast(prepared.length+' étiquette(s) envoyée(s) à la mini-imprimante Mac')}
+    }catch(error){toast('Impossible de préparer les étiquettes')}
+    finally{button.disabled=false}
+  }
 }
 
 async function updatePrinterStatus(){
   const saved=await db.get('settings','printer')
-  const label=saved?.name?`Imprimante · ${saved.name}`:'Imprimante · À connecter'
-  const button=$('#printerBtn');if(button){button.textContent=label;button.classList.toggle('connected',Boolean(saved))}
+  const state=printerDisplayState({nativeBridge:hasNativePrinter(),savedPrinterName:saved?.native?saved.name:''})
+  const button=$('#printerBtn')
+  if(button){button.textContent=state.label;button.classList.toggle('connected',state.connected)}
 }
 window.addEventListener('mises-native-printer-status',event=>{const message=String(event.detail||'');if(message)toast(message)})
 
+// WalkPrint/YHK currently uses Bluetooth Classic RFCOMM/SPP in our experimental
+// Android bridge, while browser Web Bluetooth only implements BLE/GATT. Do not
+// record a random BLE device as a usable printer or claim it is connected.
+function openDesktopPrinterHelp(){
+  const d=$('#printerDlg')
+  if(d.open)d.close()
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Imprimer depuis l’ordinateur</b><small>MISES! · WalkPrint / YHK · 384 pixels</small></div><button id="closeDesktopPrinter" class="ghost" type="button" aria-label="Fermer">×</button></div>
+    <p>Pour les mini-imprimantes WalkPrint / YHK utilisant Bluetooth Classic (SPP), le Bluetooth du navigateur ne suffit pas à imprimer. La détection d’un appareil ne garantit pas l’impression.</p>
+    <div class="manualSteps">
+      <article><b>1 · Prépare l’étiquette</b><span>Ouvre une valise ou un objet, puis touche « Exporter PNG 384 px » pour obtenir l’image au bon format et le QR.</span></article>
+      <article><b>2 · Imprime sur ton Mac</b><span>Si l’imprimante est installée dans macOS avec un pilote compatible, utilise « Impression système ». Sinon ouvre le PNG dans l’application compatible avec ta mini-imprimante pour l’imprimer.</span></article>
+      <article><b>3 · Depuis Android</b><span>MISES! possède aussi un pilote direct WalkPrint / YHK expérimental. Il ne rend pas automatiquement ce protocole accessible au navigateur du Mac.</span></article>
+    </div>
+    <p class="hint">MISES! ne lance aucune connexion Bluetooth fictive. Le futur pilote natif Mac nécessitera une validation sur le modèle réel de l’imprimante.</p>
+    <button id="closeDesktopPrinterBottom" type="button">Compris</button></div>`
+  d.showModal()
+  $('#closeDesktopPrinter').onclick=()=>d.close()
+  $('#closeDesktopPrinterBottom').onclick=()=>d.close()
+}
 async function pairPrinter(){
-  if(hasNativePrinter())return openNativePrinterDialog()
-  if(!navigator.bluetooth){toast('Bluetooth web indisponible ici · utilise l’impression système ou l’app Android');return}
-  try{
-    toast('Choisis ton imprimante Bluetooth')
-    const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:['battery_service']})
-    let gattConnected=false
-    try{if(device.gatt){await device.gatt.connect();gattConnected=device.gatt.connected}}catch{}
-    await db.put('settings',{id:'printer',name:device.name||'Bluetooth',deviceId:device.id,pairedAt:new Date().toISOString(),gattConnected})
-    await updatePrinterStatus()
-    toast(gattConnected?'Bluetooth connecté · impression directe à tester':'Imprimante autorisée · protocole direct à identifier')
-  }catch(e){if(e.name!=='NotFoundError') toast('Connexion Bluetooth impossible')}
+  return hasNativePrinter()?openNativePrinterDialog():openDesktopPrinterDialog()
 }
 
 function parseScannedTarget(text){
@@ -1484,6 +1675,11 @@ function parseScannedTarget(text){
   return {caseId,objectId,kitId,miseId,text}
 }
 async function handleScanTarget(target){
+  const promo=parsePromoTransferCode(target?.text)
+  if(scanPurpose!=='move'&&promo){
+    toast('Sticker reçu : '+promo.label)
+    return hasNativePrinter()?openNativePrinterDialog(promo.id):openDesktopPrinterDialog(promo.id)
+  }
   if(scanPurpose!=='move'){
     if(target.caseId&&caseBy(target.caseId))return showCase(target.caseId)
     if(target.objectId&&objectBy(target.objectId))return openObject(objectBy(target.objectId))
@@ -1799,6 +1995,7 @@ $('#goalWorkshop').onclick=()=>openWorkshopFlow({},'tout l’inventaire',lastPar
 $('#goalMove').onclick=startMoveScans
 $('#goalShare').onclick=openShareDialog
 $('#goalBatchPrint').onclick=openBatchPrint
+$('#goalPromoStickers').onclick=()=>openPromoStickerDialog()
 const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)
 const isStandalone=window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true
 if(isIOS&&!isStandalone){$('#goalIosInstall').hidden=false;$('#goalIosInstall').onclick=()=>{$('#manualDlg').showModal();setTimeout(()=>$('#manualIos')?.scrollIntoView({block:'center',behavior:'smooth'}),80)}}
@@ -1833,7 +2030,9 @@ function openVoiceLabelFlow() {
     allObjects: objects,
     origin: location.href,
     onPrint: () => {
-      window.print()
+      const image=document.querySelector('.voiceLabelPreview img, .labelPreview img')?.src
+      if(image?.startsWith('data:image/png;'))void sendSystemPrint(image,'MISES! · Étiquette vocale')
+      else toast('Utilise Exporter PNG pour imprimer cette étiquette vocale sur la mini-imprimante')
     },
     onSave: async (label) => {
       await refresh()
@@ -1898,7 +2097,7 @@ $$('[data-action]').forEach(b=>b.onclick=()=>{
   if(a==='quick-add')openQuickAddFlow()
   if(a==='case-photo')$('#casePhotoInput').click()
   if(a==='voice-label')openVoiceLabelFlow()
-  if(a==='photo')pickPhoto('photoInput')
+  if(a==='photo')openPhotoImportChoice()
   if(a==='scan')startScan()
   if(a==='inventory')$('#inventoryInput').click()
   if(a==='label'){openFreeLabel();return}
@@ -1923,6 +2122,7 @@ function renderCreator(){
 function render(){
   renderSearch()
   renderPublicSections()
+  if($('#halloween').classList.contains('active'))renderHalloween()
   const displayObjects = spareFilterActive ? objects.filter(o => o.spare || /\bspare\b/i.test(o.nickname||'') || /\bspare\b/i.test(o.name)) : objects
   $('#objectCards').innerHTML=displayObjects.length?displayObjects.slice().sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'fr')).map(o=>`<button class="card objectCard ${o.spare?'isSpareCard':''}" data-object="${o.id}">
     <b>${o.favorite?'★ ':''}${esc(o.name)}${o.nickname?` <span class="nickBadge">${esc(o.nickname)}</span>`:''}${o.spare?' <span class="spareBadge">SPARE</span>':''}</b><span>${esc(soundSummary(o)||'Son à préciser')}</span><small>${esc(objectPathString(o, cases))}${o.state?` · ${esc(o.state)}`:''}${o.quantity>1?` · qté ${o.quantity}`:''}${o.audioMemo?' · mémo sonore':''} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></button>`).join(''):'<div class="empty"><b>Aucun objet pour l’instant.</b><span>Importe tes Data Bruitage ou ajoute une fiche. Rien n’est inventé à ta place.</span></div>'

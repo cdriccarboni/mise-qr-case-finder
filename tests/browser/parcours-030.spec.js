@@ -1,3 +1,4 @@
+import { APP_VERSION } from '../../src/version.js'
 import { test, expect } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
 
@@ -20,7 +21,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await page.goto('/')
   await page.evaluate(async () => { await navigator.serviceWorker.ready })
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true)
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.14')
+  await expect(page.locator('#appVersion')).toHaveText(APP_VERSION)
   await expect(page.locator('#projectContext')).toBeHidden()
   await expect(page.locator('#aboutHome')).toHaveCount(0)
   await expect(page.locator('#goalAbout')).toHaveCount(0)
@@ -58,14 +59,16 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   const qrSrc = await page.locator('img.qr').getAttribute('src')
   expect(qrSrc).toMatch(/^data:image\/png/)
   await page.locator('#printLabel').click()
-  await page.locator('#systemPrint').click()
-  await expect.poll(() => page.evaluate(() => window.__prints.length)).toBe(1)
-  const job = await page.evaluate(() => window.__prints[0])
-  expect(job.name).toContain('Caisse grise')
-  expect(job.dataUrl).toMatch(/^data:image\/png/)
+  const jobPng = await page.locator('#printDlg .labelPreview img').getAttribute('src')
+  expect(jobPng).toMatch(/^data:image\/png/)
+  await expect(page.locator('#systemPrint')).toHaveCount(0)
+  await page.locator('#btPrint').click()
+  await expect(page.locator('#printerDlg')).toContainText('Mini-imprimante · Android')
+  expect(await page.evaluate(() => window.__prints.length)).toBe(0) // never open Epson
+  await page.locator('#closeNativePrinter').click()
   await page.locator('#closePrint').click()
   await page.locator('#closeCase').click()
-  await page.evaluate(async () => window.__mise.ingestQrImage(window.__prints[0].dataUrl))
+  await page.evaluate(async (src) => window.__mise.ingestQrImage(src), jobPng)
   await expect(page.locator('.caseView')).toContainText('Caisse grise n°23')
   await page.locator('#closeCase').click()
 

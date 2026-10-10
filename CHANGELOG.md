@@ -1,3 +1,19 @@
+## 0.4.0-beta.16 — 2026-10-10 (impression directe Mac + Android / import photo)
+
+- Impression des étiquettes et QR : **aucun appel à la fenêtre d’impression système/Epson** dans l’interface principale et l’éditeur ; priorité au pilote WalkPrint/YHK Android ou au compagnon local Mac.
+- Compagnon Mac natif (`mac/mini-printer`) : fenêtre indépendante, périphériques appairés, prévisualisation, serveur strictement local, Bluetooth Classic via port série virtuel `/dev/cu.YHK-1CB7` validé à l’envoi. Aucun transfert au téléphone nécessaire pour imprimer depuis Mac.
+- QR promotionnels sélectionnables MISES!, ART, Acousmatic Théâtre, 1/3 stickers, PNG 384 px et code facultatif de transfert de modèle vers le scanner Android.
+- Restauration de l’ancien test « logo + QR » sans inventaire. QR du test vers le domaine public MISES! et non vers l’origine interne WebView.
+- Photo : suppression de la capture forcée des entrées d’import ; choix explicite galerie/Google Photos/Drive/Fichiers ou caméra. Sélecteur de fournisseur Android mis à jour.
+- Version Android 27 ; cache service worker `mises-0.4.0-beta.16`.
+
+## 0.4.0-beta.15 — 2026-10-10 (Halloween + synchronisation des gros inventaires)
+
+- Rubrique « Trouver → Halloween » : parcours de l’index local et des références existantes, avec 4 ambiances thématiques, filtre textuel et résultats progressifs, sans modifier le stock.
+- Supabase : pagination ordonnée par blocs de 500 au lieu d'une lecture unique potentiellement plafonnée à 1 000 lignes. Aucune réconciliation ne démarre si une page échoue.
+- Tests de non-régression : limites 999 / 1 000 / 1 001 / 2 503, erreur d'une page, filtres Halloween ; test de restauration locale de 1 505 objets conservé.
+- Version Android 26 ; cache PWA `mises-0.4.0-beta.15`. Publication Play séparée et conditionnée aux validations.
+
 ## 0.4.0-beta.12 — 2026-10-05 (glossaire public V5 + privé Supabase propriétaire)
 
 - Glossaire public : `public/public-foley.json` régénéré depuis `EXPORT_PUBLIC_WEB` uniquement (216 recettes `PUBLIC_WEB`, 12 fabrications, 19 sources). Aucun `PRIVE_ONLY` dans le dépôt.

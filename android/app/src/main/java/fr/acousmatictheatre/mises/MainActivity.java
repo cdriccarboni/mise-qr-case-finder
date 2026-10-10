@@ -78,7 +78,7 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " MISES-Android/0.4.0-beta.14");
+        settings.setUserAgentString(settings.getUserAgentString() + " MISES-Android/0.4.0-beta.16");
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -144,10 +144,31 @@ public final class MainActivity extends Activity {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
                 try {
-                    startActivityForResult(params.createIntent(), FILE_CHOOSER_REQUEST);
+                    Intent picker;
+                    if (params.isCaptureEnabled()) {
+                        // Explicit camera action only. Do not force camera for an image import.
+                        picker = params.createIntent();
+                    } else {
+                        // The Android document provider offers local images, Drive and
+                        // any installed provider (Google Photos if exposed by the device).
+                        picker = new Intent(Intent.ACTION_GET_CONTENT);
+                        picker.addCategory(Intent.CATEGORY_OPENABLE);
+                        String[] accepts = params.getAcceptTypes();
+                        String mime = accepts != null && accepts.length == 1 &&
+                                accepts[0] != null && !accepts[0].trim().isEmpty() ?
+                                accepts[0] : "*/*";
+                        picker.setType(mime);
+                        picker.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        picker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,
+                                params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+                        picker = Intent.createChooser(picker,
+                                "Choisir une photo · Galerie / Photos / Drive / Fichiers");
+                    }
+                    startActivityForResult(picker, FILE_CHOOSER_REQUEST);
                 } catch (ActivityNotFoundException e) {
+                    fileCallback.onReceiveValue(null);
                     fileCallback = null;
-                    return false;
+                    return true;
                 }
                 return true;
             }

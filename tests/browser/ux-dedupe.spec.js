@@ -40,7 +40,7 @@ test('grille 2 colonnes : dernier cartouche impair en pleine largeur (360 et Pix
     await trouver.evaluate(node => { node.open = true })
     const buttons = trouver.locator('div > button')
     const count = await buttons.count()
-    expect(count).toBe(2)
+    expect(count).toBe(3) // Créateur, Vibe et nouvelle rubrique Halloween
     if (size[0] <= 620) {
       const first = await buttons.nth(0).boundingBox()
       const second = await buttons.nth(1).boundingBox()
@@ -48,6 +48,11 @@ test('grille 2 colonnes : dernier cartouche impair en pleine largeur (360 et Pix
       expect(second).toBeTruthy()
       // 2 items on 2-col: same row, neither spans full alone
       expect(Math.abs(first.y - second.y)).toBeLessThan(8)
+      const halloween = await buttons.nth(2).boundingBox()
+      const container = await trouver.locator('div').first().boundingBox()
+      expect(halloween).toBeTruthy()
+      expect(container).toBeTruthy()
+      expect(halloween.width).toBeGreaterThan(container.width * 0.85)
     }
     // Force odd last child: open Créer which has 5 buttons
     await page.getByText('Créer', { exact: true }).click()
