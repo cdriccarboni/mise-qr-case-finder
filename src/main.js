@@ -26,6 +26,7 @@ import { publicReferenceIdeas, generatePublicGame, randomPublicUniverse, publicA
 import { publicHubHtml, fabricationsHtml, activitiesHtml, publicGameHtml, publicWorkshopHtml } from './public-ui.js'
 import { openLabelEditor } from './label-editor.js'
 import { buildGlobalIndex, indexStats, diagnosticHtml, searchGlobalIndex } from './index-engine.js'
+import { HALLOWEEN_THEMES, halloweenMatches } from './halloween.js'
 import { visionStatus, VISION_BENCHMARK_PLAN, buildVisionVocabulary } from './vision-engine.js'
 import { parseIntent, answerIntent } from './conversation.js'
 import { newLearning } from './learning.js'
@@ -967,13 +968,14 @@ $('#app').innerHTML=`
   </div>
 </section>
 <div class="goalNav" aria-label="Navigation MISES">
- <details open><summary>Trouver</summary><div><button class="foleyOnly" data-tab="creator">Créateur d’ambiance</button><button class="foleyOnly" data-tab="vibe">Vibe bruitage</button></div></details>
+ <details open><summary>Trouver</summary><div><button data-tab="halloween">🎃 Halloween</button><button class="foleyOnly" data-tab="creator">Créateur d’ambiance</button><button class="foleyOnly" data-tab="vibe">Vibe bruitage</button></div></details>
  <details class="createGoals"><summary>Créer</summary><div><span class="inventoryNavGroup inventoryOnly"><button id="goalQuickAdd" type="button">⚡ Ajout rapide</button><button id="goalCasePhoto" type="button">📷 Caisse par photo</button><button id="goalVoiceLabel" type="button">🎙 Étiquette vocale</button><button id="goalAddObjectSimple" type="button">+ Objet</button><button id="goalAddCaseSimple" type="button">+ Contenant</button><button id="goalQrSimple" type="button">Étiquettes QR</button></span><button id="goalPlay" class="foleyOnly" type="button">Jouer</button><button id="goalWorkshop" class="foleyOnly" type="button">Préparer un atelier</button><button id="goalChallenge" class="foleyOnly" type="button">Défi bruitage</button><button id="goalPublic" class="foleyOnly" data-tab="publicLibrary" type="button">Bibliothèque publique</button><button id="goalFabrications" class="foleyOnly" data-tab="fabrications" type="button">Fabrications</button><button id="goalActivities" class="foleyOnly" data-tab="activities" type="button">Activités pédagogiques</button><button id="goalPedagogySpaces" class="foleyOnly" type="button">Atelier & 10 jeux</button><button id="goalRandomUniverse" class="foleyOnly" type="button">Univers aléatoire</button><button id="goalHands" class="foleyOnly" type="button">Crée ton bruitage</button><button id="goalExercise" class="foleyOnly" type="button">Exercice</button><button id="goalGroupPhoto" class="foleyOnly" type="button">Photo de groupe</button><button id="goalUniverse" class="foleyOnly" type="button">Univers d’une photo</button></div></details>
  <details><summary>Ranger</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
  <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><div class="row"><button id="filterSpareBtn" class="ghost" type="button">Filtrer SPARE</button><button id="quickAddObjectBtn" class="ghost" type="button">⚡ Ajout rapide</button><button id="addObject">+ Objet</button></div></div><div id="objectCards" class="cards"></div></section>
+<section id="halloween" class="tab"><div class="panel"><h2>🎃 Halloween · Explorer mes bruitages</h2><p class="hint">Cherche dans tes objets, contenants, kits, mises, sons et références déjà indexés. Aucune donnée n’est inventée ni ajoutée au stock.</p><div id="halloweenThemes" class="row" aria-label="Ambiances Halloween"></div><label>Affiner les résultats<input id="halloweenFilter" type="search" placeholder="Ex. chaîne, porte, vent, fantôme…"></label><div id="halloweenResults" aria-live="polite"></div></div></section>
 <section id="cases" class="tab"><div class="sectionhead"><h2>Valises & caisses</h2><div class="row"><button id="addCasePhotoBtn" class="ghost" type="button">📷 Caisse par photo</button><button id="addCase">+ Contenant</button></div></div><p class="hint">Crée une valise ou une caisse, puis ouvre-la pour créer / imprimer son QR code. Ex. « Musique & percussions », « Vie quotidienne · 1/3 »…</p><div id="caseCards" class="cards"></div></section>
 <section id="kits" class="tab"><div class="sectionhead"><h2>Kits</h2><button id="addKit">+ Kit</button></div><p class="hint">Un kit est un sous-ensemble de préparation : spectacle, atelier, tournée ou besoin ponctuel.</p><div id="kitCards" class="cards"></div></section>
 <section id="mises" class="tab"><div class="miseSectionHead"><div><small>MISES ET CONTRÔLE</small><h2>Mises et contrôle</h2><p>Préparer, ouvrir et vérifier la mise du spectacle.</p></div><button id="addMise">+ Mise</button></div><div id="miseCards" class="cards miseCards"></div></section>
@@ -1040,7 +1042,30 @@ function setTab(t){
   $$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))
   render()
 }
-$$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
+$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
+let halloweenTheme='all',halloweenShown=80
+function renderHalloween(){
+  const root=$('#halloweenResults'),themes=$('#halloweenThemes')
+  if(!root||!themes)return
+  themes.innerHTML=HALLOWEEN_THEMES.map(theme=>`<button type="button" class="${halloweenTheme===theme.id?'active':'ghost'}" data-halloween-theme="${theme.id}" aria-pressed="${halloweenTheme===theme.id}">${esc(theme.label)}</button>`).join('')
+  const results=halloweenMatches(currentIndexRows(),{theme:halloweenTheme,query:$('#halloweenFilter').value})
+  const visible=results.slice(0,halloweenShown)
+  root.innerHTML=`<p class="hint">${results.length.toLocaleString('fr-FR')} référence(s) trouvée(s) · ${visible.length.toLocaleString('fr-FR')} affichée(s)</p>`+
+    (visible.length?`<div class="cards">${visible.map((row,i)=>`<button class="card" type="button" data-halloween-open="${i}"><b>${esc(row.label)}</b><span>${esc(row.kind==='objet'?'Mon inventaire':row.kind)}</span><small>Voir la fiche ou rechercher dans MISES!</small></button>`).join('')}</div>`:'<p class="empty">Aucun résultat dans les données actuellement disponibles pour ce filtre.</p>')+
+    (results.length>visible.length?`<button id="halloweenMore" type="button">Afficher 80 résultats supplémentaires (${results.length-visible.length} restants)</button>`:'')
+  $('[data-halloween-theme]',themes).forEach(button=>button.onclick=()=>{halloweenTheme=button.dataset.halloweenTheme;halloweenShown=80;renderHalloween()})
+  $('[data-halloween-open]',root).forEach(button=>button.onclick=()=>{
+    const row=visible[Number(button.dataset.halloweenOpen)]
+    if(!row)return
+    if(row.kind==='objet'){const object=objects.find(o=>o.id===row.id);if(object){openObject(object);return}}
+    if(row.kind==='contenant'){showCase(row.id);return}
+    if(row.kind==='kit'){showKit(row.id);return}
+    if(row.kind==='mise'){const mise=miseBy(row.id);if(mise){activeMise=mise.id;setTab('mises');openMise(mise);return}}
+    $('#q').value=row.label;setTab('search');$('#searchResults')?.scrollIntoView({block:'nearest'})
+  })
+  $('#halloweenMore')?.addEventListener('click',()=>{halloweenShown+=80;renderHalloween()})
+}
+$('#halloweenFilter').addEventListener('input',()=>{halloweenShown=80;renderHalloween()})
 
 function renderSearch(target='#searchResults'){
   const q=$('#q').value.trim(), own=searchOwned(q), ideas=isInventoryMode()?[]:searchExternal(q), entities=searchEntities(q)
@@ -1923,6 +1948,7 @@ function renderCreator(){
 function render(){
   renderSearch()
   renderPublicSections()
+  if($('#halloween').classList.contains('active'))renderHalloween()
   const displayObjects = spareFilterActive ? objects.filter(o => o.spare || /\bspare\b/i.test(o.nickname||'') || /\bspare\b/i.test(o.name)) : objects
   $('#objectCards').innerHTML=displayObjects.length?displayObjects.slice().sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'fr')).map(o=>`<button class="card objectCard ${o.spare?'isSpareCard':''}" data-object="${o.id}">
     <b>${o.favorite?'★ ':''}${esc(o.name)}${o.nickname?` <span class="nickBadge">${esc(o.nickname)}</span>`:''}${o.spare?' <span class="spareBadge">SPARE</span>':''}</b><span>${esc(soundSummary(o)||'Son à préciser')}</span><small>${esc(objectPathString(o, cases))}${o.state?` · ${esc(o.state)}`:''}${o.quantity>1?` · qté ${o.quantity}`:''}${o.audioMemo?' · mémo sonore':''} · ${esc(provenanceLabel(o.provenance||'user-document'))}</small></button>`).join(''):'<div class="empty"><b>Aucun objet pour l’instant.</b><span>Importe tes Data Bruitage ou ajoute une fiche. Rien n’est inventé à ta place.</span></div>'
