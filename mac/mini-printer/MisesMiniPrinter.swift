@@ -1,6 +1,3 @@
-[Reading 314 lines from start (total: 314 lines, 0 remaining)]
-
-
 import Foundation
 import SwiftUI
 import AppKit
@@ -314,5 +311,3 @@ final class MisesPrintServer {
     conn.send(content:Data(headers.utf8)+content,completion:.contentProcessed { _ in conn.cancel() })
   }
 }
-
-[executed on device: MacBook-Air-M4-de-Cdric.local (1efbc799-63fb-466d-a8da-56d587d10304)]
