@@ -1,9 +1,10 @@
-## 0.4.0-beta.16 — 2026-10-10 (impression ordinateur / WalkPrint)
+## 0.4.0-beta.16 — 2026-10-10 (impression directe Mac + Android / import photo)
 
-- Étiquettes objets, caisses et préparations de série : export PNG thermique 384 px directement depuis MISES! ; nom de fichier sûr.
-- Page d’aide Mac/ordinateur : explication de l’impression système et du transfert PNG, pas de fausse connexion BLE/GATT lorsque le protocole requis est Bluetooth Classic SPP.
-- Bouton de statut imprimante : « Imprimer · Ordinateur » sans prétendre qu’un pilote natif est connecté.
-- Android : pilote SPP/RFCOMM conservé sans modification.
+- Impression des étiquettes et QR : **aucun appel à la fenêtre d’impression système/Epson** dans l’interface principale et l’éditeur ; priorité au pilote WalkPrint/YHK Android ou au compagnon local Mac.
+- Compagnon Mac natif (`mac/mini-printer`) : fenêtre indépendante, périphériques appairés, prévisualisation, serveur strictement local, Bluetooth Classic via port série virtuel `/dev/cu.YHK-1CB7` validé à l’envoi. Aucun transfert au téléphone nécessaire pour imprimer depuis Mac.
+- QR promotionnels sélectionnables MISES!, ART, Acousmatic Théâtre, 1/3 stickers, PNG 384 px et code facultatif de transfert de modèle vers le scanner Android.
+- Restauration de l’ancien test « logo + QR » sans inventaire. QR du test vers le domaine public MISES! et non vers l’origine interne WebView.
+- Photo : suppression de la capture forcée des entrées d’import ; choix explicite galerie/Google Photos/Drive/Fichiers ou caméra. Sélecteur de fournisseur Android mis à jour.
 - Version Android 27 ; cache service worker `mises-0.4.0-beta.16`.
 
 ## 0.4.0-beta.15 — 2026-10-10 (Halloween + synchronisation des gros inventaires)
