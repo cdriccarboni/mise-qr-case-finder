@@ -17,3 +17,33 @@ export function printerDisplayState({nativeBridge=false,savedPrinterName=''}={})
     connected:Boolean(savedPrinterName),mode:'android-native'
   }
 }
+
+export const MAC_PRINTER_ENDPOINT='http://127.0.0.1:39381'
+
+/**
+ * A separate macOS companion listens exclusively on loopback and talks to
+ * WalkPrint/YHK via Bluetooth Classic RFCOMM. The browser cannot do that itself.
+ */
+export async function macPrinterHealth(fetcher=globalThis.fetch){
+  try{
+    const response=await fetcher(MAC_PRINTER_ENDPOINT+'/health',{
+      method:'GET',mode:'cors',cache:'no-store',signal:AbortSignal.timeout(2000)
+    })
+    const result=await response.json()
+    return response.ok&&result?.ready===true&&result?.backend==='mac-bluetooth'
+  }catch{return false}
+}
+
+export async function sendMacThermalPrint(png,label='MISES!',fetcher=globalThis.fetch){
+  if(!/^data:image\/png;base64,/.test(String(png||'')))throw Error('Étiquette PNG invalide')
+  const response=await fetcher(MAC_PRINTER_ENDPOINT+'/print',{
+    method:'POST',mode:'cors',cache:'no-store',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({png,label:String(label).slice(0,80)}),
+    signal:AbortSignal.timeout(12000)
+  })
+  if(!response.ok)throw Error('Le compagnon Mac a refusé cette étiquette')
+  const status=await response.json()
+  if(status.queued!==true)throw Error('Étiquette non confirmée')
+  return status
+}
