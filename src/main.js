@@ -27,6 +27,7 @@ import { publicHubHtml, fabricationsHtml, activitiesHtml, publicGameHtml, public
 import { openLabelEditor } from './label-editor.js'
 import { buildGlobalIndex, indexStats, diagnosticHtml, searchGlobalIndex } from './index-engine.js'
 import { HALLOWEEN_THEMES, halloweenMatches } from './halloween.js'
+import { labelPngFileName, printerDisplayState } from './desktop-print.js'
 import { visionStatus, VISION_BENCHMARK_PLAN, buildVisionVocabulary } from './vision-engine.js'
 import { parseIntent, answerIntent } from './conversation.js'
 import { newLearning } from './learning.js'
@@ -663,6 +664,14 @@ function showObjectScanned(o){
   $('#scanAddList').onclick=()=>{d.close();addToActiveMise(o.id)}
 }
 function pageOrigin(){return location.href.split('?')[0].split('#')[0]}
+function downloadLabelPng(dataUrl, name='Étiquette'){
+  if(!/^data:image\/png;base64,/.test(String(dataUrl||''))){toast('Image PNG indisponible');return false}
+  const a=document.createElement('a')
+  a.href=dataUrl
+  a.download=labelPngFileName(name)
+  document.body.append(a);a.click();a.remove()
+  return true
+}
 function sendSystemPrint(dataUrl, jobName){
   if(window.MisesAndroidPrinter&&typeof window.MisesAndroidPrinter.printWithSystem==='function'){
     window.MisesAndroidPrinter.printWithSystem(jobName||'MISES!', dataUrl)
@@ -677,10 +686,11 @@ async function openEntityLabel(kind, entity, {next}={}){
   const spec={name, shortId:shortId(entity.id), id:entity.id, qrText:entityUrl(pageOrigin(), kind, entity.id), location:kind==='object'?caseName(caseBy(entity.caseId||entity.container_id)):'', category:entity.family||entity.type||kind}
   const image=renderLabelDataUrl(spec)
   const d=$('#printDlg')
-  d.innerHTML=`<div class="labelPreview"><img alt="Étiquette ${esc(name)}" src="${image}"><small>${esc(name)} · ${esc(spec.shortId)}</small></div><div class="row"><button id="systemPrint">Imprimer</button><button id="btPrint" class="ghost">${hasNativePrinter()?'Mini-imprimante':'Bluetooth'}</button>${next?'<button id="labelNext" type="button">Objet suivant</button>':''}<button id="closePrint" class="ghost">Fermer</button></div><p class="hint">L’impression passe par le service d’impression du téléphone. La mini-imprimante WalkPrint / YHK reste un essai à part, seulement si elle est vraiment là.</p>`
+  d.innerHTML=`<div class="labelPreview"><img alt="Étiquette ${esc(name)}" src="${image}"><small>${esc(name)} · ${esc(spec.shortId)}</small></div><div class="row"><button id="systemPrint">Imprimer</button><button id="saveLabelPng" class="ghost" type="button">Exporter PNG 384 px</button><button id="btPrint" class="ghost">${hasNativePrinter()?'Mini-imprimante':'Aide mini-imprimante'}</button>${next?'<button id="labelNext" type="button">Objet suivant</button>':''}<button id="closePrint" class="ghost">Fermer</button></div><p class="hint">${hasNativePrinter()?'Android : impression système ou pilote expérimental WalkPrint/YHK.':'Ordinateur : impression système si un pilote est installé, sinon export PNG 384 px à ouvrir dans l’application de ton imprimante. La connexion Bluetooth du navigateur ne suffit pas pour WalkPrint/YHK.'}</p>`
   d.showModal()
   $('#closePrint').onclick=()=>d.close()
   $('#systemPrint').onclick=()=>sendSystemPrint(image, name)
+  $('#saveLabelPng').onclick=()=>downloadLabelPng(image,name)
   $('#btPrint').onclick=async()=>{if(!hasNativePrinter())return pairPrinter();const saved=await db.get('settings','printer');if(!saved?.deviceId)return openNativePrinterDialog();await nativePrint(saved.deviceId,[image])}
   if(next) $('#labelNext').onclick=()=>{d.close();next()}
 }
@@ -1451,15 +1461,17 @@ async function printCaseNative(c,qr){
 }
 
 function openPrint(c,qr){
+  const image=renderLabelDataUrl({name:caseName(c),id:c.id,shortId:shortId(c.id),qrText:entityUrl(pageOrigin(),'case',c.id),category:c.type||'Contenant'})
   const d=$('#printDlg')
-  d.innerHTML=`<div class="labelPreview"><strong>${esc(caseName(c))}</strong><img src="${qr}"><small>${esc(c.id)}</small></div>
-  <div class="row"><button id="systemPrint">Impression système</button><button id="btPrint">${hasNativePrinter()?'Imprimer sur la mini-imprimante':'Bluetooth'}</button><button id="printerTestFromLabel" class="ghost">Test 2 étiquettes</button><button id="closePrint" class="ghost">Fermer</button></div>
-  <p class="hint">${hasNativePrinter()?'Android : pilote direct WalkPrint / YHK expérimental, 384 px.':'PWA : impression système ; le pilote direct WalkPrint / YHK est disponible dans l’app Android.'}</p>`
+  d.innerHTML=`<div class="labelPreview"><strong>${esc(caseName(c))}</strong><img src="${image}" alt="Étiquette QR de ${esc(caseName(c))}"><small>${esc(c.id)}</small></div>
+  <div class="row"><button id="systemPrint">Impression système</button><button id="saveCaseLabelPng" type="button" class="ghost">Exporter PNG 384 px</button><button id="btPrint">${hasNativePrinter()?'Imprimer sur la mini-imprimante':'Aide mini-imprimante'}</button><button id="printerTestFromLabel" class="ghost">${hasNativePrinter()?'Test 2 étiquettes':'Comment imprimer sur Mac ?'}</button><button id="closePrint" class="ghost">Fermer</button></div>
+  <p class="hint">${hasNativePrinter()?'Android : pilote direct WalkPrint / YHK expérimental, 384 px.':'Mac / ordinateur : export PNG au format thermique 384 px, ou impression système si l’imprimante apparaît dans la liste. Le navigateur ne prend pas en charge Bluetooth Classic SPP.'}</p>`
   d.showModal()
   $('#closePrint').onclick=()=>d.close()
   $('#systemPrint').onclick=()=>window.print()
+  $('#saveCaseLabelPng').onclick=()=>downloadLabelPng(image,caseName(c))
   $('#btPrint').onclick=()=>hasNativePrinter()?printCaseNative(c,qr):pairPrinter()
-  $('#printerTestFromLabel').onclick=openNativePrinterDialog
+  $('#printerTestFromLabel').onclick=()=>hasNativePrinter()?openNativePrinterDialog():openDesktopPrinterHelp()
 }
 async function openBatchPrint(){
   const d=$('#printDlg')
