@@ -1,3 +1,4 @@
+import { APP_VERSION } from '../../src/version.js'
 import { readFile } from 'node:fs/promises'
 import { test, expect } from '@playwright/test'
 
@@ -33,7 +34,7 @@ test('installability criteria, standalone launch, offline reload, restore and ca
   })
   await page.waitForFunction(async () => !(await caches.keys()).includes('workbox-precache-v2-mises-old'))
   const names = await page.evaluate(() => caches.keys())
-  expect(names.some(name => name.includes('mises-0.4.0-beta.14'))).toBeTruthy()
+  expect(names.some(name => name.includes(`mises-${APP_VERSION}`))).toBeTruthy()
 
   await page.evaluate(async () => {
     const db = await new Promise((resolve, reject) => {
@@ -90,7 +91,7 @@ test('service worker update checks stay automatic and do not block the app', asy
     return { active: Boolean(reg.active), waiting: Boolean(reg.waiting) }
   })
   expect(state.active).toBe(true)
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.14')
+  await expect(page.locator('#appVersion')).toHaveText(APP_VERSION)
 })
 
 test('projectId opens, restores, attaches an old mise, and ignores a bad return address', async ({ page }) => {
