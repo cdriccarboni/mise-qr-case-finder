@@ -1,3 +1,4 @@
+import { APP_VERSION } from '../../src/version.js'
 import { test, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 
@@ -5,7 +6,7 @@ const backup = JSON.parse(readFileSync(new URL('../fixtures/beta2-backup.json', 
 
 test('the new app reimports a complete beta.2 backup file', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.14')
+  await expect(page.locator('#appVersion')).toHaveText(APP_VERSION)
   page.once('dialog', dialog => dialog.accept())
   await page.locator('#restoreInput').setInputFiles({
     name: 'MISE-backup.json',
