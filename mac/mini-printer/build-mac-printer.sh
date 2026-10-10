@@ -1,5 +1,3 @@
-[Reading 9 lines from start (total: 9 lines, 0 remaining)]
-
 #!/bin/zsh
 set -euo pipefail
 HERE="${0:A:h}"
@@ -9,5 +7,3 @@ xcrun swiftc -parse-as-library -O -framework IOBluetooth -framework AppKit -fram
 cp "${HERE}/Info.plist" "${DEST}/Contents/Info.plist"
 codesign --force --deep --sign - "${DEST}"
 echo "Built: ${DEST}"
-
-[executed on device: MacBook-Air-M4-de-Cdric.local (1efbc799-63fb-466d-a8da-56d587d10304)]
