@@ -31,3 +31,18 @@ export const PROMO_STICKERS=Object.freeze([
 export function getPromoSticker(id='mises'){
   return PROMO_STICKERS.find(item=>item.id===id)||PROMO_STICKERS[0]
 }
+
+/**
+ * Local handoff QR for MISES's own scanner, not a web URL.
+ * Only three predefined public sticker IDs are accepted (no arbitrary URL,
+ * JSON or remote code), and scanning never sends an automatic print job.
+ */
+export function promoTransferCode(id='mises'){
+  const target=PROMO_STICKERS.find(item=>item.id===id)
+  if(!target)throw new RangeError('Sticker QR inconnu')
+  return 'MISES:PRINT-PROMO:1:'+target.id
+}
+export function parsePromoTransferCode(raw){
+  const match=/^MISES:PRINT-PROMO:1:(mises|art|acousmatic)$/.exec(String(raw||'').trim())
+  return match?getPromoSticker(match[1]):null
+}
