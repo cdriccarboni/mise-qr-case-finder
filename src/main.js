@@ -1012,14 +1012,15 @@ $('#app').innerHTML=`
 </main>
 <footer class="appFooter" aria-label="Informations MISES"><span>MISES! · QR Case Finder · <b id="footerVersion">${APP_VERSION}</b> · © Cédric Carboni</span></footer>
 
-<input id="photoInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="quickAddPhotoInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="casePhotoInput" type="file" accept="image/*" capture="environment" hidden>
+<input id="photoInput" type="file" accept="image/*" hidden>
+<input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
+<input id="quickAddPhotoInput" type="file" accept="image/*" hidden>
+<input id="casePhotoInput" type="file" accept="image/*" hidden>
 <input id="galleryInput" type="file" accept="image/*" hidden>
-<input id="groupPhotoInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="inventoryInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="handsPhotoInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="universePhotoInput" type="file" accept="image/*" capture="environment" hidden>
+<input id="groupPhotoInput" type="file" accept="image/*" hidden>
+<input id="inventoryInput" type="file" accept="image/*" hidden>
+<input id="handsPhotoInput" type="file" accept="image/*" hidden>
+<input id="universePhotoInput" type="file" accept="image/*" hidden>
 <input id="restoreInput" type="file" accept=".json" hidden>
 <dialog id="modal"></dialog>
 <dialog id="scanDlg"><div class="dialoghead"><strong id="scanTitle">Scanner un QR</strong><button id="stopScan" class="ghost">Fermer</button></div><video id="scanVideo" playsinline muted></video><p id="scanFeedback" class="scanFeedback" role="status">Cadre un QR. La lecture est continue, sans bouton déclencheur.</p><div class="row manualScanRow"><input id="manualScanInput" placeholder="Ou saisis/colle un identifiant en secours..." style="flex:1"><button id="manualScanGo" type="button" class="ghost">Ouvrir</button></div><div class="row"><button id="scanObjects" type="button">Analyser les objets</button></div></dialog>
@@ -1176,13 +1177,24 @@ async function photoFlow(file){
 $('#goalDataBruitage').onclick=()=>openDataBruitage({db,changed:async()=>{await refresh();render()}})
 $('#groupPhotoInput').onchange=e=>{const file=e.target.files?.[0];e.target.value='';if(file)groupPhotoFlow(file)}
 
-for(const id of ['photoInput','galleryInput']){
+for(const id of ['photoInput','galleryInput','cameraInput']){
   $("#"+id).onchange=e=>{const file=e.target.files[0];e.target.value='';if(file)photoFlow(file)}
   $("#"+id).addEventListener('cancel',()=>{photoTargetMiseId=null})
 }
 function pickPhoto(inputId,miseId=null){
   photoTargetMiseId=miseId
   $('#'+inputId).click()
+}
+function openPhotoImportChoice(miseId=null){
+  const d=$('#modal')
+  if(d.open)d.close()
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Analyser une photo</b><small>Galerie, Google Photos, Drive, Fichiers ou appareil photo</small></div><button id="closePhotoChoices" class="ghost" type="button">×</button></div>
+    <p class="hint">Tu peux importer une image déjà enregistrée sur le téléphone ou dans un fournisseur de fichiers. MISES! l’analyse localement après sélection.</p>
+    <div class="row"><button id="choosePhoneFiles" type="button">🖼 Galerie / Photos / Drive / Fichiers</button><button id="chooseTakePhoto" type="button" class="ghost">📷 Prendre une photo</button></div></div>`
+  d.showModal()
+  $('#closePhotoChoices').onclick=()=>d.close()
+  $('#choosePhoneFiles').onclick=()=>{d.close();pickPhoto('galleryInput',miseId)}
+  $('#chooseTakePhoto').onclick=()=>{d.close();pickPhoto('cameraInput',miseId)}
 }
 
 function openObject(p={}){
@@ -1218,7 +1230,7 @@ function openObject(p={}){
   <div class="row"><button type="button" id="pickGallery" class="ghost">Importer photo</button><button type="button" id="pickCamera" class="ghost">Appareil photo</button><button id="saveObject">Enregistrer</button></div></form>`
   m.showModal()
   $('#pickGallery').onclick=()=>pickPhoto('galleryInput')
-  $('#pickCamera').onclick=()=>pickPhoto('photoInput')
+  $('#pickCamera').onclick=()=>pickPhoto('cameraInput')
   $('#favObject').onclick=()=>{o.favorite=!o.favorite;$('#favObject').textContent=o.favorite?'★ Favori':'☆ Favori'}
   if($('#qrObject'))$('#qrObject').onclick=()=>showObjectQr(o)
   if($('#freeLabelObject'))$('#freeLabelObject').onclick=()=>openFreeLabel({type:'object',id:o.id,name:o.name,photo:o.photo||'',spare:Boolean(o.spare)})
@@ -2052,7 +2064,7 @@ $$('[data-action]').forEach(b=>b.onclick=()=>{
   if(a==='quick-add')openQuickAddFlow()
   if(a==='case-photo')$('#casePhotoInput').click()
   if(a==='voice-label')openVoiceLabelFlow()
-  if(a==='photo')pickPhoto('photoInput')
+  if(a==='photo')openPhotoImportChoice()
   if(a==='scan')startScan()
   if(a==='inventory')$('#inventoryInput').click()
   if(a==='label'){openFreeLabel();return}
