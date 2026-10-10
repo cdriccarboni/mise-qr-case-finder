@@ -1512,7 +1512,8 @@ async function openDesktopPrinterDialog(initialId='mises'){
   const transferQr=await QRCode.toDataURL(promoTransferCode(id),{width:190,margin:3})
   const ready=await macPrinterHealth()
   d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Mini-imprimante · Mac</b><small>YHK / WalkPrint · fenêtre dédiée · jamais Epson</small></div><button id="closeDesktopPrint" class="ghost">×</button></div>
-    <p id="desktopPrintState" class="hint" role="status">${ready?'✓ Compagnon Mac prêt · impression directe':'Compagnon non détecté. Ouvre Applications → MISES Mini Printer.app sur ce Mac, puis actualise.'}</p>
+    <p id="desktopPrintState" class="hint" role="status">${ready?'✓ Compagnon Mac prêt · impression directe':'Compagnon non détecté. Installe et ouvre MISES Mini Printer.app sur CE Mac, puis actualise.'}</p>
+    <p class="hint"><a id="macCompanionDownload" href="https://github.com/cdriccarboni/mise-qr-case-finder/releases/download/v${APP_VERSION}/MISES-Mini-Printer-Mac-Universal.zip" target="_blank" rel="noopener noreferrer">⇩ Télécharger MISES Mini Printer · Mac M1 / M4 / Intel</a><br>Installe l’application dans Applications sur chaque Mac et associe ta mini-imprimante en Bluetooth depuis chaque ordinateur. Si le navigateur refuse l’accès local, exporte le PNG puis ouvre-le depuis la fenêtre Mini Printer.</p>
     <div class="row"><button id="refreshDesktopPrint" class="ghost">Vérifier la connexion</button><button id="desktopTestPrint" ${ready?'':'disabled'}>Tester logo + QR</button></div>
     <label>Sticker<select id="desktopPromoTarget">${PROMO_STICKERS.map(item=>`<option value="${item.id}" ${item.id===id?'selected':''}>${esc(item.label)}</option>`).join('')}</select></label>
     <div class="labelPreview"><img id="desktopPromoPreview" src="${image}" alt="Sticker QR à imprimer"><small id="desktopPromoURL">${esc(getPromoSticker(id).url)}</small></div>

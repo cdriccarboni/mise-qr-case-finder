@@ -2,7 +2,7 @@
 
 MISES! — QR Case Finder · PWA de bruitage, inventaire et mises.
 
-Version en cours de validation : **0.4.0-beta.16** (Android versionCode 27).
+Version en cours de validation : **0.4.0-beta.17** (Android versionCode 28).
 
 Pour travailler dans Cursor : [docs/CURSOR.md](docs/CURSOR.md). Prise en main générale : [docs/COMMENCER.md](docs/COMMENCER.md). Dossier Play Console : [docs/PLAY-CONSOLE.md](docs/PLAY-CONSOLE.md).
 
@@ -10,7 +10,7 @@ Les Data Bruitage personnelles ne sont pas dans ce dépôt. L’exemple de `publ
 
 ## Base publique active
 
-MISES! 0.4.0-beta.16 charge `public/public-foley.json` au démarrage. Cette base publique alimente la recherche, les fabrications, les jeux, les activités pédagogiques et les univers aléatoires. Le bundle public contient uniquement le glossaire `PUBLIC_WEB` (`EXPORT_PUBLIC_WEB`) ; le corpus personnel Data Bruitage n'est pas publié dans le dépôt. Détail public/privé et accès propriétaire : [docs/DATA-PUBLIQUE-PRIVEE.md](docs/DATA-PUBLIQUE-PRIVEE.md).
+MISES! 0.4.0-beta.17 charge `public/public-foley.json` au démarrage. Cette base publique alimente la recherche, les fabrications, les jeux, les activités pédagogiques et les univers aléatoires. Le bundle public contient uniquement le glossaire `PUBLIC_WEB` (`EXPORT_PUBLIC_WEB`) ; le corpus personnel Data Bruitage n'est pas publié dans le dépôt. Détail public/privé et accès propriétaire : [docs/DATA-PUBLIQUE-PRIVEE.md](docs/DATA-PUBLIQUE-PRIVEE.md).
 
 
 ## Halloween & inventaires volumineux
@@ -24,19 +24,17 @@ La synchronisation **Supabase** lit désormais toutes les pages de 500 enregistr
 
 ## Impression QR · WalkPrint / YHK · Mac et Android
 
-MISES! 0.4.0-beta.16 propose trois stickers QR : **MISES!**, **ART — Acousmatic Régie Tools** et **Acousmatic Théâtre**. Les QR ouvrent uniquement les trois sites publics correspondants ; l’inventaire reste privé. La création des étiquettes fonctionne même avec un stock vide.
+MISES! 0.4.0-beta.17 propose trois stickers QR : **MISES!**, **ART — Acousmatic Régie Tools** et **Acousmatic Théâtre**. Les QR ouvrent uniquement les trois sites publics correspondants ; l’inventaire reste privé. La création des étiquettes fonctionne même avec un stock vide.
 
 **Android natif :** sélectionner la mini-imprimante WalkPrint/YHK déjà associée, puis « Test logo + QR », « 1 sticker » ou « 3 stickers ». Le pilote natif Bluetooth Classic reste en place. Le sélecteur d’imprimantes Android/Epson n’est plus invoqué depuis les boutons d’étiquettes.
 
 **Mac :** installer et ouvrir l’application compagne indépendante `MISES Mini Printer.app`. Son code et ses instructions sont dans [mac/mini-printer](mac/mini-printer). Sur le Mac de validation, la mini-imprimante `YHK-1CB7` expose le port série Bluetooth `/dev/cu.YHK-1CB7`, auquel le compagnon envoie directement les données au format 384 px ; pas de dialogue macOS Epson. Le compagnon n’écoute que `127.0.0.1:39381`, accepte uniquement les origines MISES!/ART autorisées et ne stocke ni inventaire ni image. Depuis la PWA, autoriser si nécessaire « Accès au réseau local / Loopback » à la première connexion. Le Bluetooth du navigateur seul ne sait pas ouvrir le protocole SPP de ce modèle.
 
-Pour installer sur un autre Mac disposant des outils de compilation Xcode :
+**Distribution multi-Mac, M1/M4 et autres utilisateurs :** dans MISES! → Partager → Imprimante → « Télécharger MISES Mini Printer · Mac M1 / M4 / Intel », ou sur la [release GitHub de la version en cours](https://github.com/cdriccarboni/mise-qr-case-finder/releases). Le ZIP est un exécutable **universel arm64 + x86_64**, macOS 13 minimum : ni Xcode ni compilation requis sur le Mac utilisateur. Dézipper, glisser la .app dans Applications, l’ouvrir, puis associer la mini-imprimante sur **chaque Mac**. Sur un Mac sans identifiant développeur Apple, si macOS demande une exception à l’ouverture de l’app non notarisée, voir Réglages Système → Confidentialité et sécurité → « Ouvrir quand même ». Le paquet est construit en CI macOS et ajouté à la même release que la version PWA.
 
-```bash
-cd mac/mini-printer
-zsh build-mac-printer.sh
-open "$HOME/Applications/MISES Mini Printer.app"
-```
+Chaque Mac conserve son appairage Bluetooth local et peut imprimer indépendamment, mais **une seule connexion Bluetooth active à la mini-imprimante à la fois**. Les données et préférences MISES! nécessitent leur propre synchronisation (Supabase/Drive) : le compagnon d’impression ne synchronise ni inventaire ni préférences.
+
+Pour les développeurs souhaitant compiler les deux architectures depuis le code source : `zsh mac/mini-printer/package-mac-printer.sh`. Les instructions pour les utilisateurs sont dans [INSTALLER-MAC.txt](mac/mini-printer/INSTALLER-MAC.txt).
 
 Pour basculer vers Android, la fenêtre Mac affiche aussi un QR de transfert du **modèle de sticker**. Le scanner MISES! Android peut l'ouvrir sans transférer de données privées ni déclencher d’impression non sollicitée. L’application Mac et Android peuvent aussi fonctionner séparément.
 
