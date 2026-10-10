@@ -1,3 +1,4 @@
+import { APP_VERSION } from '../../src/version.js'
 import { test, expect } from '@playwright/test'
 
 test('0.4.0-beta.14 label editor, import surface and index diagnostics', async ({ page }) => {
@@ -13,7 +14,7 @@ test('0.4.0-beta.14 label editor, import surface and index diagnostics', async (
     }
   })
   await page.goto('/')
-  await expect(page.locator('#appVersion')).toHaveText('0.4.0-beta.14')
+  await expect(page.locator('#appVersion')).toHaveText(APP_VERSION)
 
   await page.locator('[data-action="label"]').click()
   const editor=page.locator('.labelEditorDialog')
