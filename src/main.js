@@ -27,8 +27,8 @@ import { publicHubHtml, fabricationsHtml, activitiesHtml, publicGameHtml, public
 import { openLabelEditor } from './label-editor.js'
 import { buildGlobalIndex, indexStats, diagnosticHtml, searchGlobalIndex } from './index-engine.js'
 import { HALLOWEEN_THEMES, halloweenMatches } from './halloween.js'
-import { labelPngFileName, printerDisplayState } from './desktop-print.js'
-import { PROMO_STICKERS, getPromoSticker } from './promo-stickers.js'
+import { labelPngFileName, printerDisplayState, macPrinterHealth, sendMacThermalPrint } from './desktop-print.js'
+import { PROMO_STICKERS, getPromoSticker, promoTransferCode, parsePromoTransferCode } from './promo-stickers.js'
 import { visionStatus, VISION_BENCHMARK_PLAN, buildVisionVocabulary } from './vision-engine.js'
 import { parseIntent, answerIntent } from './conversation.js'
 import { newLearning } from './learning.js'
@@ -673,26 +673,34 @@ function downloadLabelPng(dataUrl, name='Étiquette'){
   document.body.append(a);a.click();a.remove()
   return true
 }
-function sendSystemPrint(dataUrl, jobName){
-  if(window.MisesAndroidPrinter&&typeof window.MisesAndroidPrinter.printWithSystem==='function'){
-    window.MisesAndroidPrinter.printWithSystem(jobName||'MISES!', dataUrl)
-    toast('Impression Android lancée')
-    return 'android-print'
+async function sendSystemPrint(dataUrl, jobName='MISES!'){
+  // Never open the macOS or Android system print dialog: it may select Epson.
+  if(hasNativePrinter()){
+    const saved=await db.get('settings','printer')
+    if(!saved?.native||!nativePrinterDevices().some(device=>device.address===saved.deviceId)){
+      await openNativePrinterDialog()
+      return 'choose-mini-printer'
+    }
+    return nativePrint(saved.deviceId,[dataUrl])
   }
-  window.print()
-  return 'window-print'
+  if(await macPrinterHealth()){
+    try{await sendMacThermalPrint(dataUrl,jobName);toast('Étiquette envoyée au compagnon Mac · vérifie la mini-imprimante');return 'mac-mini-printer'}
+    catch(error){toast('Impression Mac indisponible : '+String(error?.message||error));return 'mac-error'}
+  }
+  await openDesktopPrinterDialog()
+  toast('Compagnon Mac non détecté · ouvre MISES Mini Printer pour imprimer')
+  return 'mac-not-ready'
 }
 async function openEntityLabel(kind, entity, {next}={}){
   const name=kind==='case'?caseName(entity):(entity.name||'MISES!')
   const spec={name, shortId:shortId(entity.id), id:entity.id, qrText:entityUrl(pageOrigin(), kind, entity.id), location:kind==='object'?caseName(caseBy(entity.caseId||entity.container_id)):'', category:entity.family||entity.type||kind}
   const image=renderLabelDataUrl(spec)
   const d=$('#printDlg')
-  d.innerHTML=`<div class="labelPreview"><img alt="Étiquette ${esc(name)}" src="${image}"><small>${esc(name)} · ${esc(spec.shortId)}</small></div><div class="row"><button id="btPrint" type="button">${hasNativePrinter()?'Mini-imprimante Bluetooth':'Aide mini-imprimante'}</button><button id="systemPrint" class="ghost" type="button">Impression système (Epson…)</button><button id="saveLabelPng" class="ghost" type="button">Exporter PNG 384 px</button>${next?'<button id="labelNext" type="button">Objet suivant</button>':''}<button id="closePrint" class="ghost">Fermer</button></div><p class="hint">${hasNativePrinter()?'Android : impression système ou pilote expérimental WalkPrint/YHK.':'Ordinateur : impression système si un pilote est installé, sinon export PNG 384 px à ouvrir dans l’application de ton imprimante. La connexion Bluetooth du navigateur ne suffit pas pour WalkPrint/YHK.'}</p>`
+  d.innerHTML=`<div class="labelPreview"><img alt="Étiquette ${esc(name)}" src="${image}"><small>${esc(name)} · ${esc(spec.shortId)}</small></div><div class="row"><button id="btPrint" type="button">${hasNativePrinter()?'Mini-imprimante Bluetooth':'Aide mini-imprimante'}</button><button id="saveLabelPng" class="ghost" type="button">Exporter PNG 384 px</button>${next?'<button id="labelNext" type="button">Objet suivant</button>':''}<button id="closePrint" class="ghost">Fermer</button></div><p class="hint">${hasNativePrinter()?'Android : uniquement le pilote Bluetooth de la mini-imprimante ; jamais Epson.':'Mac : impression directe via la petite application MISES Mini Printer ; jamais de dialogue Epson.'}</p>`
   d.showModal()
   $('#closePrint').onclick=()=>d.close()
-  $('#systemPrint').onclick=()=>sendSystemPrint(image, name)
   $('#saveLabelPng').onclick=()=>downloadLabelPng(image,name)
-  $('#btPrint').onclick=async()=>{if(!hasNativePrinter())return pairPrinter();const saved=await db.get('settings','printer');if(!saved?.native||!nativePrinterDevices().some(device=>device.address===saved.deviceId))return openNativePrinterDialog();await nativePrint(saved.deviceId,[image])}
+  $('#btPrint').onclick=()=>sendSystemPrint(image,name)
   if(next) $('#labelNext').onclick=()=>{d.close();next()}
 }
 function scopedCaseSearch(c,q){
@@ -1540,13 +1548,12 @@ function openPrint(c,qr){
   const image=renderLabelDataUrl({name:caseName(c),id:c.id,shortId:shortId(c.id),qrText:entityUrl(pageOrigin(),'case',c.id),category:c.type||'Contenant'})
   const d=$('#printDlg')
   d.innerHTML=`<div class="labelPreview"><strong>${esc(caseName(c))}</strong><img src="${image}" alt="Étiquette QR de ${esc(caseName(c))}"><small>${esc(c.id)}</small></div>
-  <div class="row"><button id="btPrint">${hasNativePrinter()?'Mini-imprimante Bluetooth':'Aide mini-imprimante'}</button><button id="systemPrint" class="ghost">Impression système (Epson…)</button><button id="saveCaseLabelPng" type="button" class="ghost">Exporter PNG 384 px</button><button id="printerTestFromLabel" class="ghost">${hasNativePrinter()?'Test 2 étiquettes':'Comment imprimer sur Mac ?'}</button><button id="closePrint" class="ghost">Fermer</button></div>
-  <p class="hint">${hasNativePrinter()?'Android : pilote direct WalkPrint / YHK expérimental, 384 px.':'Mac / ordinateur : export PNG au format thermique 384 px, ou impression système si l’imprimante apparaît dans la liste. Le navigateur ne prend pas en charge Bluetooth Classic SPP.'}</p>`
+  <div class="row"><button id="btPrint">${hasNativePrinter()?'Mini-imprimante Bluetooth':'Aide mini-imprimante'}</button><button id="saveCaseLabelPng" type="button" class="ghost">Exporter PNG 384 px</button><button id="printerTestFromLabel" class="ghost">${hasNativePrinter()?'Test 2 étiquettes':'Comment imprimer sur Mac ?'}</button><button id="closePrint" class="ghost">Fermer</button></div>
+  <p class="hint">${hasNativePrinter()?'Android : pilote direct WalkPrint / YHK expérimental, 384 px.':'Mac : utilise MISES Mini Printer pour la connexion directe YHK. Epson n’est jamais proposé.'}</p>`
   d.showModal()
   $('#closePrint').onclick=()=>d.close()
-  $('#systemPrint').onclick=()=>window.print()
   $('#saveCaseLabelPng').onclick=()=>downloadLabelPng(image,caseName(c))
-  $('#btPrint').onclick=()=>hasNativePrinter()?printCaseNative(c,qr):pairPrinter()
+  $('#btPrint').onclick=()=>sendSystemPrint(image,caseName(c))
   $('#printerTestFromLabel').onclick=()=>hasNativePrinter()?openNativePrinterDialog():openDesktopPrinterHelp()
 }
 async function openBatchPrint(){
