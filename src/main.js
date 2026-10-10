@@ -28,6 +28,7 @@ import { openLabelEditor } from './label-editor.js'
 import { buildGlobalIndex, indexStats, diagnosticHtml, searchGlobalIndex } from './index-engine.js'
 import { HALLOWEEN_THEMES, halloweenMatches } from './halloween.js'
 import { labelPngFileName, printerDisplayState } from './desktop-print.js'
+import { PROMO_STICKERS, getPromoSticker } from './promo-stickers.js'
 import { visionStatus, VISION_BENCHMARK_PLAN, buildVisionVocabulary } from './vision-engine.js'
 import { parseIntent, answerIntent } from './conversation.js'
 import { newLearning } from './learning.js'
@@ -1445,22 +1446,33 @@ async function nativePrint(address,images){
 }
 // This is the same proven SPP/RFCOMM pathway used by the original WalkPrint test.
 // No stock data is needed: the logo, test and public promotional QR are generated locally.
-async function makePromoStickerImage(){
-  const qr=await QRCode.toDataURL(PUBLIC_PWA_URL,{width:280,margin:2,errorCorrectionLevel:'M'})
-  return makeThermalLabel({title:'MISES!',qrDataUrl:qr,subtitle:'Scanne pour decouvrir MISES!'})
+async function makePromoStickerImage(id='mises'){
+  const sticker=getPromoSticker(id)
+  const qr=await QRCode.toDataURL(sticker.url,{width:280,margin:2,errorCorrectionLevel:'M'})
+  return makeThermalLabel({title:sticker.printTitle,qrDataUrl:qr,subtitle:sticker.subtitle})
 }
 async function openPromoStickerDialog(){
   if(hasNativePrinter())return openNativePrinterDialog()
-  const image=await makePromoStickerImage()
+  let promoId='mises'
+  let image=await makePromoStickerImage(promoId)
   const d=$('#printDlg')
   if(d.open)d.close()
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Stickers QR · MISES!</b><small>Le QR ouvre la PWA publique</small></div><button id="closePromoStickers" type="button" class="ghost" aria-label="Fermer">×</button></div>
-  <p class="hint">Un sticker pour faire découvrir MISES! sans créer d’inventaire.</p>
-  <div class="labelPreview"><img src="${image}" alt="Sticker promotionnel QR MISES!"><small>${esc(PUBLIC_PWA_URL)}</small></div>
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Stickers QR · MISES! / ART / Acousmatic Théâtre</b><small>3 liens publics · aucun inventaire nécessaire</small></div><button id="closePromoStickers" type="button" class="ghost" aria-label="Fermer">×</button></div>
+  <label>Destination du QR
+    <select id="promoStickerSelect">${PROMO_STICKERS.map(item=>`<option value="${esc(item.id)}">${esc(item.label)}</option>`).join('')}</select>
+  </label>
+  <p class="hint">Sélectionne un site. Le QR imprimé mène directement à son adresse publique.</p>
+  <div class="labelPreview"><img id="promoStickerPreview" src="${image}" alt="Sticker promotionnel QR"><small id="promoTargetUrl">${esc(getPromoSticker(promoId).url)}</small></div>
   <div class="row"><button id="exportPromoPng" type="button">Exporter PNG 384 px</button><button id="systemPromoPrint" type="button" class="ghost">Impression système</button><button id="promoPrinterHelp" type="button" class="ghost">Aide mini-imprimante</button></div></div>`
   d.showModal()
   $('#closePromoStickers').onclick=()=>d.close()
-  $('#exportPromoPng').onclick=()=>downloadLabelPng(image,'MISES-QR-Promo')
+  $('#promoStickerSelect').onchange=async event=>{
+    promoId=event.target.value
+    image=await makePromoStickerImage(promoId)
+    $('#promoStickerPreview').src=image
+    $('#promoTargetUrl').textContent=getPromoSticker(promoId).url
+  }
+  $('#exportPromoPng').onclick=()=>downloadLabelPng(image,getPromoSticker(promoId).fileName+'-QR-Promo')
   $('#systemPromoPrint').onclick=()=>window.print()
   $('#promoPrinterHelp').onclick=()=>openDesktopPrinterHelp()
 }
