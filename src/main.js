@@ -1042,7 +1042,7 @@ function setTab(t){
   $$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))
   render()
 }
-$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
+$$('[data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);if(b.dataset.tab==='creator')renderCreator()})
 let halloweenTheme='all',halloweenShown=80
 function renderHalloween(){
   const root=$('#halloweenResults'),themes=$('#halloweenThemes')
@@ -1053,8 +1053,8 @@ function renderHalloween(){
   root.innerHTML=`<p class="hint">${results.length.toLocaleString('fr-FR')} référence(s) trouvée(s) · ${visible.length.toLocaleString('fr-FR')} affichée(s)</p>`+
     (visible.length?`<div class="cards">${visible.map((row,i)=>`<button class="card" type="button" data-halloween-open="${i}"><b>${esc(row.label)}</b><span>${esc(row.kind==='objet'?'Mon inventaire':row.kind)}</span><small>Voir la fiche ou rechercher dans MISES!</small></button>`).join('')}</div>`:'<p class="empty">Aucun résultat dans les données actuellement disponibles pour ce filtre.</p>')+
     (results.length>visible.length?`<button id="halloweenMore" type="button">Afficher 80 résultats supplémentaires (${results.length-visible.length} restants)</button>`:'')
-  $('[data-halloween-theme]',themes).forEach(button=>button.onclick=()=>{halloweenTheme=button.dataset.halloweenTheme;halloweenShown=80;renderHalloween()})
-  $('[data-halloween-open]',root).forEach(button=>button.onclick=()=>{
+  $$('[data-halloween-theme]',themes).forEach(button=>button.onclick=()=>{halloweenTheme=button.dataset.halloweenTheme;halloweenShown=80;renderHalloween()})
+  $$('[data-halloween-open]',root).forEach(button=>button.onclick=()=>{
     const row=visible[Number(button.dataset.halloweenOpen)]
     if(!row)return
     if(row.kind==='objet'){const object=objects.find(o=>o.id===row.id);if(object){openObject(object);return}}
