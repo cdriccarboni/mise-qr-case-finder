@@ -1,7 +1,7 @@
 import { APP_VERSION } from '../../src/version.js'
 import { test, expect } from '@playwright/test'
 
-test('0.4.0-beta.14 label editor, import surface and index diagnostics', async ({ page }) => {
+test('label editor uses mini-printer only, import surface and index diagnostics', async ({ page }) => {
   const errors=[]
   page.on('pageerror', error=>errors.push(error.message))
   await page.addInitScript(() => {
@@ -27,8 +27,10 @@ test('0.4.0-beta.14 label editor, import surface and index diagnostics', async (
   await editor.locator('[data-orientation]').selectOption('vertical')
   await expect(editor.locator('canvas')).toBeVisible()
   await editor.locator('[data-print]').click()
-  await expect.poll(()=>page.evaluate(()=>window.__prints.length)).toBe(1)
-  expect((await page.evaluate(()=>window.__prints[0].dataUrl))).toMatch(/^data:image\/png/)
+  await expect(page.locator('#modal')).toContainText('Mini-imprimante · Android')
+  await expect(page.locator('#systemPrint')).toHaveCount(0)
+  expect(await page.evaluate(()=>window.__prints.length)).toBe(0) // no Epson/system print
+  await page.locator('#closeNativePrinter').click()
   await editor.locator('[data-close]').click()
 
   await page.locator('#preferencesBtn').click()
