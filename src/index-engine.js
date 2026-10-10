@@ -19,7 +19,7 @@ export function buildGlobalIndex({objects=[],cases=[],kits=[],mises=[],publicFol
   for(const g of publicFoley.games||[]) rows.push(record('jeu',g.id,g.title,[g.description,g.kind]))
   for(const a of publicFoley.pedagogyActivities||[]) rows.push(record('activité',a.id,a.title,[a.goal,...(a.gameIds||[])]))
   for(const f of publicFoley.fabrications||[]) rows.push(record('fabrication',f.id,f.name,[f.use,f.assembly,...(f.materials||[])]))
-  for(const p of publicFoley.records||[]) rows.push(record('recette publique',p.id,p.sound,[p.technique,p.fabrication,p.sourceRef,...(p.objects||[])]))
+  for(const p of publicFoley.records||[]) rows.push(record('recette publique',p.id,p.sound,[p.technique,p.fabrication,p.sourceRef,...(p.objects||[])],{themeTags:p.themeTags||[]}))
   const dataTerms=unique([
     ...(seed.sounds||[]).flatMap(x=>[x.name,...(x.aliases||[]),...(x.tags||[])]),
     ...objects.flatMap(x=>[x.name,x.device,x.family,...(x.aliases||[]),...(x.tags||[]),...(x.sounds||[])])
