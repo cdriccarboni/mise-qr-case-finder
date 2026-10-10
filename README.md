@@ -22,10 +22,24 @@ La synchronisation **Supabase** lit désormais toutes les pages de 500 enregistr
 **Android :** une modification GitHub/PWA n’installe pas toute seule l’APK. La livraison exige les tests CI réussis, un AAB signé, la publication sur le canal Play interne et l’accès du compte Google comme testeur.
 
 
-## Imprimer des étiquettes depuis un ordinateur
+## Impression QR · WalkPrint / YHK · Mac et Android
 
-Le générateur produit désormais des **étiquettes QR complètes de 384 pixels**, téléchargeables en PNG depuis un objet, une valise ou la préparation d’une planche d’étiquettes. Depuis le Mac, choisir « Exporter PNG 384 px » puis ouvrir l’image avec le logiciel de l’imprimante, ou choisir « Impression système » si un pilote compatible existe dans macOS.
+MISES! 0.4.0-beta.16 propose trois stickers QR : **MISES!**, **ART — Acousmatic Régie Tools** et **Acousmatic Théâtre**. Les QR ouvrent uniquement les trois sites publics correspondants ; l’inventaire reste privé. La création des étiquettes fonctionne même avec un stock vide.
 
-**Attention :** le pilote Android expérimental WalkPrint/YHK passe par Bluetooth Classic SPP/RFCOMM et n’est pas disponible dans la PWA ordinateur. La sélection Bluetooth BLE dans Chrome ne constitue pas un pilote d’impression ; MISES ne prétend plus qu’une imprimante est connectée à partir d’une simple sélection GATT. Une impression directe en un clic depuis le Mac nécessiterait un pont natif vérifié sur le modèle exact.
+**Android natif :** sélectionner la mini-imprimante WalkPrint/YHK déjà associée, puis « Test logo + QR », « 1 sticker » ou « 3 stickers ». Le pilote natif Bluetooth Classic reste en place. Le sélecteur d’imprimantes Android/Epson n’est plus invoqué depuis les boutons d’étiquettes.
 
-La gestion Bluetooth et l’impression natives Android restent inchangées. Aucune donnée d’inventaire n’est envoyée à un service pour les exports PNG.
+**Mac :** installer et ouvrir l’application compagne indépendante `MISES Mini Printer.app`. Son code et ses instructions sont dans [mac/mini-printer](mac/mini-printer). Sur le Mac de validation, la mini-imprimante `YHK-1CB7` expose le port série Bluetooth `/dev/cu.YHK-1CB7`, auquel le compagnon envoie directement les données au format 384 px ; pas de dialogue macOS Epson. Le compagnon n’écoute que `127.0.0.1:39381`, accepte uniquement les origines MISES!/ART autorisées et ne stocke ni inventaire ni image. Depuis la PWA, autoriser si nécessaire « Accès au réseau local / Loopback » à la première connexion. Le Bluetooth du navigateur seul ne sait pas ouvrir le protocole SPP de ce modèle.
+
+Pour installer sur un autre Mac disposant des outils de compilation Xcode :
+
+```bash
+cd mac/mini-printer
+zsh build-mac-printer.sh
+open "$HOME/Applications/MISES Mini Printer.app"
+```
+
+Pour basculer vers Android, la fenêtre Mac affiche aussi un QR de transfert du **modèle de sticker**. Le scanner MISES! Android peut l'ouvrir sans transférer de données privées ni déclencher d’impression non sollicitée. L’application Mac et Android peuvent aussi fonctionner séparément.
+
+**Photos :** sélectionner « Galerie / Photos / Drive / Fichiers » pour analyser une photo existante ou « Prendre une photo » pour utiliser l’appareil. Les fournisseurs proposés dépendent des applications installées sur le téléphone. Le choix Android est basé sur le sélecteur de documents du système et non plus sur la capture forcée.
+
+**À vérifier sur le matériel réel :** apparition physique de l’étiquette en sortie, contraste/rotation sur chaque modèle, autorisation locale Chrome/Safari, et vérification de l’application Android installée via test interne Google Play. Conserver une sauvegarde JSON avant les premiers tests de synchronisation Supabase.
