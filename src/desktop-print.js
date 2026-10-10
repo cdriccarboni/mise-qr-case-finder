@@ -27,7 +27,7 @@ export const MAC_PRINTER_ENDPOINT='http://127.0.0.1:39381'
 export async function macPrinterHealth(fetcher=globalThis.fetch){
   try{
     const response=await fetcher(MAC_PRINTER_ENDPOINT+'/health',{
-      method:'GET',mode:'cors',cache:'no-store',signal:AbortSignal.timeout(2000)
+      method:'GET',mode:'cors',cache:'no-store',targetAddressSpace:'loopback',signal:AbortSignal.timeout(2000)
     })
     const result=await response.json()
     return response.ok&&result?.ready===true&&result?.backend==='mac-bluetooth'
@@ -37,7 +37,7 @@ export async function macPrinterHealth(fetcher=globalThis.fetch){
 export async function sendMacThermalPrint(png,label='MISES!',fetcher=globalThis.fetch){
   if(!/^data:image\/png;base64,/.test(String(png||'')))throw Error('Étiquette PNG invalide')
   const response=await fetcher(MAC_PRINTER_ENDPOINT+'/print',{
-    method:'POST',mode:'cors',cache:'no-store',
+    method:'POST',mode:'cors',cache:'no-store',targetAddressSpace:'loopback',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({png,label:String(label).slice(0,80)}),
     signal:AbortSignal.timeout(12000)
