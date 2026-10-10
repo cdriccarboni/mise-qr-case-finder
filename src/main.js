@@ -1435,14 +1435,13 @@ async function makeThermalLabel({title='MISES!',qrDataUrl='',subtitle='',logoOnl
   return canvas.toDataURL('image/png')
 }
 async function makePrinterTestImages(){
-  const target=location.href.split('?')[0].split('#')[0]
-  const qr=await QRCode.toDataURL(target,{width:280,margin:1,errorCorrectionLevel:'M'})
+  const qr=await QRCode.toDataURL(PUBLIC_PWA_URL,{width:280,margin:1,errorCorrectionLevel:'M'})
   return [await makeThermalLabel({logoOnly:true}),await makeThermalLabel({title:'MISES!',qrDataUrl:qr,subtitle:'Scanne pour ouvrir MISES!'})]
 }
 async function nativePrint(address,images){
   if(!hasNativePrinter()){toast('Le pilote natif est disponible dans l’app Android MISES!');return false}
   if(!address){toast('Choisis d’abord une imprimante');return false}
-  try{window.MisesAndroidPrinter.printImages(address,JSON.stringify(images));return true}catch(error){toast('Impossible de lancer l’impression native');return false}
+  try{window.MisesAndroidPrinter.printImages(address,JSON.stringify(images));toast('Envoi Bluetooth lancé…');return true}catch(error){toast('Impossible de lancer l’impression Bluetooth');return false}
 }
 async function openNativePrinterDialog(){
   const d=$('#modal'),devices=nativePrinterDevices(),saved=await db.get('settings','printer')
