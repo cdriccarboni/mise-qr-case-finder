@@ -1,7 +1,7 @@
 {
   "schema": "mises-public-foley/v1",
-  "version": "0.4.0-beta.12",
-  "generatedOn": "2026-10-05",
+  "version": "0.4.0-beta.18",
+  "generatedOn": "2026-10-10",
   "publicationScope": "PUBLIC_WEB",
   "rules": [
     "Aucune donnée PRIVE_ONLY dans ce paquet.",
@@ -36,7 +36,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "voyages"
+      ]
     },
     {
       "id": "WEBTEC-2CD2D4EF6018",
@@ -60,7 +63,12 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "halloween",
+        "magie",
+        "animaux"
+      ]
     },
     {
       "id": "WEBTEC-C33D53A94CA2",
@@ -149,7 +157,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mystere"
+      ]
     },
     {
       "id": "WEBTEC-29A7C1646877",
@@ -174,7 +185,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "hiver"
+      ]
     },
     {
       "id": "WEBTEC-8125B5A0867F",
@@ -198,7 +212,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "animaux"
+      ]
     },
     {
       "id": "WEBTEC-45CD804723DF",
@@ -341,7 +358,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "hiver"
+      ]
     },
     {
       "id": "WEBTEC-20C9720D45D1",
@@ -365,7 +385,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "foret"
+      ]
     },
     {
       "id": "WEBTEC-5E2BD26B5910",
@@ -389,7 +412,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "foret",
+        "meteo"
+      ]
     },
     {
       "id": "WEBTEC-E0B9F5D1B837",
@@ -413,7 +440,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo"
+      ]
     },
     {
       "id": "WEBTEC-9CA65E1B26F1",
@@ -502,7 +532,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "noel"
+      ]
     },
     {
       "id": "WEBTEC-E82C01FD8A96",
@@ -524,7 +557,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "foret",
+        "animaux"
+      ]
     },
     {
       "id": "WEBTEC-51D28345E230",
@@ -571,7 +608,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "ville",
+        "voyages"
+      ]
     },
     {
       "id": "WEBTEC-41BA0C049136",
@@ -643,7 +684,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "voyages"
+      ]
     },
     {
       "id": "WEBTEC-4477A959FDAC",
@@ -691,7 +736,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo"
+      ]
     },
     {
       "id": "WEBTEC-0F003BBA8075",
@@ -715,7 +763,12 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "animaux",
+        "medieval"
+      ]
     },
     {
       "id": "WEBTEC-57C223B8B7CF",
@@ -739,7 +792,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "animaux"
+      ]
     },
     {
       "id": "WEBTEC-B9C3E580E9A0",
@@ -787,7 +843,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "noel",
+        "hiver"
+      ]
     },
     {
       "id": "WEBTEC-5552BD1BB16B",
@@ -809,7 +869,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "foret",
+        "animaux"
+      ]
     },
     {
       "id": "WEBTEC-A654FDD4A184",
@@ -837,7 +901,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "noel",
+        "hiver"
+      ]
     },
     {
       "id": "WEBTEC-FD1CD365D37B",
@@ -1087,7 +1155,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "voyages"
+      ]
     },
     {
       "id": "WEBTEC-F918464CCC7A",
@@ -1329,7 +1400,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "voyages"
+      ]
     },
     {
       "id": "WEBTEC-F712EF504C0D",
@@ -1375,7 +1449,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "foret"
+      ]
     },
     {
       "id": "WEBTEC-1BA7859B1A54",
@@ -1400,7 +1477,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "animaux"
+      ]
     },
     {
       "id": "WEBTEC-B06CF3C1B0A1",
@@ -1473,7 +1553,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "ville"
+      ]
     },
     {
       "id": "WEBTEC-99D621E5F86A",
@@ -1592,7 +1675,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "ville"
+      ]
     },
     {
       "id": "WEBTEC-6A9F3E0D0B1F",
@@ -1807,7 +1893,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "ville"
+      ]
     },
     {
       "id": "WEBTEC-958FB7933B7B",
@@ -1834,7 +1924,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "ville",
+        "cirque"
+      ]
     },
     {
       "id": "WEBTEC-019529EE455B",
@@ -1856,7 +1950,12 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "ville",
+        "cirque"
+      ]
     },
     {
       "id": "WEBTEC-6C8B2DE8A83C",
@@ -2020,7 +2119,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "voyages",
+        "medieval"
+      ]
     },
     {
       "id": "WEBTEC-1E0F30790433",
@@ -2067,7 +2170,12 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "halloween",
+        "magie",
+        "animaux"
+      ]
     },
     {
       "id": "WEBTEC-EA50D3E2BE06",
@@ -2093,7 +2201,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "magie",
+        "animaux"
+      ]
     },
     {
       "id": "WEBTEC-AEE7EA3E7935",
@@ -2118,7 +2230,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "halloween",
+        "magie"
+      ]
     },
     {
       "id": "WEBTEC-2F99C9C75C3A",
@@ -2142,7 +2258,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "sciencefiction"
+      ]
     },
     {
       "id": "WEBTEC-EADC0A9B1081",
@@ -2165,7 +2284,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "halloween",
+        "magie"
+      ]
     },
     {
       "id": "WEBTEC-8636830BBE66",
@@ -2191,7 +2314,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "magie"
+      ]
     },
     {
       "id": "WEBTEC-43C7495E1640",
@@ -2217,7 +2343,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "sciencefiction"
+      ]
     },
     {
       "id": "WEBTEC-B08C175FF4A2",
@@ -2242,7 +2371,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "magie"
+      ]
     },
     {
       "id": "WEBTEC-6E672E4F3A00",
@@ -2265,7 +2397,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "ville"
+      ]
     },
     {
       "id": "WEBTEC-1BC60D86AC4C",
@@ -2413,7 +2548,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "sciencefiction"
+      ]
     },
     {
       "id": "WEBTEC-FDF0FC79DA",
@@ -2466,7 +2604,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "ville",
+        "voyages"
+      ]
     },
     {
       "id": "WEBTEC-BE858AE267",
@@ -2520,7 +2662,12 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "meteo",
+        "voyages"
+      ]
     },
     {
       "id": "WEBTEC-028CE6778F",
@@ -2546,7 +2693,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "sciencefiction"
+      ]
     },
     {
       "id": "WEBTEC-9403D423FB",
@@ -2599,7 +2749,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "halloween",
+        "magie"
+      ]
     },
     {
       "id": "WEBTEC-ED85495696",
@@ -2652,7 +2806,13 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "halloween",
+        "mer",
+        "ville",
+        "medieval"
+      ]
     },
     {
       "id": "WEBTEC-55B67F70AF",
@@ -2679,7 +2839,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer"
+      ]
     },
     {
       "id": "WEBTEC-FD0CB98C30",
@@ -2706,7 +2869,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "noel",
+        "hiver"
+      ]
     },
     {
       "id": "WEBTEC-EA1683ED14",
@@ -2760,7 +2927,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "ville"
+      ]
     },
     {
       "id": "WEBTEC-DB1A827B14",
@@ -2786,7 +2957,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "foret",
+        "animaux"
+      ]
     },
     {
       "id": "PUB-0DAD3194B1",
@@ -2813,7 +2988,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "foret"
+      ]
     },
     {
       "id": "PUB-AE9B2BF00D",
@@ -2841,7 +3019,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "noel",
+        "hiver"
+      ]
     },
     {
       "id": "PUB-6AB4538B9E",
@@ -2868,7 +3050,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "noel",
+        "hiver"
+      ]
     },
     {
       "id": "PUB-87E575552E",
@@ -2895,7 +3081,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "foret"
+      ]
     },
     {
       "id": "PUB-35C554C3A7",
@@ -2922,7 +3111,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "foret"
+      ]
     },
     {
       "id": "PUB-52FAF373D7",
@@ -3056,7 +3248,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo"
+      ]
     },
     {
       "id": "PUB-47347E4F10",
@@ -3083,7 +3278,12 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "ville",
+        "mystere"
+      ]
     },
     {
       "id": "PUB-8A2F7216A2",
@@ -3111,7 +3311,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mystere"
+      ]
     },
     {
       "id": "PUB-48D6C51F88",
@@ -3220,7 +3423,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo"
+      ]
     },
     {
       "id": "PUB-6EDEFF167B",
@@ -3250,7 +3456,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo"
+      ]
     },
     {
       "id": "PUB-AE0E8D04A0",
@@ -3358,7 +3567,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo"
+      ]
     },
     {
       "id": "PUB-5F4FC95BAF",
@@ -3385,7 +3597,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "ville"
+      ]
     },
     {
       "id": "PUB-80B94E04D1",
@@ -3491,7 +3706,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "ville"
+      ]
     },
     {
       "id": "PUB-07168F8EE5",
@@ -3544,7 +3762,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo"
+      ]
     },
     {
       "id": "PUB-BE6C818799",
@@ -3813,7 +4034,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "ville"
+      ]
     },
     {
       "id": "PUB-E858735B97",
@@ -3894,7 +4119,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "halloween",
+        "magie"
+      ]
     },
     {
       "id": "PUB4-AFC003CD8E",
@@ -4004,7 +4233,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "foret",
+        "animaux"
+      ]
     },
     {
       "id": "PUB4-F27C226F42",
@@ -4031,7 +4264,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "animaux"
+      ]
     },
     {
       "id": "PUB4-FAD508F8FF",
@@ -4058,7 +4294,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "halloween",
+        "magie"
+      ]
     },
     {
       "id": "PUB4-E34CF2E2FE",
@@ -4085,7 +4325,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "magie"
+      ]
     },
     {
       "id": "PUB4-E69C8075FA",
@@ -4140,7 +4383,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "halloween",
+        "magie"
+      ]
     },
     {
       "id": "PUB4-3AC20ADDE7",
@@ -4167,7 +4414,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "sciencefiction"
+      ]
     },
     {
       "id": "PUB4-DCB0F4BA86",
@@ -4194,7 +4444,14 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "meteo",
+        "sciencefiction",
+        "ville",
+        "voyages"
+      ]
     },
     {
       "id": "PUB4-D64B804693",
@@ -4222,7 +4479,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "sciencefiction",
+        "voyages"
+      ]
     },
     {
       "id": "PUB4-A278DD3F84",
@@ -4250,7 +4511,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo"
+      ]
     },
     {
       "id": "PUB4-1470ABA00C",
@@ -4278,7 +4542,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "sciencefiction"
+      ]
     },
     {
       "id": "PUB4-6698CE81F0",
@@ -4333,7 +4600,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "voyages"
+      ]
     },
     {
       "id": "PUB4-D3F31F8F6F",
@@ -4412,7 +4682,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo",
+        "voyages"
+      ]
     },
     {
       "id": "PUB4-DD40FE2FF0",
@@ -4439,7 +4713,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "ville",
+        "voyages"
+      ]
     },
     {
       "id": "PUB4-CE24E1B1CD",
@@ -4466,7 +4744,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "voyages"
+      ]
     },
     {
       "id": "PUB4-56753B2B1C",
@@ -4493,7 +4774,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "voyages"
+      ]
     },
     {
       "id": "PUB4-AC6346F2B4",
@@ -4520,7 +4804,12 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "ville",
+        "voyages"
+      ]
     },
     {
       "id": "PUB4-2DF4DB276E",
@@ -4547,7 +4836,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "noel",
+        "hiver"
+      ]
     },
     {
       "id": "PUB4-A4B62B4FE0",
@@ -4575,7 +4868,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "voyages"
+      ]
     },
     {
       "id": "PUB4-AEEF3A1B1B",
@@ -4602,7 +4898,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo"
+      ]
     },
     {
       "id": "PUB4-3233A55F86",
@@ -4629,7 +4928,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "foret",
+        "meteo"
+      ]
     },
     {
       "id": "PUB4-E693F33630",
@@ -4656,7 +4959,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo"
+      ]
     },
     {
       "id": "PUB4-6837C12509",
@@ -4683,7 +4989,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "meteo"
+      ]
     },
     {
       "id": "PUB4-356C3DF9A0",
@@ -4709,7 +5018,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "halloween",
+        "meteo"
+      ]
     },
     {
       "id": "PUB4-1826CE7B61",
@@ -4763,7 +5076,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "noel"
+      ]
     },
     {
       "id": "PUB4-4BE151E680",
@@ -4952,7 +5268,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "ville"
+      ]
     },
     {
       "id": "PUB4-F0A3598665",
@@ -5193,7 +5513,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "halloween",
+        "magie"
+      ]
     },
     {
       "id": "PUB4-F3F5CFA7DE",
@@ -5221,7 +5545,10 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer"
+      ]
     },
     {
       "id": "PUB4-D960AD615A",
@@ -5358,7 +5685,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "ville",
+        "cirque"
+      ]
     },
     {
       "id": "PUB4-7697AF45C5",
@@ -5439,7 +5770,11 @@
       "difficulty": "à déterminer",
       "prepTime": "à déterminer",
       "soundGoal": "bruitage / effet sonore",
-      "confidence": "à_enrichir"
+      "confidence": "à_enrichir",
+      "themeTags": [
+        "mer",
+        "ville"
+      ]
     },
     {
       "id": "PUB4-C9900FD6F9",
@@ -6058,7 +6393,8 @@
       "jeux",
       "activités pédagogiques",
       "univers aléatoire",
-      "recettes enrichies"
+      "recettes enrichies",
+      "14 univers thématiques filtrés (tags éditoriaux)"
     ],
     "privateCorpusIncluded": false
   },
@@ -6068,6 +6404,267 @@
     "games": 8,
     "pedagogyActivities": 7,
     "universeFrames": 8,
-    "sources": 19
-  }
+    "sources": 19,
+    "themePacks": 14,
+    "themeTaggedRecords": 93
+  },
+  "themeTagging": {
+    "type": "suggestion-editoriale",
+    "method": "motifs-sonores-explicites-v1",
+    "caution": "Les thèmes suggèrent une ambiance et ne prouvent pas une utilisation terrain ou une possession."
+  },
+  "themePacks": [
+    {
+      "id": "halloween",
+      "label": "Halloween",
+      "icon": "🎃",
+      "description": "Étrange, hanté, créatures et atmosphères inquiétantes.",
+      "groups": [
+        {
+          "id": "haunted",
+          "label": "Maison hantée"
+        },
+        {
+          "id": "creatures",
+          "label": "Créatures fantastiques"
+        },
+        {
+          "id": "night",
+          "label": "Nuit mystérieuse"
+        },
+        {
+          "id": "spells",
+          "label": "Sortilèges"
+        }
+      ]
+    },
+    {
+      "id": "noel",
+      "label": "Noël & fêtes d’hiver",
+      "icon": "🎄",
+      "description": "Sons d’hiver, de fête, de maison et de cadeaux.",
+      "groups": [
+        {
+          "id": "snow",
+          "label": "Neige & traîneau"
+        },
+        {
+          "id": "bells",
+          "label": "Grelots & cloches"
+        },
+        {
+          "id": "home",
+          "label": "Feu de cheminée"
+        },
+        {
+          "id": "gifts",
+          "label": "Cadeaux & festivités"
+        }
+      ]
+    },
+    {
+      "id": "hiver",
+      "label": "Hiver & montagne",
+      "icon": "❄️",
+      "description": "Neige, froid, ski, glace et grands espaces.",
+      "groups": [
+        {
+          "id": "ice",
+          "label": "Neige & glace"
+        },
+        {
+          "id": "mountain",
+          "label": "Montagne"
+        }
+      ]
+    },
+    {
+      "id": "mer",
+      "label": "Mer & pirates",
+      "icon": "🏴‍☠️",
+      "description": "Navigation, eau, cordages et aventures maritimes.",
+      "groups": [
+        {
+          "id": "water",
+          "label": "Vagues & eau"
+        },
+        {
+          "id": "ship",
+          "label": "À bord du navire"
+        },
+        {
+          "id": "adventure",
+          "label": "Aventure maritime"
+        }
+      ]
+    },
+    {
+      "id": "foret",
+      "label": "Forêt & nature",
+      "icon": "🌲",
+      "description": "Vie végétale, sous-bois et sons du dehors.",
+      "groups": [
+        {
+          "id": "trees",
+          "label": "Feuilles & sous-bois"
+        },
+        {
+          "id": "wildlife",
+          "label": "Oiseaux & nature"
+        }
+      ]
+    },
+    {
+      "id": "meteo",
+      "label": "Orage & météo",
+      "icon": "🌧️",
+      "description": "Pluie, tonnerre, vent et phénomènes naturels.",
+      "groups": [
+        {
+          "id": "storm",
+          "label": "Orage"
+        },
+        {
+          "id": "rain",
+          "label": "Pluie & gouttes"
+        },
+        {
+          "id": "wind",
+          "label": "Vent"
+        }
+      ]
+    },
+    {
+      "id": "magie",
+      "label": "Contes & magie",
+      "icon": "✨",
+      "description": "Créatures, sortilèges et objets merveilleux.",
+      "groups": [
+        {
+          "id": "enchantment",
+          "label": "Sortilèges"
+        },
+        {
+          "id": "creatures",
+          "label": "Créatures fabuleuses"
+        }
+      ]
+    },
+    {
+      "id": "sciencefiction",
+      "label": "Espace & science-fiction",
+      "icon": "🚀",
+      "description": "Machines futuristes et univers étranges.",
+      "groups": [
+        {
+          "id": "space",
+          "label": "Espace"
+        },
+        {
+          "id": "robot",
+          "label": "Robots & mécanismes"
+        }
+      ]
+    },
+    {
+      "id": "ville",
+      "label": "Ville & quotidien",
+      "icon": "🏙️",
+      "description": "Rue, intérieur, déplacements et vie collective.",
+      "groups": [
+        {
+          "id": "street",
+          "label": "Dans la rue"
+        },
+        {
+          "id": "home",
+          "label": "Dans la maison"
+        }
+      ]
+    },
+    {
+      "id": "animaux",
+      "label": "Animaux & bestiaire",
+      "icon": "🐾",
+      "description": "Pattes, ailes, cris et mouvements d’animaux.",
+      "groups": [
+        {
+          "id": "feet",
+          "label": "Pattes & démarches"
+        },
+        {
+          "id": "wings",
+          "label": "Ailes & insectes"
+        }
+      ]
+    },
+    {
+      "id": "voyages",
+      "label": "Voyages & transports",
+      "icon": "🚂",
+      "description": "Trains, déplacements, mécanique et trajets.",
+      "groups": [
+        {
+          "id": "rail",
+          "label": "Trains"
+        },
+        {
+          "id": "road",
+          "label": "Sur la route"
+        },
+        {
+          "id": "water",
+          "label": "Sur l’eau"
+        }
+      ]
+    },
+    {
+      "id": "cirque",
+      "label": "Cirque & fête",
+      "icon": "🎪",
+      "description": "Spectacles, jeux, public et fête foraine.",
+      "groups": [
+        {
+          "id": "party",
+          "label": "Fête & musique"
+        },
+        {
+          "id": "show",
+          "label": "Scène & spectacle"
+        }
+      ]
+    },
+    {
+      "id": "medieval",
+      "label": "Châteaux & légendes",
+      "icon": "🏰",
+      "description": "Portes, chevaux, forteresses et mondes anciens.",
+      "groups": [
+        {
+          "id": "castle",
+          "label": "Château"
+        },
+        {
+          "id": "journey",
+          "label": "Cheval & charrette"
+        }
+      ]
+    },
+    {
+      "id": "mystere",
+      "label": "Mystère & enquête",
+      "icon": "🔎",
+      "description": "Indices, pas discrets, horloges et suspense.",
+      "groups": [
+        {
+          "id": "clues",
+          "label": "Indices & petits sons"
+        },
+        {
+          "id": "suspense",
+          "label": "Suspense"
+        }
+      ]
+    }
+  ]
 }

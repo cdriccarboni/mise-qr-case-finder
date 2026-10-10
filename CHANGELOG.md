@@ -1,3 +1,10 @@
+## 0.4.0-beta.18 — 10 octobre 2026
+
+- Recherche **Ambiances** : 14 univers (Halloween, Noël, hiver, mer/pirates, forêt, météo, magie, science-fiction, ville, animaux, voyages, cirque, châteaux, mystère) ; sous-thèmes, texte, source inventaire/public.
+- Critères de correspondance resserrés : suppression des faux positifs fondés sur une seule matière ou un mot générique. Sur l’index public de vérification, Halloween passe de 161/304 à moins de 30/304 références.
+- Bibliothèque publique : 216 recettes préservées, 14 packs décrits, 93 recettes annotées à titre éditorial, sans invention de stock ni modification des données privées synchronisées.
+- Version PWA/Android et cache Service Worker incrémentés.
+
 ## 0.4.0-beta.17 — 10 octobre 2026
 - Mac MISES Mini Printer: corrected disappearing printer popup; native floating NSPanel stays visible above Brave, port detected immediately without blocking Bluetooth; direct local PNG picker and dedicated print button as fallback when browser blocks loopback. Only YHK/WalkPrint ports, never Epson.
 - Visual search: Android / browser photo picker accepts multiple images from available local/Google Photos/Drive file providers; every selected photo is analysed and human-validated in sequence. Native Android WebView now reads multiple ClipData URIs.

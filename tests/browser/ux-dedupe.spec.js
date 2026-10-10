@@ -40,7 +40,7 @@ test('grille 2 colonnes : dernier cartouche impair en pleine largeur (360 et Pix
     await trouver.evaluate(node => { node.open = true })
     const buttons = trouver.locator('div > button')
     const count = await buttons.count()
-    expect(count).toBe(3) // Créateur, Vibe et nouvelle rubrique Halloween
+    expect(count).toBe(3) // Ambiances, Créateur et Vibe
     if (size[0] <= 620) {
       const first = await buttons.nth(0).boundingBox()
       const second = await buttons.nth(1).boundingBox()

@@ -68,6 +68,6 @@ test('actual bundled COCO model loads offline and manual photo correction surviv
   await page.locator('[data-tab="inventory"]').click()
   await expect(page.locator('#objectCards')).toContainText('Objet photo synthétique')
   expect(requests.some(url => url.includes('/api/staging-analyse'))).toBe(false)
-  expect(requests.every(url => url.startsWith('http://127.0.0.1:4173/') || url.startsWith('data:') || url.startsWith('blob:'))).toBe(true)
+  expect(requests.every(url => url.startsWith(new URL(page.url()).origin + '/') || url.startsWith('data:') || url.startsWith('blob:'))).toBe(true)
   expect(errors).toEqual([])
 })

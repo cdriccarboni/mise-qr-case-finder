@@ -1,5 +1,5 @@
 MISES! · Mini-imprimante Bluetooth YHK / WalkPrint
-Version 0.4.0-beta.17 · macOS 13 ou plus récent · Apple Silicon M1/M4 et Intel
+Version 0.4.0-beta.18 · macOS 13 ou plus récent · Apple Silicon M1/M4 et Intel
 
 INSTALLATION (une fois sur CHAQUE Mac)
 1. Decompressez MISES-Mini-Printer-Mac-Universal.zip.
