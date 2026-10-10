@@ -1471,31 +1471,7 @@ async function makePromoStickerImage(id='mises'){
   const qr=await QRCode.toDataURL(sticker.url,{width:280,margin:2,errorCorrectionLevel:'M'})
   return makeThermalLabel({title:sticker.printTitle,qrDataUrl:qr,subtitle:sticker.subtitle})
 }
-async function openPromoStickerDialog(){
-  if(hasNativePrinter())return openNativePrinterDialog()
-  let promoId='mises'
-  let image=await makePromoStickerImage(promoId)
-  const d=$('#printDlg')
-  if(d.open)d.close()
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Stickers QR · MISES! / ART / Acousmatic Théâtre</b><small>3 liens publics · aucun inventaire nécessaire</small></div><button id="closePromoStickers" type="button" class="ghost" aria-label="Fermer">×</button></div>
-  <label>Destination du QR
-    <select id="promoStickerSelect">${PROMO_STICKERS.map(item=>`<option value="${esc(item.id)}">${esc(item.label)}</option>`).join('')}</select>
-  </label>
-  <p class="hint">Sélectionne un site. Le QR imprimé mène directement à son adresse publique.</p>
-  <div class="labelPreview"><img id="promoStickerPreview" src="${image}" alt="Sticker promotionnel QR"><small id="promoTargetUrl">${esc(getPromoSticker(promoId).url)}</small></div>
-  <div class="row"><button id="exportPromoPng" type="button">Exporter PNG 384 px</button><button id="systemPromoPrint" type="button" class="ghost">Impression système</button><button id="promoPrinterHelp" type="button" class="ghost">Aide mini-imprimante</button></div></div>`
-  d.showModal()
-  $('#closePromoStickers').onclick=()=>d.close()
-  $('#promoStickerSelect').onchange=async event=>{
-    promoId=event.target.value
-    image=await makePromoStickerImage(promoId)
-    $('#promoStickerPreview').src=image
-    $('#promoTargetUrl').textContent=getPromoSticker(promoId).url
-  }
-  $('#exportPromoPng').onclick=()=>downloadLabelPng(image,getPromoSticker(promoId).fileName+'-QR-Promo')
-  $('#systemPromoPrint').onclick=()=>window.print()
-  $('#promoPrinterHelp').onclick=()=>openDesktopPrinterHelp()
-}
+async function openPromoStickerDialog(){return pairPrinter()}
 
 async function openDesktopPrinterDialog(initialId='mises'){
   let id=getPromoSticker(initialId).id
@@ -1616,7 +1592,7 @@ function openPrint(c,qr){
   $('#closePrint').onclick=()=>d.close()
   $('#saveCaseLabelPng').onclick=()=>downloadLabelPng(image,caseName(c))
   $('#btPrint').onclick=()=>sendSystemPrint(image,caseName(c))
-  $('#printerTestFromLabel').onclick=()=>hasNativePrinter()?openNativePrinterDialog():openDesktopPrinterHelp()
+  $('#printerTestFromLabel').onclick=()=>hasNativePrinter()?openNativePrinterDialog():openDesktopPrinterDialog()
 }
 async function openBatchPrint(){
   const d=$('#printDlg')
@@ -1635,12 +1611,12 @@ async function openBatchPrint(){
         prepared.push({box,image:renderLabelDataUrl({name:caseName(box),id:box.id,shortId:shortId(box.id),qrText:entityUrl(pageOrigin(),'case',box.id),category:box.type||'Contenant'})})
         if(i%12===11)await new Promise(resolve=>setTimeout(resolve,0))
       }
-      $('#batchLabels').innerHTML=prepared.map(({box,image},i)=>`<div class="labelPreview batchLabel"><strong>${esc(caseName(box))}</strong><img src="${image}" alt="Étiquette QR de ${esc(caseName(box))}"><small>${esc(box.id)}</small><button type="button" class="ghost" data-save-batch="${i}">Exporter PNG</button></div>`).join('')+`<div class="row"><button id="printBatchNow" type="button">Imprimer la planche</button></div>`
+      $('#batchLabels').innerHTML=prepared.map(({box,image},i)=>`<div class="labelPreview batchLabel"><strong>${esc(caseName(box))}</strong><img src="${image}" alt="Étiquette QR de ${esc(caseName(box))}"><small>${esc(box.id)}</small><button type="button" class="ghost" data-save-batch="${i}">Exporter PNG</button></div>`).join('')+`<div class="row"><button id="printBatchNow" type="button">Mini-imprimante · étiquettes</button></div>`
       $$('[data-save-batch]',d).forEach(item=>item.onclick=()=>{
         const entry=prepared[Number(item.dataset.saveBatch)]
         if(entry)downloadLabelPng(entry.image,caseName(entry.box))
       })
-      $('#printBatchNow').onclick=()=>window.print()
+      $('#printBatchNow').onclick=async()=>{if(!prepared.length)return;if(hasNativePrinter()){const saved=await db.get('settings','printer');if(!saved?.native)return openNativePrinterDialog();await nativePrint(saved.deviceId,prepared.map(e=>e.image));return}if(!(await macPrinterHealth()))return openDesktopPrinterDialog();for(const entry of prepared)await sendMacThermalPrint(entry.image,caseName(entry.box));toast(prepared.length+' étiquette(s) envoyée(s) à la mini-imprimante Mac')}
     }catch(error){toast('Impossible de préparer les étiquettes')}
     finally{button.disabled=false}
   }
@@ -2053,7 +2029,9 @@ function openVoiceLabelFlow() {
     allObjects: objects,
     origin: location.href,
     onPrint: () => {
-      window.print()
+      const image=document.querySelector('.voiceLabelPreview img, .labelPreview img')?.src
+      if(image?.startsWith('data:image/png;'))void sendSystemPrint(image,'MISES! · Étiquette vocale')
+      else toast('Utilise Exporter PNG pour imprimer cette étiquette vocale sur la mini-imprimante')
     },
     onSave: async (label) => {
       await refresh()
