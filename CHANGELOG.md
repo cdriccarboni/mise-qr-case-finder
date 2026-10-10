@@ -1,3 +1,10 @@
+## 0.4.0-beta.15 — 2026-10-10 (Halloween + synchronisation des gros inventaires)
+
+- Rubrique « Trouver → Halloween » : parcours de l’index local et des références existantes, avec 4 ambiances thématiques, filtre textuel et résultats progressifs, sans modifier le stock.
+- Supabase : pagination ordonnée par blocs de 500 au lieu d'une lecture unique potentiellement plafonnée à 1 000 lignes. Aucune réconciliation ne démarre si une page échoue.
+- Tests de non-régression : limites 999 / 1 000 / 1 001 / 2 503, erreur d'une page, filtres Halloween ; test de restauration locale de 1 505 objets conservé.
+- Version Android 26 ; cache PWA `mises-0.4.0-beta.15`. Publication Play séparée et conditionnée aux validations.
+
 ## 0.4.0-beta.12 — 2026-10-05 (glossaire public V5 + privé Supabase propriétaire)
 
 - Glossaire public : `public/public-foley.json` régénéré depuis `EXPORT_PUBLIC_WEB` uniquement (216 recettes `PUBLIC_WEB`, 12 fabrications, 19 sources). Aucun `PRIVE_ONLY` dans le dépôt.
