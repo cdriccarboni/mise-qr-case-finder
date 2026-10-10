@@ -1,0 +1,20 @@
+[Reading 16 lines from start (total: 16 lines, 0 remaining)]
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleIdentifier</key><string>fr.acousmatictheatre.mises.miniprinter</string>
+<key>CFBundleName</key><string>MISES Mini Printer</string>
+<key>CFBundleDisplayName</key><string>MISES! · Mini-imprimante</string>
+<key>CFBundleExecutable</key><string>MISES-Mini-Printer</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleShortVersionString</key><string>0.4.0-beta.16</string>
+<key>CFBundleVersion</key><string>27</string>
+<key>LSMinimumSystemVersion</key><string>13.0</string>
+<key>NSHighResolutionCapable</key><true/>
+<key>NSBluetoothAlwaysUsageDescription</key><string>MISES utilise le Bluetooth pour imprimer uniquement sur votre mini-imprimante thermique déjà associée.</string>
+<key>NSLocalNetworkUsageDescription</key><string>Le compagnon MISES reçoit les étiquettes de la PWA sur ce même Mac (127.0.0.1 uniquement).</string>
+<key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
+</dict></plist>
+
+[executed on device: MacBook-Air-M4-de-Cdric.local (1efbc799-63fb-466d-a8da-56d587d10304)]
