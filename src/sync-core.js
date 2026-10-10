@@ -87,13 +87,32 @@ async function hydratePhoto(supabase,payload){
   next.photo=await blobDataUrl(data)
   return next
 }
+// Supabase/PostgREST limits the number of rows returned per request (often 1,000).
+// Read every page before comparing any local record: a partial cloud snapshot could
+// otherwise make an existing remote entry look missing and overwrite it.
+export async function fetchAllRemoteRecords(supabase,spaceId,{pageSize=500}={}){
+  if(!Number.isInteger(pageSize)||pageSize<1||pageSize>1000) throw new RangeError('Taille de page invalide')
+  const rows=[]
+  for(let offset=0;;offset+=pageSize){
+    const {data,error}=await supabase.from('mises_records')
+      .select('space_id,store_name,record_id,payload,updated_by,updated_at,deleted_at,revision')
+      .eq('space_id',spaceId)
+      .order('store_name',{ascending:true})
+      .order('record_id',{ascending:true})
+      .range(offset,offset+pageSize-1)
+    if(error) throw error
+    const page=data||[]
+    rows.push(...page)
+    if(page.length<pageSize) return rows
+  }
+}
+
 export async function syncMises(db,{onProgress=()=>{}}={}){
   const session=await supabaseSession()
   if(!session?.user) return {ok:false,reason:'not-authenticated',pushed:0,pulled:0,photos:0}
   const supabase=await supabaseClient()
   const spaceId=await ensurePersonalSpace(supabase,session.user)
-  const {data:remote,error:remoteError}=await supabase.from('mises_records').select('space_id,store_name,record_id,payload,updated_by,updated_at,deleted_at').eq('space_id',spaceId)
-  if(remoteError) throw remoteError
+  const remote=await fetchAllRemoteRecords(supabase,spaceId)
   const remoteMap=new Map((remote||[]).map(r=>[`${r.store_name}::${r.record_id}`,r]))
   let pushed=0,pulled=0,photos=0
   const total=SYNC_STORES.reduce((n,s)=>n+1+n,0)
