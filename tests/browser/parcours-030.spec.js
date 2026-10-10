@@ -63,7 +63,7 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   expect(jobPng).toMatch(/^data:image\/png/)
   await expect(page.locator('#systemPrint')).toHaveCount(0)
   await page.locator('#btPrint').click()
-  await expect(page.locator('#modal')).toContainText('Mini-imprimante · Android')
+  await expect(page.locator('#printerDlg')).toContainText('Mini-imprimante · Android')
   expect(await page.evaluate(() => window.__prints.length)).toBe(0) // never open Epson
   await page.locator('#closeNativePrinter').click()
   await page.locator('#closePrint').click()
