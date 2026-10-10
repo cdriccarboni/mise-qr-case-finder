@@ -330,7 +330,7 @@ html[data-display=mobile] .shareAppActions{grid-template-columns:1fr}
 @media(max-width:620px){.mainQuickBar{grid-template-columns:repeat(5,1fr);gap:.35rem}.quickActionBtn{font-size:.65rem;min-height:58px;padding:.4rem .15rem}.quickIcon{font-size:1.1rem}}
 
 /* SPARE badge (Section 6) */
-.spareBadge{display:inline-flex;align-items:center;justify-content:center;background:var(--ink,#D12A74);color:#fff;font-weight:900;font-size:.72rem;letter-spacing:.08em;padding:.18rem .52rem;border-radius:999px;text-transform:uppercase;margin-left:.35rem;box-shadow:0 1px 4px rgba(0,0,0,.25);vertical-align:middle}
+.spareBadge{display:inline-flex;align-items:center;justify-content:center;background:var(--ink,#D12A74);color:var(--on-ink,#fff);font-weight:900;font-size:.72rem;letter-spacing:.08em;padding:.18rem .52rem;border-radius:999px;text-transform:uppercase;margin-left:.35rem;box-shadow:0 1px 4px rgba(0,0,0,.25);vertical-align:middle}
 .nickBadge{display:inline-flex;align-items:center;padding:.15rem .45rem;border-radius:4px;font-size:.75rem;font-weight:700;background:rgba(255,255,255,.12);color:var(--text,#fff);letter-spacing:.04em;margin-left:.3rem;text-transform:uppercase}
 .isSpareResult,.isSpareCard{border-left:4px solid var(--ink,#D12A74)!important}
 
@@ -358,8 +358,8 @@ html[data-display=mobile] .shareAppActions{grid-template-columns:1fr}
 .voiceLabelBody{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.6rem 0}
 .voiceLabelLines{display:flex;flex-direction:column;gap:.25rem;flex:1}
 .voiceLabelLine{font-weight:900;font-size:1.05rem;line-height:1.1;text-transform:uppercase}
-.voiceLabelQrImg{width:90px;height:90px;display:block}
-.voiceLabelFooter{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #ccc;padding-top:.35rem;font-size:.72rem;font-weight:700}
+.voiceLabelQrImg{width:clamp(100px,32vw,138px);height:auto;aspect-ratio:1/1;display:block;image-rendering:pixelated}
+.voiceLabelFooter{display:flex;justify-content:flex-start;align-items:center;border-top:1px solid #ccc;padding-top:.35rem;font-size:.72rem;font-weight:700}
 .voiceActionsRow{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.5rem}
 .ctaBig{min-height:54px;font-size:1rem;font-weight:800}
 

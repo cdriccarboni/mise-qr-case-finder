@@ -19,7 +19,7 @@ const TITLES = {
   control: ['Détection photo', 'Data Bruitage']
 }
 
-export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode = 'control', durationMin = 1 }) {
+export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode = 'control', durationMin = 1, onDialogOpened }) {
   const data = await readData(db)
   const catalogue = enrichObjects(data)
   const learnings = await db.getAll('learnings').catch(() => [])
@@ -278,6 +278,7 @@ export async function openLocalPhoto({ file, db, mise, resizePhoto, saved, mode 
   })
   $('[data-save]').onclick = () => persist('')
   dialog.showModal(); summarize()
+  onDialogOpened?.(dialog)
   const image = $('[data-photo]'); image.src = photo
   try {
     await image.decode()

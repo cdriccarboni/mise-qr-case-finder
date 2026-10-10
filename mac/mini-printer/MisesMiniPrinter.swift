@@ -1,8 +1,8 @@
+
 import Foundation
 import Darwin
 import SwiftUI
 import AppKit
-import IOBluetooth
 import Network
 import CoreGraphics
 import Combine
@@ -28,38 +28,69 @@ final class PrinterModel: ObservableObject {
   @Published var lastLabel = "Aucune étiquette reçue"
   @Published var preview: NSImage?
   @Published var isPrinting = false
+  @Published var readyToPrintPNG: Data?
+  @Published var readyToPrintName = ""
   private var listener: MisesPrintServer?
 
+  // Bluetooth Classic SPP exposes associated printers as /dev/cu.YHK-XXXX.
+  // Reading /dev is immediate; IOBluetooth.pairedDevices may hang for minutes
+  // during CoreBluetooth initialization and make the entire palette disappear.
   func refresh() {
-    let all = (IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice]) ?? []
-    let likely = all.compactMap { item -> MiniPrinterDevice? in
-      let name = item.name ?? ""
-      let upper = name.uppercased()
-      guard ["YHK", "WALK", "MINI", "PRINT", "CTP", "SC03", "SC04", "X6"].contains(where: upper.contains) else { return nil }
-      return MiniPrinterDevice(id: item.addressString ?? "", name: name)
-    }.filter { !$0.id.isEmpty }
-    devices = likely.sorted { $0.name < $1.name }
-    let saved = UserDefaults.standard.string(forKey: "selectedMiniPrinter") ?? ""
-    if !devices.contains(where: { $0.id == selectedID }) {
-      selectedID = devices.first(where: { $0.id == saved })?.id ?? devices.first?.id ?? ""
+    let entries=(try? FileManager.default.contentsOfDirectory(atPath:"/dev")) ?? []
+    let devicesFound=entries.compactMap { entry -> MiniPrinterDevice? in
+      guard entry.hasPrefix("cu.") else {return nil}
+      let name=String(entry.dropFirst(3))
+      let upper=name.uppercased()
+      guard ["YHK","WALK","MINI","PRINT","CTP","SC03","SC04","X6"].contains(where: upper.contains) else {return nil}
+      guard name.range(of:"^[A-Za-z0-9-]{2,64}$",options:.regularExpression) != nil else {return nil}
+      return MiniPrinterDevice(id:name,name:name)
+    }.sorted { $0.name < $1.name }
+    devices=devicesFound
+    let saved=UserDefaults.standard.string(forKey:"selectedMiniPrinter") ?? ""
+    if !devicesFound.contains(where:{$0.id==selectedID}) {
+      selectedID=devicesFound.first(where:{$0.id==saved})?.id ?? devicesFound.first?.id ?? ""
     }
-    if devices.isEmpty { info = "Mini-imprimante absente : associe-la dans Réglages Bluetooth." }
-    else if listener != nil { info = "Prêt · impression directe (sans Epson)" }
+    info=devicesFound.isEmpty ? "Mini-imprimante absente : associe-la dans Réglages Bluetooth." : "Prêt · "+(devicesFound.first?.name ?? "Mini-imprimante")+" · sans Epson"
   }
   func select(_ id: String) {
     selectedID = id
     UserDefaults.standard.set(id, forKey: "selectedMiniPrinter")
   }
   func start() {
-    refresh()
+    // Start the local endpoint first, before any potentially slow Bluetooth call.
     if listener == nil {
       do {
         listener = try MisesPrintServer { [weak self] label, png in
           Task { @MainActor in self?.printLabel(label, png: png) }
         }
-        info = devices.isEmpty ? "Mini-imprimante non associée sur ce Mac" : "Prêt · impression directe (sans Epson)"
       } catch { info = "Port local indisponible : \(error.localizedDescription)" }
     }
+    refresh()
+  }
+  func choosePNG() {
+    let picker=NSOpenPanel()
+    picker.allowedContentTypes=[.png]
+    picker.canChooseDirectories=false
+    picker.canChooseFiles=true
+    picker.allowsMultipleSelection=false
+    picker.message="Choisis une étiquette PNG exportée depuis MISES!"
+    guard picker.runModal() == .OK, let url=picker.url else { return }
+    do {
+      let bytes=try Data(contentsOf:url,options:.mappedIfSafe)
+      guard bytes.count>0,bytes.count<2_000_000,let image=NSImage(data:bytes) else {
+        info="PNG invalide ou trop volumineux"
+        return
+      }
+      preview=image
+      readyToPrintPNG=bytes
+      readyToPrintName=url.deletingPathExtension().lastPathComponent
+      lastLabel=readyToPrintName
+      info="Étiquette chargée. Vérifie l’aperçu puis clique sur Imprimer ce PNG."
+    }catch{ info="Impossible de lire le PNG : "+error.localizedDescription }
+  }
+  func confirmPNG() {
+    guard let data=readyToPrintPNG else {info="Choisis d’abord une étiquette PNG";return}
+    printLabel(readyToPrintName,png:data)
   }
   func printLabel(_ label: String, png: Data) {
     guard !selectedID.isEmpty else { info = "Sélectionne ta YHK avant d’imprimer."; return }
@@ -112,6 +143,12 @@ struct MiniPrinterContent: View {
         .frame(maxWidth: .infinity)
         Button("Actualiser") { model.refresh() }
       }
+      HStack(spacing:10) {
+        Button("Choisir un PNG de MISES!") { model.choosePNG() }
+        Button("Imprimer le PNG choisi") { model.confirmPNG() }
+          .disabled(model.readyToPrintPNG == nil || model.isPrinting)
+      }
+      .frame(maxWidth:.infinity,alignment:.leading)
       Text(model.info).font(.footnote).foregroundStyle(model.isPrinting ? .orange : .primary)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
@@ -146,18 +183,62 @@ struct MiniPrinterContent: View {
     }
     .padding(20)
     .frame(width: 520, height: 405)
-    .onAppear { model.start() }
+    .onAppear {
+      model.start()
+      NSApp.activate(ignoringOtherApps: true)
+    }
+  }
+}
+
+@MainActor
+final class MisesMiniPanelDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+  private let model=PrinterModel()
+  private var panel:NSPanel?
+  func applicationDidFinishLaunching(_ notification:Notification) {
+    NSApp.setActivationPolicy(.regular)
+    let content=MiniPrinterContent().environmentObject(model)
+    let hosting=NSHostingView(rootView:content)
+    let newPanel=NSPanel(
+      contentRect:NSRect(x:0,y:0,width:560,height:460),
+      styleMask:[.titled,.closable,.miniaturizable,.resizable],
+      backing:.buffered,
+      defer:false
+    )
+    newPanel.title="MISES! · Mini-imprimante"
+    newPanel.contentView=hosting
+    newPanel.level = .floating
+    newPanel.isFloatingPanel=true
+    newPanel.hidesOnDeactivate=false
+    newPanel.collectionBehavior=[.canJoinAllSpaces,.fullScreenAuxiliary]
+    newPanel.isReleasedWhenClosed=false
+    newPanel.delegate=self
+    newPanel.center()
+    panel=newPanel
+    model.start()
+    show()
+  }
+  func show() {
+    guard let panel else{return}
+    panel.level = .floating
+    panel.makeKeyAndOrderFront(nil)
+    panel.orderFrontRegardless()
+    NSApp.activate(ignoringOtherApps:true)
+  }
+  func windowShouldClose(_ sender:NSWindow)->Bool {
+    sender.orderOut(nil)
+    return false
+  }
+  func applicationShouldHandleReopen(_ sender:NSApplication,hasVisibleWindows flag:Bool)->Bool {
+    show()
+    return true
   }
 }
 
 @main
 struct MisesMiniPrinterApp: App {
-  @StateObject private var model = PrinterModel()
+  @NSApplicationDelegateAdaptor(MisesMiniPanelDelegate.self) private var delegate
   var body: some Scene {
-    WindowGroup("MISES! · Mini-imprimante") {
-      MiniPrinterContent().environmentObject(model)
-    }
-    .windowResizability(.contentSize)
+    Settings { EmptyView() }
   }
 }
 
@@ -203,20 +284,14 @@ enum MisesRaster {
 
 enum MisesBluetooth {
   static func send(_ data: Data,address: String) throws {
-    guard let device=IOBluetoothDevice(addressString:address),device.isPaired() else {
-      throw NSError(domain:"MISES",code:3,userInfo:[NSLocalizedDescriptionKey:"Mini-imprimante non associée à ce Mac"])
-    }
-    let name=device.name ?? ""
-    let upper=name.uppercased()
-    guard ["YHK","WALK","MINI","PRINT","CTP","SC03","SC04","X6"].contains(where: upper.contains),
-          name.range(of:"^[A-Za-z0-9-]{2,64}$",options:.regularExpression) != nil else {
+    // Only an already-mapped Bluetooth serial printer is ever opened.
+    // No IOBluetooth calls, which could block startup/printing on macOS.
+    let upper=address.uppercased()
+    guard ["YHK","WALK","MINI","PRINT","CTP","SC03","SC04","X6"].contains(where:upper.contains),
+          address.range(of:"^[A-Za-z0-9-]{2,64}$",options:.regularExpression) != nil else {
       throw NSError(domain:"MISES",code:4,userInfo:[NSLocalizedDescriptionKey:"Modèle Bluetooth refusé ou nom invalide"])
     }
-    // macOS exposes bonded Classic SPP devices as virtual serial ports.
-    // On the connected test Mac: YHK-1CB7 -> /dev/cu.YHK-1CB7.
-    // Access this port directly: IOBluetooth.openRFCOMMChannelSync returned
-    // kIOReturnError even though the device's SDP declares RFCOMM channel 2.
-    let port="/dev/cu."+name
+    let port="/dev/cu."+address
     guard FileManager.default.fileExists(atPath:port) else {
       throw NSError(domain:"MISES",code:5,userInfo:[NSLocalizedDescriptionKey:"Port série "+port+" absent. Associe puis rallume l’imprimante."])
     }

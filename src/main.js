@@ -693,7 +693,7 @@ async function sendSystemPrint(dataUrl, jobName='MISES!'){
 }
 async function openEntityLabel(kind, entity, {next}={}){
   const name=kind==='case'?caseName(entity):(entity.name||'MISES!')
-  const spec={name, shortId:shortId(entity.id), id:entity.id, qrText:entityUrl(pageOrigin(), kind, entity.id), location:kind==='object'?caseName(caseBy(entity.caseId||entity.container_id)):'', category:entity.family||entity.type||kind}
+  const spec={name, shortId:shortId(entity.id), id:entity.id, qrText:entityUrl(pageOrigin(), kind, entity.id), location:kind==='object'?caseName(caseBy(entity.caseId||entity.container_id)):'', category:entity.family||entity.type||kind, spare:Boolean(entity.spare), ink:getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()}
   const image=renderLabelDataUrl(spec)
   const d=$('#printDlg')
   d.innerHTML=`<div class="labelPreview"><img alt="Étiquette ${esc(name)}" src="${image}"><small>${esc(name)} · ${esc(spec.shortId)}</small></div><div class="row"><button id="btPrint" type="button">${hasNativePrinter()?'Mini-imprimante Bluetooth':'Aide mini-imprimante'}</button><button id="saveLabelPng" class="ghost" type="button">Exporter PNG 384 px</button>${next?'<button id="labelNext" type="button">Objet suivant</button>':''}<button id="closePrint" class="ghost">Fermer</button></div><p class="hint">${hasNativePrinter()?'Android : uniquement le pilote Bluetooth de la mini-imprimante ; jamais Epson.':'Mac : impression directe via la petite application MISES Mini Printer ; jamais de dialogue Epson.'}</p>`
@@ -1016,7 +1016,7 @@ $('#app').innerHTML=`
 <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
 <input id="quickAddPhotoInput" type="file" accept="image/*" hidden>
 <input id="casePhotoInput" type="file" accept="image/*" hidden>
-<input id="galleryInput" type="file" accept="image/*" hidden>
+<input id="galleryInput" type="file" accept="image/*" multiple hidden>
 <input id="groupPhotoInput" type="file" accept="image/*" hidden>
 <input id="inventoryInput" type="file" accept="image/*" hidden>
 <input id="handsPhotoInput" type="file" accept="image/*" hidden>
@@ -1156,10 +1156,10 @@ async function resizePhoto(file){
     img.onerror=()=>{URL.revokeObjectURL(u);reject(new Error('Image illisible'))};img.src=u
   })
 }
-async function runLocalPhoto(file,mise=null,mode='control'){
+async function runLocalPhoto(file,mise=null,mode='control',onDialogOpened){
   if(!file?.type?.startsWith('image/')){toast('Sélectionnez une image');return}
   const minutes=pendingExerciseMinutes||1
-  try{await openLocalPhoto({file,db,mise,resizePhoto,mode,durationMin:minutes,saved:async (next,created)=>{
+  try{await openLocalPhoto({file,db,mise,resizePhoto,mode,durationMin:minutes,onDialogOpened,saved:async (next,created)=>{
     if(next)publishProject(next)
     await refresh();render();scheduleSupabaseSync()
     for(const row of created||[]) if(row.fresh) undoStack.push({store:'objects',id:row.id})
@@ -1178,9 +1178,39 @@ async function photoFlow(file){
 $('#goalDataBruitage').onclick=()=>openDataBruitage({db,changed:async()=>{await refresh();render()}})
 $('#groupPhotoInput').onchange=e=>{const file=e.target.files?.[0];e.target.value='';if(file)groupPhotoFlow(file)}
 
-for(const id of ['photoInput','galleryInput','cameraInput']){
+for(const id of ['photoInput','cameraInput']){
   $("#"+id).onchange=e=>{const file=e.target.files[0];e.target.value='';if(file)photoFlow(file)}
   $("#"+id).addEventListener('cancel',()=>{photoTargetMiseId=null})
+}
+// Multi-photo analysis: select photos from any installed Android provider
+// (Gallery / Google Photos / Drive / Files), then validate them one by one.
+function importPhotoBatch(files,miseId=null,mode='control'){
+  const queue=Array.from(files||[]).filter(f=>f.type.startsWith('image/')).slice(0,30)
+  if(!queue.length){toast('Aucune photo sélectionnée');return}
+  let current=0
+  const next=()=>{
+    if(current>=queue.length){if(queue.length>1)toast('Album / lot terminé · '+queue.length+' photo(s) parcourue(s)');return}
+    const file=queue[current++]
+    const index=current
+    if(queue.length>1)toast('Photo '+index+' / '+queue.length+' · '+file.name)
+    void runLocalPhoto(file,miseBy(miseId),mode,(dialog)=>{
+      if(queue.length>1){
+        const hint=document.createElement('p')
+        hint.className='hint'
+        hint.textContent='Photo '+index+' / '+queue.length+' · Après validation, ferme cette photo pour passer à la suivante.'
+        dialog.querySelector('.dialoghead')?.after(hint)
+        dialog.addEventListener('close',()=>queueMicrotask(next),{once:true})
+      }
+    })
+  }
+  next()
+}
+$('#galleryInput').addEventListener('cancel',()=>{photoTargetMiseId=null})
+$('#galleryInput').onchange=e=>{
+  const files=Array.from(e.target.files||[])
+  e.target.value=''
+  const target=photoTargetMiseId;photoTargetMiseId=null
+  if(files.length)importPhotoBatch(files,target)
 }
 function pickPhoto(inputId,miseId=null){
   photoTargetMiseId=miseId
@@ -1189,9 +1219,9 @@ function pickPhoto(inputId,miseId=null){
 function openPhotoImportChoice(miseId=null){
   const d=$('#modal')
   if(d.open)d.close()
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Analyser une photo</b><small>Galerie, Google Photos, Drive, Fichiers ou appareil photo</small></div><button id="closePhotoChoices" class="ghost" type="button">×</button></div>
-    <p class="hint">Tu peux importer une image déjà enregistrée sur le téléphone ou dans un fournisseur de fichiers. MISES! l’analyse localement après sélection.</p>
-    <div class="row"><button id="choosePhoneFiles" type="button">🖼 Galerie / Photos / Drive / Fichiers</button><button id="chooseTakePhoto" type="button" class="ghost">📷 Prendre une photo</button></div></div>`
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Analyser une photo</b><small>Galerie, albums Google Photos, Drive, Fichiers ou appareil photo</small></div><button id="closePhotoChoices" class="ghost" type="button">×</button></div>
+    <p class="hint">Choisis une ou plusieurs images depuis la galerie, un album Google Photos disponible dans le sélecteur, Drive ou les fichiers. Chaque photo est analysée à tour de rôle, après ta validation. Le fournisseur doit être installé et disponible.</p>
+    <div class="row"><button id="choosePhoneFiles" type="button">🖼 Galerie / Google Photos / Drive · plusieurs photos</button><button id="chooseTakePhoto" type="button" class="ghost">📷 Prendre une photo</button></div></div>`
   d.showModal()
   $('#closePhotoChoices').onclick=()=>d.close()
   $('#choosePhoneFiles').onclick=()=>{d.close();pickPhoto('galleryInput',miseId)}
@@ -2029,10 +2059,16 @@ function openVoiceLabelFlow() {
     allCases: cases,
     allObjects: objects,
     origin: location.href,
-    onPrint: () => {
-      const image=document.querySelector('.voiceLabelPreview img, .labelPreview img')?.src
-      if(image?.startsWith('data:image/png;'))void sendSystemPrint(image,'MISES! · Étiquette vocale')
-      else toast('Utilise Exporter PNG pour imprimer cette étiquette vocale sur la mini-imprimante')
+    onPrint: (label) => {
+      const image=renderLabelDataUrl({
+        name:(label.lines||[]).filter(Boolean).join(' ')||'MISES!',
+        id:label.id,
+        shortId:shortId(label.id),
+        qrText:entityUrl(pageOrigin(),'label',label.id),
+        spare:Boolean(label.isSpare),
+        ink:getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()
+      })
+      void sendSystemPrint(image,'MISES! · Étiquette vocale')
     },
     onSave: async (label) => {
       await refresh()

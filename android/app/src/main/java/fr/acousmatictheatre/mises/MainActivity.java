@@ -78,7 +78,7 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " MISES-Android/0.4.0-beta.16");
+        settings.setUserAgentString(settings.getUserAgentString() + " MISES-Android/0.4.0-beta.17");
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -314,6 +314,14 @@ public final class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == FILE_CHOOSER_REQUEST && fileCallback != null) {
             Uri[] results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+            if (resultCode == RESULT_OK && data != null && data.getClipData() != null) {
+                // Some installed photo/cloud providers return a ClipData batch
+                // instead of the single URI expected by older WebView helpers.
+                android.content.ClipData clip = data.getClipData();
+                int count = Math.min(clip.getItemCount(), 30);
+                results = new Uri[count];
+                for (int i = 0; i < count; i++) results[i] = clip.getItemAt(i).getUri();
+            }
             fileCallback.onReceiveValue(results);
             fileCallback = null;
         }
