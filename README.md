@@ -36,7 +36,7 @@ Chaque Mac conserve son appairage Bluetooth local et peut imprimer indépendamme
 
 Pour les développeurs souhaitant compiler les deux architectures depuis le code source : `zsh mac/mini-printer/package-mac-printer.sh`. Les instructions pour les utilisateurs sont dans [INSTALLER-MAC.txt](mac/mini-printer/INSTALLER-MAC.txt).
 
-Pour basculer vers Android, la fenêtre Mac affiche aussi un QR de transfert du **modèle de sticker**. Le scanner MISES! Android peut l'ouvrir sans transférer de données privées ni déclencher d’impression non sollicitée. L’application Mac et Android peuvent aussi fonctionner séparément.
+Pour basculer vers Android, la fenêtre **Partager → Imprimante** de la PWA affiche aussi un QR de transfert du **modèle de sticker**. Le scanner MISES! Android peut l'ouvrir sans transférer de données privées ni déclencher d’impression non sollicitée. L’application Mac et Android peuvent aussi fonctionner séparément.
 
 **Photos :** sélectionner « Galerie / Photos / Drive / Fichiers » pour analyser une photo existante ou « Prendre une photo » pour utiliser l’appareil. Les fournisseurs proposés dépendent des applications installées sur le téléphone. Le choix Android est basé sur le sélecteur de documents du système et non plus sur la capture forcée.
 

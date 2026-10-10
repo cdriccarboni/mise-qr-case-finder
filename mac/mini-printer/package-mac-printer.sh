@@ -14,6 +14,8 @@ rm -f "${ASSET}"
 (
   cd "${BUILDDIR}"
   ditto -c -k --sequesterRsrc --keepParent "MISES Mini Printer.app" "${ASSET}"
+  # Keep the drag-and-drop installation guide next to the .app in the ZIP.
+  /usr/bin/zip -q "${ASSET}" "LIRE-AVANT-INSTALLATION.txt"
 )
 echo "Package: ${ASSET}"
 lipo -archs "${BUILDDIR}/MISES Mini Printer.app/Contents/MacOS/MISES-Mini-Printer"
