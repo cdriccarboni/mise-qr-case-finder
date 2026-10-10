@@ -1481,23 +1481,34 @@ async function openBatchPrint(){
 
 async function updatePrinterStatus(){
   const saved=await db.get('settings','printer')
-  const label=saved?.name?`Imprimante · ${saved.name}`:'Imprimante · À connecter'
-  const button=$('#printerBtn');if(button){button.textContent=label;button.classList.toggle('connected',Boolean(saved))}
+  const state=printerDisplayState({nativeBridge:hasNativePrinter(),savedPrinterName:saved?.native?saved.name:''})
+  const button=$('#printerBtn')
+  if(button){button.textContent=state.label;button.classList.toggle('connected',state.connected)}
 }
 window.addEventListener('mises-native-printer-status',event=>{const message=String(event.detail||'');if(message)toast(message)})
 
+// WalkPrint/YHK currently uses Bluetooth Classic RFCOMM/SPP in our experimental
+// Android bridge, while browser Web Bluetooth only implements BLE/GATT. Do not
+// record a random BLE device as a usable printer or claim it is connected.
+function openDesktopPrinterHelp(){
+  const d=$('#modal')
+  if(d.open)d.close()
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Imprimer depuis l’ordinateur</b><small>MISES! · WalkPrint / YHK · 384 pixels</small></div><button id="closeDesktopPrinter" class="ghost" type="button" aria-label="Fermer">×</button></div>
+    <p>Pour les mini-imprimantes WalkPrint / YHK utilisant Bluetooth Classic (SPP), le Bluetooth du navigateur ne suffit pas à imprimer. La détection d’un appareil ne garantit pas l’impression.</p>
+    <div class="manualSteps">
+      <article><b>1 · Prépare l’étiquette</b><span>Ouvre une valise ou un objet, puis touche « Exporter PNG 384 px » pour obtenir l’image au bon format et le QR.</span></article>
+      <article><b>2 · Imprime sur ton Mac</b><span>Si l’imprimante est installée dans macOS avec un pilote compatible, utilise « Impression système ». Sinon ouvre le PNG dans l’application compatible avec ta mini-imprimante pour l’imprimer.</span></article>
+      <article><b>3 · Depuis Android</b><span>MISES! possède aussi un pilote direct WalkPrint / YHK expérimental. Il ne rend pas automatiquement ce protocole accessible au navigateur du Mac.</span></article>
+    </div>
+    <p class="hint">MISES! ne lance aucune connexion Bluetooth fictive. Le futur pilote natif Mac nécessitera une validation sur le modèle réel de l’imprimante.</p>
+    <button id="closeDesktopPrinterBottom" type="button">Compris</button></div>`
+  d.showModal()
+  $('#closeDesktopPrinter').onclick=()=>d.close()
+  $('#closeDesktopPrinterBottom').onclick=()=>d.close()
+}
 async function pairPrinter(){
   if(hasNativePrinter())return openNativePrinterDialog()
-  if(!navigator.bluetooth){toast('Bluetooth web indisponible ici · utilise l’impression système ou l’app Android');return}
-  try{
-    toast('Choisis ton imprimante Bluetooth')
-    const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:['battery_service']})
-    let gattConnected=false
-    try{if(device.gatt){await device.gatt.connect();gattConnected=device.gatt.connected}}catch{}
-    await db.put('settings',{id:'printer',name:device.name||'Bluetooth',deviceId:device.id,pairedAt:new Date().toISOString(),gattConnected})
-    await updatePrinterStatus()
-    toast(gattConnected?'Bluetooth connecté · impression directe à tester':'Imprimante autorisée · protocole direct à identifier')
-  }catch(e){if(e.name!=='NotFoundError') toast('Connexion Bluetooth impossible')}
+  openDesktopPrinterHelp()
 }
 
 function parseScannedTarget(text){
