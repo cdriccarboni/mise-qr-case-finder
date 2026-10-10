@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 import SwiftUI
 import AppKit
 import IOBluetooth
@@ -205,42 +206,58 @@ enum MisesBluetooth {
     guard let device=IOBluetoothDevice(addressString:address),device.isPaired() else {
       throw NSError(domain:"MISES",code:3,userInfo:[NSLocalizedDescriptionKey:"Mini-imprimante non associée à ce Mac"])
     }
-    let upper=(device.name ?? "").uppercased()
-    guard ["YHK","WALK","MINI","PRINT","CTP","SC03","SC04","X6"].contains(where: upper.contains) else {
-      throw NSError(domain:"MISES",code:4,userInfo:[NSLocalizedDescriptionKey:"Cet appareil n’est pas une mini-imprimante connue"])
+    let name=device.name ?? ""
+    let upper=name.uppercased()
+    guard ["YHK","WALK","MINI","PRINT","CTP","SC03","SC04","X6"].contains(where: upper.contains),
+          name.range(of:"^[A-Za-z0-9-]{2,64}$",options:.regularExpression) != nil else {
+      throw NSError(domain:"MISES",code:4,userInfo:[NSLocalizedDescriptionKey:"Modèle Bluetooth refusé ou nom invalide"])
     }
-    var active: IOBluetoothRFCOMMChannel?
-    for id: UInt8 in [1,2] {
-      var candidate: IOBluetoothRFCOMMChannel?
-      let code=device.openRFCOMMChannelSync(&candidate,withChannelID:id,delegate:nil)
-      if code == 0 && candidate != nil { active=candidate; break }
+    // macOS exposes bonded Classic SPP devices as virtual serial ports.
+    // On the connected test Mac: YHK-1CB7 -> /dev/cu.YHK-1CB7.
+    // Access this port directly: IOBluetooth.openRFCOMMChannelSync returned
+    // kIOReturnError even though the device's SDP declares RFCOMM channel 2.
+    let port="/dev/cu."+name
+    guard FileManager.default.fileExists(atPath:port) else {
+      throw NSError(domain:"MISES",code:5,userInfo:[NSLocalizedDescriptionKey:"Port série "+port+" absent. Associe puis rallume l’imprimante."])
     }
-    guard let channel=active else {
-      throw NSError(domain:"MISES",code:5,userInfo:[NSLocalizedDescriptionKey:"Connexion RFCOMM refusée (imprimante occupée ou non compatible)"])
+    let fd=Darwin.open(port,O_RDWR | O_NOCTTY | O_NONBLOCK)
+    guard fd>=0 else {
+      throw NSError(domain:"MISES",code:Int(errno),userInfo:[NSLocalizedDescriptionKey:"Impossible d’ouvrir "+port+" : "+String(cString:strerror(errno))])
     }
-    defer { _=channel.close() }
-    let mtu=max(24, min(512, Int(channel.getMTU())))
+    defer { Darwin.close(fd) }
+    var settings=termios()
+    if tcgetattr(fd,&settings)==0 {
+      _ = cfsetispeed(&settings,speed_t(B115200))
+      _ = cfsetospeed(&settings,speed_t(B115200))
+      _ = tcsetattr(fd,TCSANOW,&settings)
+    }
     let raw=[UInt8](data)
-    // ESC @ + YHK start sequence, as in the existing Android printer bridge.
-    let first=[UInt8](raw.prefix(2))
-    let second=[UInt8](raw.dropFirst(2).prefix(4))
-    let raster=[UInt8](raw.dropFirst(6))
-    func write(_ bytes:[UInt8]) throws {
-      for offset in stride(from:0,to:bytes.count,by:mtu) {
-        var part=Array(bytes[offset..<min(offset+mtu,bytes.count)])
-        let count=UInt16(part.count)
-        let result=part.withUnsafeMutableBytes { channel.writeSync($0.baseAddress,length:count) }
-        guard result == 0 else {
-          throw NSError(domain:"MISES",code:Int(result),userInfo:[NSLocalizedDescriptionKey:"Envoi Bluetooth interrompu (\(result))"])
-        }
-        Thread.sleep(forTimeInterval:0.005)
-      }
+    guard raw.count>=10,raw.starts(with:[0x1b,0x40]) else {
+      throw NSError(domain:"MISES",code:6,userInfo:[NSLocalizedDescriptionKey:"Séquence d’impression incorrecte"])
     }
-    try write(first)
-    Thread.sleep(forTimeInterval:0.18)
-    try write(second)
-    Thread.sleep(forTimeInterval:0.18)
-    try write(raster)
+    let packets=[Array(raw.prefix(2)),Array(raw.dropFirst(2).prefix(4)),Array(raw.dropFirst(6))]
+    for packet in packets {
+      var offset=0,waiting=0
+      while offset < packet.count {
+        let end=min(offset+256,packet.count)
+        let fragment=Array(packet[offset..<end])
+        let written=fragment.withUnsafeBytes { ptr in
+          Darwin.write(fd,ptr.baseAddress,ptr.count)
+        }
+        if written>0 { offset+=written;waiting=0;Thread.sleep(forTimeInterval:0.008) }
+        else if errno==EINTR || errno==EAGAIN {
+          waiting+=1
+          guard waiting < 250 else {
+            throw NSError(domain:"MISES",code:7,userInfo:[NSLocalizedDescriptionKey:"Imprimante occupée ou délai Bluetooth expiré"])
+          }
+          Thread.sleep(forTimeInterval:0.020)
+        } else {
+          throw NSError(domain:"MISES",code:Int(errno),userInfo:[NSLocalizedDescriptionKey:"Envoi série Bluetooth interrompu : "+String(cString:strerror(errno))])
+        }
+      }
+      Thread.sleep(forTimeInterval:0.180)
+    }
+    Thread.sleep(forTimeInterval:0.15)
   }
 }
 
