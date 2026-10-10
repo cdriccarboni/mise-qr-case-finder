@@ -394,3 +394,8 @@ html[data-display=mobile] .shareAppActions{grid-template-columns:1fr}
 .miniActionBtn{font-size:.78rem;padding:.45rem .8rem;border-radius:7px}
 
 
+
+/* Recovery only appears when the PWA could not activate its new Service Worker. */
+.pwaRecoveryBanner{position:fixed;z-index:99999;inset:auto 14px 14px auto;width:min(360px,calc(100vw - 28px));padding:16px;border:1px solid #a65a7e;border-radius:14px;background:#252027;color:#fff;box-shadow:0 8px 32px #0009;display:grid;gap:8px;line-height:1.45;font-size:14px}
+.pwaRecoveryBanner strong{font-size:15px}.pwaRecoveryBanner span{color:#ddd}.pwaRecoveryBanner a{color:#ffa9d6;font-weight:700}.pwaRecoveryBanner button{justify-self:end;padding:5px 10px}
+@media(max-width:600px){.pwaRecoveryBanner{inset:auto 8px max(8px,env(safe-area-inset-bottom)) 8px;width:auto}}

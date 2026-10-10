@@ -5,6 +5,7 @@ import QRCode from 'qrcode'
 import { BrowserQRCodeReader } from '@zxing/browser'
 import { openDB } from 'idb'
 import { registerSW } from 'virtual:pwa-register'
+import { createPwaUpdateCoordinator, MISES_RECOVERY_URL } from './pwa-update.js'
 import { readProjectContext, makeControlSummary, makeProjectSummary, planProjectOpen, makeArtLinkExport } from './project-control.js'
 import { artGoogleSession, requestGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState, createSharePackage, loadSharePackage, androidGoogleSignInBlocked, googleSignInUnavailableMessage } from './google-sync.js'
 
@@ -50,37 +51,61 @@ migrateSessionKeys()
 applyInk(localStorage.getItem(LOCAL_KEYS.ink))
 
 let applySwUpdate=()=>{}
-let swRegistration=null
-let pwaRefreshInFlight=false
+function showPwaRecovery(remote){
+  let banner=document.getElementById('pwaRecoveryBanner')
+  if(!banner){
+    banner=document.createElement('aside')
+    banner.id='pwaRecoveryBanner'
+    banner.className='pwaRecoveryBanner'
+    banner.setAttribute('role','status')
+    const label=document.createElement('strong')
+    label.className='pwaRecoveryLabel'
+    const description=document.createElement('span')
+    description.textContent='La mise à jour est bloquée dans le cache de cette PWA.'
+    const link=document.createElement('a')
+    link.href=MISES_RECOVERY_URL
+    link.textContent='Réparer sans effacer mes données ↗'
+    const close=document.createElement('button')
+    close.type='button'
+    close.className='ghost'
+    close.textContent='Fermer'
+    close.addEventListener('click',()=>banner.remove())
+    banner.append(label,description,link,close)
+    document.body.append(banner)
+  }
+  banner.querySelector('.pwaRecoveryLabel').textContent='MISES ! '+remote+' disponible'
+}
+const pwaCoordinator=createPwaUpdateCoordinator({
+  version:APP_VERSION,
+  serviceWorker:navigator.serviceWorker,
+  fetchVersion:async()=>{
+    const response=await fetch(`./version.json?check=${Date.now()}`,{
+      cache:'no-store',headers:{accept:'application/json'}
+    })
+    if(!response.ok)throw Error('Version distante inaccessible')
+    return response.json()
+  },
+  requestUpdate:()=>applySwUpdate(true),
+  reload:()=>location.reload(),
+  onProgress:remote=>{if(document.querySelector('#toast'))toast(`MISES ! ${remote} détectée · actualisation en cours…`)},
+  onStuck:showPwaRecovery,
+  storage:sessionStorage,
+  online:()=>navigator.onLine,
+  scopeUrl:'https://cdriccarboni.github.io/mise-qr-case-finder/'
+})
 applySwUpdate=registerSW({
   immediate:true,
-  onRegisteredSW(_swUrl,registration){swRegistration=registration||null},
-  onNeedRefresh(){
-    toast('Nouvelle version disponible · mise à jour…')
-    setTimeout(()=>applySwUpdate(true),300)
-  }
+  onNeedRefresh(){void pwaCoordinator.check()},
+  onRegisteredSW(){void pwaCoordinator.check()}
 })
-async function checkPublishedVersion(){
-  if(pwaRefreshInFlight||!navigator.onLine)return
-  try{
-    const response=await fetch(`./version.json?check=${Date.now()}`,{cache:'no-store',headers:{accept:'application/json'}})
-    if(!response.ok)return
-    const remote=String((await response.json())?.version||'').trim()
-    if(!remote||remote===APP_VERSION)return
-    pwaRefreshInFlight=true
-    toast(`MISES! ${remote} disponible · actualisation…`)
-    const registration=swRegistration||await navigator.serviceWorker?.getRegistration()
-    await registration?.update()
-    applySwUpdate(true)
-    setTimeout(()=>location.reload(),900)
-  }catch{}
-}
 const PUBLIC_PWA_HOST='cdriccarboni.github.io'
-if(location.hostname===PUBLIC_PWA_HOST){
-  window.addEventListener('focus',()=>void checkPublishedVersion())
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void checkPublishedVersion()})
-  setInterval(()=>void checkPublishedVersion(),60_000)
-  setTimeout(()=>void checkPublishedVersion(),1200)
+if(location.hostname===PUBLIC_PWA_HOST && location.pathname.startsWith('/mise-qr-case-finder/')){
+  window.addEventListener('focus',()=>void pwaCoordinator.check())
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')void pwaCoordinator.check()
+  })
+  setInterval(()=>void pwaCoordinator.check(),60_000)
+  setTimeout(()=>void pwaCoordinator.check(),1200)
 }
 
 const $=(s,r=document)=>r.querySelector(s)
@@ -1033,7 +1058,7 @@ $('#app').innerHTML=`
   <button id="preferencesGoogle" type="button">Raccorder Google Drive</button>
   <div id="folderDropZone" class="folderDropZone" tabindex="0"><b>Dossier de travail</b><span id="folderLinkState">Choisis un dossier local pour préparer un lot d’import. Aucun fichier source ne sera modifié.</span><small>PDF · Word · Excel · ODS · CSV/TSV · JSON · Markdown · ZIP · images</small><input id="folderDropInput" type="file" webkitdirectory multiple hidden><button id="chooseFolder" type="button" class="ghost">Choisir un dossier</button></div>
   <div class="preferenceActionBlock"><b>Données locales</b><small>La sauvegarde contient la base privée, les mises, kits, réglages et apprentissages de cet appareil.</small><div class="row"><button id="preferencesBackup" type="button">SAUVEGARDER</button><button id="preferencesRestore" type="button" class="ghost">IMPORTER UNE SAUVEGARDE</button></div></div>
-  <div class="preferenceActionBlock"><b>Index global</b><div id="indexState" class="hint">Calcul de l’index…</div><div class="row"><button id="preferencesIndexState" type="button" class="ghost">ÉTAT DE L’INDEX</button><button id="preferencesRebuildIndex" type="button" class="ghost">RECONSTRUIRE L’INDEX</button></div></div>
+  <div class="preferenceActionBlock"><b>Actualisation de la PWA</b><small>Si la version reste ancienne malgré le message de mise à jour, utilise la page de réparation. Ton inventaire local est conservé.</small><a id="pwaRecoveryLink" href="${MISES_RECOVERY_URL}" target="_self" rel="noopener noreferrer">Réparer la mise à jour sans effacer mes données ↗</a></div>\n  <div class="preferenceActionBlock"><b>Index global</b><div id="indexState" class="hint">Calcul de l’index…</div><div class="row"><button id="preferencesIndexState" type="button" class="ghost">ÉTAT DE L’INDEX</button><button id="preferencesRebuildIndex" type="button" class="ghost">RECONSTRUIRE L’INDEX</button></div></div>
   <div class="preferenceActionBlock"><b>MISES Vision</b><div id="visionState" class="hint">Vision standard disponible · Vision avancée non installée</div></div>
   <button id="preferencesShare" type="button" class="ghost">Partager</button>
 </div></dialog>

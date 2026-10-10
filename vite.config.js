@@ -19,7 +19,7 @@ export default defineConfig({
       ]
     },
     workbox:{
-      cacheId:'mises-0.4.0-beta.18',
+      cacheId:'mises-0.4.0-beta.19',
       navigateFallback:'index.html',
       globPatterns:['**/*.{js,mjs,css,html,svg,json,bin,png,ttf}','models/coco-ssd/*'],
       maximumFileSizeToCacheInBytes:8*1024*1024,

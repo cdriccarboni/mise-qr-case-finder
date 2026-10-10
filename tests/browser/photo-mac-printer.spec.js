@@ -32,7 +32,7 @@ test('Mac mini-printer download is public, universal, and not tied to one comput
   await page.locator('#goalPrinter').evaluate(button=>button.click())
   await expect(page.locator('#printerDlg')).toBeVisible()
   const url=await page.locator('#macCompanionDownload').getAttribute('href')
-  expect(url).toBe('https://github.com/cdriccarboni/mise-qr-case-finder/releases/download/v0.4.0-beta.18/MISES-Mini-Printer-Mac-Universal.zip')
+  expect(url).toBe('https://github.com/cdriccarboni/mise-qr-case-finder/releases/download/v0.4.0-beta.19/MISES-Mini-Printer-Mac-Universal.zip')
   await expect(page.locator('#printerDlg')).toContainText('M1 / M4 / Intel')
   await expect(page.locator('#printerDlg')).toContainText('chaque Mac')
 })

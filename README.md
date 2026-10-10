@@ -2,19 +2,19 @@
 
 MISES! — QR Case Finder · PWA de bruitage, inventaire et mises.
 
-Version en cours de validation : **0.4.0-beta.18** (Android versionCode 29).
+Version en cours de validation : **0.4.0-beta.19** (Android versionCode 30).
 
 Pour travailler dans Cursor : [docs/CURSOR.md](docs/CURSOR.md). Prise en main générale : [docs/COMMENCER.md](docs/COMMENCER.md). Dossier Play Console : [docs/PLAY-CONSOLE.md](docs/PLAY-CONSOLE.md).
 
 Les Data Bruitage personnelles ne sont pas dans ce dépôt. L’exemple de `public/exemples/` est fictif.
 
-## Univers thématiques (v0.4.0-beta.18)
+## Univers thématiques (v0.4.0-beta.19)
 
 Dans **Trouver → Ambiances**, sélectionne parmi 14 univers sonores (Halloween, Noël et fêtes d’hiver, montagne, mer/pirates, forêt, météo, magie, science-fiction, ville, animaux, voyages, cirque, châteaux, enquête). Chaque univers possède des sous-ambiances et un filtre **Tout / Mon inventaire / Recettes et ressources publiques**, ainsi qu’une recherche textuelle affinée. Le classement exige un indice sonore explicite : « bois », « papier », « métal », « pas » et « vent » ne rendent pas à eux seuls un objet « Halloween ». Les 216 recettes sourcées sont conservées sans doublons ; les 93 annotations thématiques de recettes sont des suggestions éditoriales et non des validations terrain ni des preuves de possession. Les données privées synchronisées ne sont pas modifiées.
 
 ## Base publique active
 
-MISES! 0.4.0-beta.18 charge `public/public-foley.json` au démarrage. Cette base publique alimente la recherche, les fabrications, les jeux, les activités pédagogiques et les univers aléatoires. Le bundle public contient uniquement le glossaire `PUBLIC_WEB` (`EXPORT_PUBLIC_WEB`) ; le corpus personnel Data Bruitage n'est pas publié dans le dépôt. Détail public/privé et accès propriétaire : [docs/DATA-PUBLIQUE-PRIVEE.md](docs/DATA-PUBLIQUE-PRIVEE.md).
+MISES! 0.4.0-beta.19 charge `public/public-foley.json` au démarrage. Cette base publique alimente la recherche, les fabrications, les jeux, les activités pédagogiques et les univers aléatoires. Le bundle public contient uniquement le glossaire `PUBLIC_WEB` (`EXPORT_PUBLIC_WEB`) ; le corpus personnel Data Bruitage n'est pas publié dans le dépôt. Détail public/privé et accès propriétaire : [docs/DATA-PUBLIQUE-PRIVEE.md](docs/DATA-PUBLIQUE-PRIVEE.md).
 
 
 ## Halloween & inventaires volumineux
@@ -28,7 +28,7 @@ La synchronisation **Supabase** lit désormais toutes les pages de 500 enregistr
 
 ## Impression QR · WalkPrint / YHK · Mac et Android
 
-MISES! 0.4.0-beta.18 propose trois stickers QR : **MISES!**, **ART — Acousmatic Régie Tools** et **Acousmatic Théâtre**. Les QR ouvrent uniquement les trois sites publics correspondants ; l’inventaire reste privé. La création des étiquettes fonctionne même avec un stock vide.
+MISES! 0.4.0-beta.19 propose trois stickers QR : **MISES!**, **ART — Acousmatic Régie Tools** et **Acousmatic Théâtre**. Les QR ouvrent uniquement les trois sites publics correspondants ; l’inventaire reste privé. La création des étiquettes fonctionne même avec un stock vide.
 
 **Android natif :** sélectionner la mini-imprimante WalkPrint/YHK déjà associée, puis « Test logo + QR », « 1 sticker » ou « 3 stickers ». Le pilote natif Bluetooth Classic reste en place. Le sélecteur d’imprimantes Android/Epson n’est plus invoqué depuis les boutons d’étiquettes.
 
@@ -45,3 +45,7 @@ Pour basculer vers Android, la fenêtre **Partager → Imprimante** de la PWA af
 **Photos :** sélectionner « Galerie / Photos / Drive / Fichiers » pour analyser une photo existante ou « Prendre une photo » pour utiliser l’appareil. Les fournisseurs proposés dépendent des applications installées sur le téléphone. Le choix Android est basé sur le sélecteur de documents du système et non plus sur la capture forcée.
 
 **À vérifier sur le matériel réel :** apparition physique de l’étiquette en sortie, contraste/rotation sur chaque modèle, autorisation locale Chrome/Safari, et vérification de l’application Android installée via test interne Google Play. Conserver une sauvegarde JSON avant les premiers tests de synchronisation Supabase.
+
+## Mise à jour PWA bloquée (beta.14 ou version antérieure)
+
+Ouvrir la **[page de récupération MISES !](https://cdriccarboni.github.io/mises-pwa-recovery/)** dans le même navigateur/profil que la PWA bloquée. Son bouton retire uniquement le Service Worker MISES ! et les caches Workbox correspondant aux builds beta MISES!, puis relance le site. **Ne pas désinstaller l’application, ni effacer les données du site ou l’inventaire IndexedDB.** Ce site de récupération est hébergé sous le même domaine cdriccarboni.github.io mais hors du scope /mise-qr-case-finder/, de façon à ne pas dépendre de l’ancien Service Worker. À partir de beta.19 le site attend l’événement controllerchange pour actualiser et présente le recours si l’activation échoue.

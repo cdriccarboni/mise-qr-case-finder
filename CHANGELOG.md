@@ -1,3 +1,11 @@
+## 0.4.0-beta.19 — 10 octobre 2026
+
+- Corrige la boucle « nouvelle version disponible » de la PWA : plus de reload arbitraire après 900 ms ; la navigation est rechargée uniquement après prise de contrôle du nouveau Service Worker.
+- La mise à jour force un vrai contrôle du script SW sans dépendre du cache HTTP du navigateur (updateViaCache: none).
+- Empêche les rafales de vérifications de version et les rechargements infinis ; propose un recours sans effacement de données si activation impossible.
+- Page indépendante de réparation : https://cdriccarboni.github.io/mises-pwa-recovery/ ; elle retire seulement l’ancien Service Worker de scope MISES ! et ses caches applicatifs, sans toucher à IndexedDB/localStorage ni aux autres applications.
+- Versions PWA, Android, Mac universel et cache SW incrémentées.
+
 ## 0.4.0-beta.18 — 10 octobre 2026
 
 - Recherche **Ambiances** : 14 univers (Halloween, Noël, hiver, mer/pirates, forêt, météo, magie, science-fiction, ville, animaux, voyages, cirque, châteaux, mystère) ; sous-thèmes, texte, source inventaire/public.
