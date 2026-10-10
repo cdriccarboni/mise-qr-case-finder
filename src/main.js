@@ -1475,8 +1475,30 @@ function openPrint(c,qr){
 }
 async function openBatchPrint(){
   const d=$('#printDlg')
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Créer / imprimer des QR</b><small>Flash codes pour valises et caisses</small></div><button id="closeBatch" class="ghost">×</button></div><p class="hint">Coche les contenants, prépare les étiquettes QR, puis imprime. Chaque flash code rouvre la valise dans MISES!.</p><div class="checklist">${cases.map(c=>`<label class="check"><input type="checkbox" data-print-case value="${c.id}" checked><span>${esc(caseName(c))}</span></label>`).join('')||'<p>Aucun contenant.</p>'}</div><button id="makeBatch">Créer les QR / préparer l’impression</button><div id="batchLabels" class="batchLabels"></div></div>`
-  d.showModal();$('#closeBatch').onclick=()=>d.close();$('#makeBatch').onclick=async()=>{const ids=$$('[data-print-case]:checked',d).map(x=>x.value),selected=cases.filter(c=>ids.includes(c.id));if(!selected.length){toast('Sélectionne au moins une valise');return}const labels=[];for(const c of selected){const url=location.href.split('?')[0]+'?case='+encodeURIComponent(c.id),qr=await QRCode.toDataURL(url,{width:420,margin:2,errorCorrectionLevel:'M'});labels.push(`<div class="labelPreview batchLabel"><strong>${esc(caseName(c))}</strong><img src="${qr}"><small>${esc(c.id)}</small></div>`)}$('#batchLabels').innerHTML=labels.join('')+`<div class="row"><button id="printBatchNow">Impression système</button></div>`;$('#printBatchNow').onclick=()=>window.print()}
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Créer / imprimer des QR</b><small>Étiquettes pour valises et caisses</small></div><button id="closeBatch" class="ghost">×</button></div><p class="hint">Coche les contenants puis prépare leurs QR. Tu peux imprimer la planche ou exporter chaque étiquette en PNG 384 px, même sans pilote Bluetooth sur l’ordinateur.</p><div class="checklist">${cases.map(c=>`<label class="check"><input type="checkbox" data-print-case value="${c.id}" checked><span>${esc(caseName(c))}</span></label>`).join('')||'<p>Aucun contenant.</p>'}</div><button id="makeBatch">Créer les QR / préparer l’impression</button><div id="batchLabels" class="batchLabels"></div></div>`
+  d.showModal()
+  $('#closeBatch').onclick=()=>d.close()
+  $('#makeBatch').onclick=async()=>{
+    const ids=$$('[data-print-case]:checked',d).map(x=>x.value),selected=cases.filter(c=>ids.includes(c.id))
+    if(!selected.length){toast('Sélectionne au moins une valise');return}
+    const button=$('#makeBatch')
+    button.disabled=true
+    const prepared=[]
+    try{
+      for(let i=0;i<selected.length;i++){
+        const box=selected[i]
+        prepared.push({box,image:renderLabelDataUrl({name:caseName(box),id:box.id,shortId:shortId(box.id),qrText:entityUrl(pageOrigin(),'case',box.id),category:box.type||'Contenant'})})
+        if(i%12===11)await new Promise(resolve=>setTimeout(resolve,0))
+      }
+      $('#batchLabels').innerHTML=prepared.map(({box,image},i)=>`<div class="labelPreview batchLabel"><strong>${esc(caseName(box))}</strong><img src="${image}" alt="Étiquette QR de ${esc(caseName(box))}"><small>${esc(box.id)}</small><button type="button" class="ghost" data-save-batch="${i}">Exporter PNG</button></div>`).join('')+`<div class="row"><button id="printBatchNow" type="button">Imprimer la planche</button></div>`
+      $$('[data-save-batch]',d).forEach(item=>item.onclick=()=>{
+        const entry=prepared[Number(item.dataset.saveBatch)]
+        if(entry)downloadLabelPng(entry.image,caseName(entry.box))
+      })
+      $('#printBatchNow').onclick=()=>window.print()
+    }catch(error){toast('Impossible de préparer les étiquettes')}
+    finally{button.disabled=false}
+  }
 }
 
 async function updatePrinterStatus(){
