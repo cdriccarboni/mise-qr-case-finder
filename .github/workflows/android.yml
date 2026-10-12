@@ -74,6 +74,7 @@ env:
 
 jobs:
   android:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.track == 'alpha') }}
     runs-on: ubuntu-latest
     env:
       PACKAGE_NAME: "fr.acousmatictheatre.mises"
@@ -300,3 +301,38 @@ jobs:
           else
             gh release create "$TAG" "/tmp/$ASSET"               --prerelease               --title "MISES ! ${VERSION} — APK TEST"               --notes "APK Android de test validé par la recette GitHub (unitaires, build PWA, Playwright, assembleDebug) avec signature de test persistante. Test uniquement."
           fi
+
+  promote-alpha:
+    # Only a manual, SHA-pinned dispatch can touch closed testing. No AAB upload.
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.track == 'alpha' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      EXPECTED_VERSION: ${{ inputs.expected_version }}
+      EXPECTED_VERSION_CODE: ${{ inputs.expected_version_code }}
+      ALPHA_MODE: ${{ inputs.publish_to_play && 'promote' || 'inspect' }}
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pinned source and allowed channel
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/main' || test "$GITHUB_REF" = 'refs/heads/hermes/play-alpha-promotion-20261012'
+          test -n "$EXPECTED_SHA" && test "$GITHUB_SHA" = "$EXPECTED_SHA"
+          test -n "$EXPECTED_VERSION" && test "$(node -p "require('./package.json').version")" = "$EXPECTED_VERSION"
+          test -n "$EXPECTED_VERSION_CODE" && test "$(sed -nE 's/^[[:space:]]*versionCode = ([0-9]+).*$/\1/p' android/app/build.gradle.kts | head -n 1)" = "$EXPECTED_VERSION_CODE"
+          test "$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)".*$/\1/p' android/app/build.gradle.kts | head -n 1)" = "$EXPECTED_VERSION"
+          test "$(sed -nE 's/^val playApplicationId = "([^"]+)".*$/\1/p' android/app/build.gradle.kts | head -n 1)" = 'fr.acousmatictheatre.mises'
+          test -n "$PLAY_SERVICE_ACCOUNT_JSON"
+          if [ "$GITHUB_REF" != 'refs/heads/main' ]; then
+            git fetch --no-tags --depth=1 origin main
+            git diff --exit-code FETCH_HEAD HEAD -- android src public package.json package-lock.json index.html vite.config.js
+          fi
+          echo "Validated alpha source SHA=$GITHUB_SHA version=$EXPECTED_VERSION code=$EXPECTED_VERSION_CODE mode=$ALPHA_MODE"
+      - name: Inspect Play and optionally promote accepted internal bundle
+        run: |
+          python -m pip install --disable-pip-version-check --quiet google-api-python-client google-auth
+          python scripts/promote-play-alpha.py
