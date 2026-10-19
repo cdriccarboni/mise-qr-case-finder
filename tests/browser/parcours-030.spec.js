@@ -2,6 +2,10 @@ import { APP_VERSION } from '../../src/version.js'
 import { test, expect } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
 
+// 0.4.0-beta.32 : actions secondaires repliées (« Plus d’actions », « Ambiances & jeux ») — ouvertes pour ces parcours.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => { const t = setInterval(() => { const ds = document.querySelectorAll('.moreShortcuts,.secondaryTools'); if (ds.length) { ds.forEach(d => { d.open = true }); clearInterval(t) } }, 20) }) })
+
+
 const shots = new URL('../../test-results/screenshots', import.meta.url).pathname
 
 test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, hors ligne', async ({ page, context }) => {

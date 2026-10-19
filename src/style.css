@@ -426,9 +426,25 @@ body.pubOpen{overflow:hidden}
 @media (max-width:640px){.fieldShortcuts .labelsShortcut{grid-column:1/-1;min-height:52px;font-size:1.05rem}}
 .pubNotice{opacity:1;text-align:center;padding:2rem 1rem}.pubNotice h1{font-size:1.4rem;margin:.2rem 0 .6rem}.pubNotice .pubId code{font-weight:700}
 
-/* 0.4.0-beta.29 · bouton fermer (×) : jamais sous la barre d'état / l'encoche, cible 48 dp */
+/* 0.4.0-beta.32 · bouton fermer (×) : jamais sous la barre d'état / l'encoche, cible 48 dp */
 dialog[open]{margin-top:calc(var(--safe-top) + 14px)}
 dialog .dialoghead{padding-top:.6rem}
 .dialoghead>button,button[id^="close"],[data-close]{min-width:48px;min-height:48px;font-size:1.35rem;line-height:1;touch-action:manipulation}
 #publicInventory{padding-top:calc(var(--safe-top) + .75rem)}
 @media(max-width:620px){dialog[open]{max-height:calc(100dvh - var(--safe-top) - var(--safe-bottom) - 28px)}}
+/* 0.4.0-beta.32 · audit UX */
+body.pubStandalone>*:not(#publicInventory){display:none!important}
+body.pubStandalone #publicInventory{position:static;min-height:100dvh}
+.pubBar #pubClose{min-height:48px;padding:0 .9rem}
+.corePrimary{font-weight:800}
+.moreShortcuts{grid-column:1/-1}
+.moreShortcuts>summary,.moreMenu>summary{min-height:48px;display:flex;align-items:center;cursor:pointer;list-style:none}
+.moreShortcuts>div{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem;margin-top:.5rem}
+.moreMenu{position:relative;display:inline-block}
+.moreMenu>summary{min-width:48px;justify-content:center;border:1px solid #444;border-radius:8px;font-size:1.3rem}
+.moreMenu[open]>button{display:block;margin-top:.35rem}
+.iconLabel{display:block;font-size:.62rem;line-height:1;margin-top:2px}
+.headerIcon{min-width:48px;min-height:48px}
+.onboarding{margin:.75rem 0}
+.onboarding .row button{min-height:48px}
+@media (max-width:640px){.fieldShortcuts .corePrimary,.fieldShortcuts .coreScan{grid-column:1/-1;min-height:52px}}

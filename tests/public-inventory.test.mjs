@@ -26,7 +26,7 @@ test('page contenant : objets, quantités, compartiments, recherche locale', () 
   const h = publicContainerHtml(inv, 'c1', esc)
   assert.match(h, /Poche avant/); assert.match(h, /Câble XLR fictif/); assert.match(h, /×4/)
   assert.doesNotMatch(publicContainerHtml(inv, 'c1', esc, { query: 'tole' }), /Câble XLR/)
-  assert.match(publicContainerHtml(inv, 'zz', esc), /pas encore publié/)
+  assert.match(publicContainerHtml(inv, 'zz', esc), /Contenant inconnu/)
 })
 test('recherche globale publique : objet + chemin du contenant', () => {
   const h = publicSearchHtml(sanitizePublicInventory(raw), 'xlr', esc)

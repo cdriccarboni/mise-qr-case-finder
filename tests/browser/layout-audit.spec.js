@@ -1,6 +1,10 @@
 import { APP_VERSION } from '../../src/version.js'
 import { test, expect } from '@playwright/test'
 
+// 0.4.0-beta.32 : actions secondaires repliées (« Plus d’actions », « Ambiances & jeux ») — ouvertes pour ces parcours.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => { const t = setInterval(() => { const ds = document.querySelectorAll('.moreShortcuts,.secondaryTools'); if (ds.length) { ds.forEach(d => { d.open = true }); clearInterval(t) } }, 20) }) })
+
+
 const tabIds = ['search','inventory','cases','kits','mises','publicLibrary','fabrications','activities','vibe','exercises','creator']
 
 async function activateTab(page, id) {

@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
 
+// 0.4.0-beta.32 : actions secondaires repliées (« Plus d’actions », « Ambiances & jeux ») — ouvertes pour ces parcours.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => { const t = setInterval(() => { const ds = document.querySelectorAll('.moreShortcuts,.secondaryTools'); if (ds.length) { ds.forEach(d => { d.open = true }); clearInterval(t) } }, 20) }) })
+
+
 test('valise → Jouer / Défi depuis inventaire réel', async ({ page }) => {
   await page.goto('/')
   await page.getByText('Ranger', { exact: true }).click()

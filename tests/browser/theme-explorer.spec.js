@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
 
+// 0.4.0-beta.32 : actions secondaires repliées (« Plus d’actions », « Ambiances & jeux ») — ouvertes pour ces parcours.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => { const t = setInterval(() => { const ds = document.querySelectorAll('.moreShortcuts,.secondaryTools'); if (ds.length) { ds.forEach(d => { d.open = true }); clearInterval(t) } }, 20) }) })
+
+
 test('themed sound browser offers 14 relevant universes and source filters',async({page})=>{
   await page.goto('/')
   await page.locator('[data-tab="halloween"]').click()

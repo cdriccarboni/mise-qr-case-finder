@@ -1,4 +1,6 @@
-## 0.4.0-beta.29 — 20 octobre 2026 (#45)
+## 0.4.0-beta.32 — 20 octobre 2026 (#45)
+
+- Audit UX (P0, P1, P2) : page publique `?case=` autonome (sans accueil propriétaire) avec « Contenant inconnu » / « Inventaire non publié » / « Hors ligne » distincts, jamais « QR valide » sans vérification ; publication de l’inventaire en opt-in propriétaire (☁ → « Publier mon inventaire ») ; accueil : titre MISES! unique, version affichée une fois, parcours 1 · Créer un contenant → 2 · Ajouter des objets → 3 · Imprimer les étiquettes, autres actions dans « Plus d’actions », Ambiances & jeux regroupés ; carte de bienvenue (se connecter / créer son premier contenant) ; « ☁ Se connecter » hors connexion ; Étiquettes : état vide avec « Créer un contenant », Supprimer dans « ⋯ » avec confirmation, sous-titre sans jargon ; casse unifiée ; icônes ⚙ ? libellées ; code mort retiré.
 
 - Connexion Supabase sur Android : retour dans l'app par `fr.acousmatictheatre.mises://auth-callback` (intent-filter MainActivity), code PKCE échangé dans l'app (`exchangeCodeForSession`) au démarrage ; « Continuer avec Google » via Custom Tab (Google refuse les WebView). PWA : retour sur l'URL publique, même échange.
 - Synchro automatique juste après la connexion, avec message de réussite (récupérées / envoyées) ou d'échec clair.
