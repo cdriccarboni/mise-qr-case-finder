@@ -47,7 +47,7 @@ test('QR public : hors ligne → message + Réessayer', async ({ page }) => {
   await expect(page.locator('[data-pub-retry]')).toBeVisible()
 })
 
-test('sans compte ni import, puis hors ligne : ÉTIQUETTES liste les 6 contenants intégrés', async ({ browser }) => {
+test('sans compte ni import, puis hors ligne : ÉTIQUETTES ne montre aucun contenant intégré (liste vide)', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
   const page = await context.newPage()
   await page.goto('/')
