@@ -14,7 +14,7 @@ android {
         applicationId = playApplicationId
         minSdk = 26
         targetSdk = 36
-        versionCode = 37
+        versionCode = 38
         versionName = "0.4.0-beta.26"
     }
 
