@@ -78,7 +78,7 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " MISES-Android/0.4.0-beta.28");
+        settings.setUserAgentString(settings.getUserAgentString() + " MISES-Android/0.4.0-beta.29");
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -240,7 +240,38 @@ public final class MainActivity extends Activity {
         return callback == null ? base : callback;
     }
 
+    static final String AUTH_SCHEME = "fr.acousmatictheatre.mises";
+    static final String AUTH_HOST = "auth-callback";
+
+    /** fr.acousmatictheatre.mises://auth-callback?code=… → page locale ?code=… (le vérificateur PKCE est dans CE stockage). */
+    private String authCallbackUrl(Uri uri) {
+        if (uri == null || !AUTH_SCHEME.equalsIgnoreCase(uri.getScheme()) || !AUTH_HOST.equalsIgnoreCase(uri.getHost())) return null;
+        StringBuilder result = new StringBuilder(getString(R.string.mise_url));
+        String query = uri.getEncodedQuery();
+        String fragment = uri.getEncodedFragment();
+        if (query != null && !query.isEmpty()) result.append('?').append(query);
+        if (fragment != null && !fragment.isEmpty()) result.append('#').append(fragment);
+        return result.toString();
+    }
+
+    /** Google refuse les WebView : la page d'autorisation Supabase s'ouvre dans un Custom Tab. */
+    void openAuthUrl(String url) {
+        runOnUiThread(() -> {
+            Uri uri = Uri.parse(url);
+            String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+            String path = uri.getPath() == null ? "" : uri.getPath();
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || !SUPABASE_HOST.equals(host) || !path.startsWith("/auth/v1/authorize")) return;
+            try {
+                new androidx.browser.customtabs.CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(this, uri);
+            } catch (ActivityNotFoundException e) {
+                openExternal(uri);
+            }
+        });
+    }
+
     private String localCallbackUrl(Uri uri) {
+        String auth = authCallbackUrl(uri);
+        if (auth != null) return auth;
         String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
         String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
         String path = uri.getPath() == null ? "" : uri.getPath();

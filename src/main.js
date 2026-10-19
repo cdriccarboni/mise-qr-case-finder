@@ -48,7 +48,7 @@ import { applyBackup, backupItemCount } from './backup.js'
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-client.js'
 import { activeLabelCases, archivedLabelCases, archiveCase, restoreCase, deleteCase, canDeleteCase, isProtectedCase, labelState } from './label-archive.js'
 import { fetchPublicInventory, publicNoticeHtml, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
-import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut } from './supabase-client.js'
+import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut, signInWithGoogleSupabase, completeSupabaseAuthFromUrl, parseAuthReturn, cleanAuthUrl } from './supabase-client.js'
 import { syncMises, queuePhotoUpload, signedPhotoUrl } from './sync-core.js'
 import { parseCsvText, planInventoryImport, applyInventoryPlan, inventoryColumnMap } from './inventory-import.js'
 import { buildCentralIndex, centralSearch } from './central-search.js'
@@ -246,8 +246,9 @@ async function openSupabaseSync(){
     }
     return
   }
-  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Synchroniser MISES!</b><small>Compte personnel · sans Google</small></div><button value="cancel" class="ghost">×</button></div><p>Entre ton adresse e-mail. MISES enverra un lien de connexion sécurisé. Aucun mot de passe ni compte Google n’est nécessaire.</p><label>E-mail<input id="supabaseEmail" type="email" autocomplete="email" required placeholder="ton@email.fr"></label><button id="sendSupabaseLink">Recevoir le lien de connexion</button><p id="supabaseAuthStatus" class="hint"></p></form>`
+  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Synchroniser MISES!</b><small>Compte personnel · sans Google</small></div><button value="cancel" class="ghost">×</button></div><p>Entre ton adresse e-mail. MISES enverra un lien de connexion sécurisé. Aucun mot de passe ni compte Google n’est nécessaire.</p><label>E-mail<input id="supabaseEmail" type="email" autocomplete="email" required placeholder="ton@email.fr"></label><button id="googleSupabaseLogin" type="button" class="ghost">Continuer avec Google</button><button id="sendSupabaseLink">Recevoir le lien de connexion</button><p id="supabaseAuthStatus" class="hint"></p></form>`
   d.showModal()
+  $('#googleSupabaseLogin')?.addEventListener('click',async e=>{e.preventDefault();const status=$('#supabaseAuthStatus');status.textContent='Ouverture de Google…';try{await signInWithGoogleSupabase();status.textContent='Termine la connexion Google : MISES! reprendra automatiquement.'}catch(error){status.textContent=error instanceof Error?error.message:'Connexion Google impossible'}})
   $('#sendSupabaseLink').onclick=async e=>{
     e.preventDefault()
     const email=$('#supabaseEmail').value.trim(),status=$('#supabaseAuthStatus')
@@ -261,12 +262,15 @@ async function runSupabaseSync(){
   const session=await supabaseSession().catch(()=>null)
   if(!session)return
   supabaseSyncBusy=true
-  try{await syncMises(db);await refresh();render()}
-  catch(error){console.warn('[MISES] Supabase sync:',error)}
+  try{
+    const r=await syncMises(db);await refresh();render()
+    if(supabaseSyncAnnounce){supabaseSyncAnnounce=false;toast(`☁ Synchronisé · ${r.pulled} récupérée(s) · ${r.pushed} envoyée(s)${r.conflicts?` · ${r.conflicts} conflit(s)`:''}`)}
+  }
+  catch(error){console.warn('[MISES] Supabase sync:',error);toast(`☁ Synchronisation impossible : ${error instanceof Error?error.message:'erreur inconnue'}. Réessaie depuis ☁.`)}
   finally{supabaseSyncBusy=false;await updateSupabaseStatus()}
 }
 function scheduleSupabaseSync(){clearTimeout(supabaseSyncTimer);supabaseSyncTimer=setTimeout(()=>runSupabaseSync(),1400)}
-let supabaseAuthListenerReady=false,supabaseAutoSyncBound=false
+let supabaseSyncAnnounce=false,supabaseAuthListenerReady=false,supabaseAutoSyncBound=false
 function bindSupabaseAutoSync(){
   if(supabaseAutoSyncBound)return
   supabaseAutoSyncBound=true
@@ -2303,6 +2307,19 @@ $('#restoreInput').onchange=async event=>{
 }
 
 await settleArtProject()
+// Retour de connexion Supabase (lien magique / Google) : code PKCE échangé ICI, puis synchro automatique.
+async function finishSupabaseAuthReturn(){
+  if(!supabaseConfigured)return
+  const href=location.href
+  if(parseAuthReturn(href)){
+    history.replaceState(null,'',cleanAuthUrl(href))
+    try{await completeSupabaseAuthFromUrl(href);supabaseSyncAnnounce=true;toast('☁ Connectée · synchronisation…')}
+    catch(error){toast(`☁ Connexion non terminée : ${error instanceof Error?error.message:'lien invalide ou expiré'}. Redemande un lien depuis ☁ dans l’app.`)}
+  }
+  const session=await supabaseSession().catch(()=>null)
+  if(session?.user){await ensureSupabaseAuthListener();await updateSupabaseStatus();scheduleSupabaseSync()}
+}
+setTimeout(()=>finishSupabaseAuthReturn(),0)
 if(params.get('shareFile'))setTimeout(()=>openSharedPackage(params.get('shareFile')),300)
 else if(params.get('case'))setTimeout(()=>caseBy(params.get('case'))?showCase(params.get('case')):openPublicInventory({caseId:params.get('case')}),250)
 else if(params.has('inventaire'))setTimeout(()=>openPublicInventory({}),100)

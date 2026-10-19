@@ -37,6 +37,13 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="errsklrioqfovhkdiejd.supabase.co" android:pathPrefix="/auth/v1/verify" />
             </intent-filter>
+            <!-- Retour Supabase Auth (lien magique, Google) : fr.acousmatictheatre.mises://auth-callback?code=… (PKCE) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="fr.acousmatictheatre.mises" android:host="auth-callback" />
+            </intent-filter>
         </activity>
     </application>
 </manifest>

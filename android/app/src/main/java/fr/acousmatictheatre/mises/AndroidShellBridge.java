@@ -25,6 +25,12 @@ public final class AndroidShellBridge {
         return GOOGLE_SIGN_IN_MESSAGE;
     }
 
+    /** Ouvre l'autorisation OAuth Supabase (Google) dans un Custom Tab ; retour par fr.acousmatictheatre.mises://auth-callback. */
+    @JavascriptInterface
+    public void openAuthUrl(String url) {
+        if (url != null) activity.openAuthUrl(url);
+    }
+
     @JavascriptInterface
     public void setAppColor(String hex) {
         activity.applyAppColor(hex);
