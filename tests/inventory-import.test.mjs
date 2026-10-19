@@ -72,3 +72,15 @@ test('colonne « Nom contenant » : ID permanent conservé, nom lisible sur l’
   const third = applyInventoryPlan(planInventoryImport(rows), { cases: named }, { now: 'T3' })
   assert.equal(third.cases.length, 0)
 })
+
+test('« Nom contenant » : renomme un contenant existant seulement si son nom est encore son ID', () => {
+  const rows = [{ ID: 'SAC-FICTIF-B-01-X', Nom: 'Objet fictif', Contenant: 'SAC-FICTIF-B-01', 'Nom contenant': 'SAC FICTIF B', Quantité: '1' }]
+  const existing = [{ id: 'SAC-FICTIF-B-01', name: 'SAC-FICTIF-B-01', importName: 'SAC-FICTIF-B-01', parentId: '' }]
+  const res = applyInventoryPlan(planInventoryImport(rows, { cases: existing }), { cases: existing }, { now: 'T' })
+  assert.equal(res.cases.length, 1)
+  assert.equal(res.cases[0].id, 'SAC-FICTIF-B-01')
+  assert.equal(res.cases[0].name, 'SAC FICTIF B')
+  const chosen = [{ ...existing[0], name: 'Mon sac' }]
+  const res2 = applyInventoryPlan(planInventoryImport(rows, { cases: chosen }), { cases: chosen }, { now: 'T' })
+  assert.equal(res2.cases.length, 0)
+})

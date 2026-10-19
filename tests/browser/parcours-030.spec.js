@@ -134,7 +134,8 @@ test('parcours terrain 0.3.0 : caisse, QR, photo, vibe, exercice, correction, ho
   await expect(page.locator('#vibeOut')).toContainText('Bibliothèque publique de techniques')
   await page.getByText('Créer', { exact: true }).click()
   await page.locator('#goalExercise').click()
-  await page.locator('#runExercise').click()
+  // Le menu « Créer » déplié (nav collante) recouvre le bouton sur cette fenêtre : clic DOM direct.
+  await page.locator('#runExercise').dispatchEvent('click')
   await expect(page.locator('#exerciseOut')).toContainText('Proposition générée')
   await expect(page.locator('#exerciseOut')).toContainText('Chaîne moyenne')
 

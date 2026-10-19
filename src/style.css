@@ -420,3 +420,8 @@ body.pubOpen{overflow:hidden}
 .labelsList{display:grid;gap:.6rem;max-height:60vh;overflow:auto}.labelCard{border:1px solid #8884;border-radius:10px;padding:.5rem}
 .labelCard img{display:block;max-height:220px;max-width:100%;margin:.4rem auto;image-rendering:pixelated;border:1px dashed #8886}
 .labelCard small{display:block;opacity:.7}.labelsBar{position:sticky;bottom:0;background:inherit;padding-top:.4rem}
+
+/* Accès direct Étiquettes · Mes contenants depuis l'accueil (mobile d'abord) */
+.fieldShortcuts .labelsShortcut{font-weight:800;letter-spacing:.04em;border-width:2px}
+@media (max-width:640px){.fieldShortcuts .labelsShortcut{grid-column:1/-1;min-height:52px;font-size:1.05rem}}
+.pubNotice{opacity:1;text-align:center;padding:2rem 1rem}.pubNotice h1{font-size:1.4rem;margin:.2rem 0 .6rem}.pubNotice .pubId code{font-weight:700}

@@ -45,7 +45,7 @@ import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSet
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
 import { applyBackup, backupItemCount } from './backup.js'
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-client.js'
-import { fetchPublicInventory, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
+import { fetchPublicInventory, publicNoticeHtml, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
 import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut } from './supabase-client.js'
 import { syncMises, queuePhotoUpload, signedPhotoUrl } from './sync-core.js'
 import { parseCsvText, planInventoryImport, applyInventoryPlan, inventoryColumnMap } from './inventory-import.js'
@@ -1010,6 +1010,7 @@ $('#app').innerHTML=`
   <div class="searchbox"><input id="q" autocomplete="off" aria-label="Recherche MISES!" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="searchGo" class="searchGo" type="button" title="Lancer la recherche" aria-label="Lancer la recherche">→</button><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
   <section id="search" class="tab active searchImmediate" aria-label="Réponse à la recherche"><div id="searchResults"></div></section>
   <div class="quick fieldShortcuts" aria-label="Raccourcis terrain">
+    <button type="button" data-action="labels" class="labelsShortcut" data-testid="home-labels">🏷 ÉTIQUETTES</button>
     <button type="button" data-action="quick-add">⚡ Ajout rapide</button>
     <button type="button" data-action="case-photo">📷 Caisse par photo</button>
     <button type="button" data-action="voice-label">🎙 Étiquette vocale</button>
@@ -2179,6 +2180,7 @@ $('#filterSpareBtn')?.addEventListener('click', ()=>{
 
 $$('[data-action]').forEach(b=>b.onclick=()=>{
   const a=b.dataset.action
+  if(a==='labels'){openBatchPrint();return}
   if(a==='quick-add')openQuickAddFlow()
   if(a==='case-photo')$('#casePhotoInput').click()
   if(a==='voice-label')openVoiceLabelFlow()
@@ -2367,10 +2369,11 @@ async function openPublicInventory({caseId=''}={}){
   <div id="pubBody" data-testid="pub-body"><p class="hint">Chargement…</p></div>`
   $('#pubClose').onclick=()=>{root.hidden=true;document.body.classList.remove('pubOpen');history.replaceState(null,'',location.pathname)}
   try{publicInventoryCache=publicInventoryCache||await fetchPublicInventory({url:SUPABASE_URL,key:SUPABASE_PUBLISHABLE_KEY})}
-  catch(error){$('#pubBody').innerHTML=`<div class="pubEmpty">${esc(error.message||'Inventaire indisponible hors ligne')}</div>`;return}
+  catch(error){$('#pubBody').innerHTML=publicNoticeHtml(error.kind||'unavailable',caseId,esc);const r=$('[data-pub-retry]',root);if(r)r.onclick=()=>openPublicInventory({caseId});return}
   const inv=publicInventoryCache,photoUrl=path=>publicPhotoUrl(SUPABASE_URL,path)
   const showCase_=(id,query='')=>{
     $('#pubBody').innerHTML=publicContainerHtml(inv,id,esc,{query,photoUrl})
+    const retry=$('[data-pub-retry]',root);if(retry)retry.onclick=()=>{publicInventoryCache=null;openPublicInventory({caseId:id})}
     history.replaceState(null,'',`${location.pathname}?case=${encodeURIComponent(id)}`)
     const box=$('#pubCaseSearch');if(box){box.oninput=()=>{const v=box.value;showCase_(id,v);const nb=$('#pubCaseSearch');nb.focus();nb.setSelectionRange(v.length,v.length)}}
     wire()

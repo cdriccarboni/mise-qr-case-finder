@@ -34,3 +34,7 @@ test('modifier le texte ne change pas la cible du QR', () => {
   const a = renderContainerLabelRgba({ id: 'CASE-X', name: 'Nom 1' }), b = renderContainerLabelRgba({ id: 'CASE-X', name: 'Autre nom bien plus long' })
   assert.equal(a.qrText, b.qrText); assert.equal(a.qrText, 'https://cdriccarboni.github.io/mise-qr-case-finder/?case=CASE-X')
 })
+test('régression décodeur : QR d’un ID réel (KIT-ACOUSTIQUE-CC) décodé, matrice exacte', () => {
+  const img = renderContainerLabelRgba({ id: 'KIT-ACOUSTIQUE-CC', name: 'KIT ACOUSTIQUE CÉCÉ', subtitle: 'KIT-ACOUSTIQUE-CC' })
+  assert.equal(decodeAnyOrientation(img), containerQrUrl('KIT-ACOUSTIQUE-CC'))
+})
