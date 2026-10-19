@@ -35,7 +35,7 @@ public final class MainActivity extends Activity {
     private static final String MISE_ORIGIN = "https://cdriccarboni.github.io";
     private static final String PWA_HOST = "cdriccarboni.github.io";
     private static final String PWA_PATH = "/mise-qr-case-finder";
-    private static final String SUPABASE_HOST = "jemqozyqqsgabljnhfvn.supabase.co";
+    private static final String SUPABASE_HOST = "errsklrioqfovhkdiejd.supabase.co";
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private NativePrinterBridge printerBridge;
@@ -78,7 +78,7 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " MISES-Android/0.4.0-beta.23");
+        settings.setUserAgentString(settings.getUserAgentString() + " MISES-Android/0.4.0-beta.24");
 
         final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))

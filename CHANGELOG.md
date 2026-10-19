@@ -1,3 +1,7 @@
+## 0.4.0-beta.24 — 19 octobre 2026 (#45)
+
+- Supabase : l’app pointe désormais vers le projet `errsklrioqfovhkdiejd` (migrations MISES! appliquées) avec sa clé publiable publique ; ancien projet `jemqozyqqsgabljnhfvn` abandonné (web, Android : hôte de vérification e-mail / App Link).
+
 ## 0.4.0-beta.23 — 19 octobre 2026 (#45)
 
 - **Étiquettes sans aucune étape** : les 6 contenants MISES! (ID + nom d’étiquette uniquement, aucun objet) sont intégrés à l’app — 🏷 ÉTIQUETTES → IMPRIMER, sans compte, sans import, hors ligne. Fusion par ID avec les contenants locaux (jamais de doublon, nom choisi localement prioritaire). QR inchangés `?case=<id>`.

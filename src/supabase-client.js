@@ -1,5 +1,5 @@
-const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || 'https://jemqozyqqsgabljnhfvn.supabase.co'
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_NKPFAOyp7XXDDzlrLDBUeg_Btd0fIZi'
+const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || 'https://errsklrioqfovhkdiejd.supabase.co'
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_qbnK4af5P24uDmmmIYUhWg_nN-iGWgC'
 const SUPABASE_EMAIL_REDIRECT_URL = import.meta.env?.VITE_SUPABASE_EMAIL_REDIRECT_URL || 'https://cdriccarboni.github.io/mise-qr-case-finder/'
 
 let clientPromise

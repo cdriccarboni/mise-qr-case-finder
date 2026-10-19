@@ -35,7 +35,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="jemqozyqqsgabljnhfvn.supabase.co" android:pathPrefix="/auth/v1/verify" />
+                <data android:scheme="https" android:host="errsklrioqfovhkdiejd.supabase.co" android:pathPrefix="/auth/v1/verify" />
             </intent-filter>
         </activity>
     </application>
