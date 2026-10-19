@@ -140,9 +140,10 @@ public final class NativePrinterBridge {
                 for (int i = 0; i < images.length(); i++) {
                     Bitmap bitmap = decodeDataUrl(images.getString(i));
                     if (bitmap == null) throw new IllegalArgumentException("Image d’étiquette illisible");
-                    writeYhkRaster(out, bitmap);
+                    emit("Étiquette " + (i + 1) + "/" + images.length() + " en cours…");
+                    long wait = writeYhkRaster(out, bitmap);
                     bitmap.recycle();
-                    Thread.sleep(250);
+                    Thread.sleep(wait); // job suivant (ESC @) ou fermeture seulement après l'impression complète
                 }
                 out.flush();
                 emit(images.length() == 1 ? "Étiquette envoyée à l’imprimante." : images.length() + " étiquettes envoyées à l’imprimante.");
@@ -178,49 +179,34 @@ public final class NativePrinterBridge {
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
     }
 
-    private void writeYhkRaster(OutputStream out, Bitmap source) throws Exception {
+    /** Un job autonome par étiquette, en bandes avec pause (voir YhkJobEncoder) ; renvoie la durée d'impression estimée. */
+    private long writeYhkRaster(OutputStream out, Bitmap source) throws Exception {
         Bitmap raster = prepareBitmap(source);
-        int height = raster.getHeight();
-        int bytesPerRow = WIDTH / 8;
-        ByteArrayOutputStream data = new ByteArrayOutputStream(bytesPerRow * height);
-        int[] row = new int[WIDTH];
-        for (int y = 0; y < height; y++) {
-            // Rotate 180° to match the WalkPrint/YHK paper exit orientation.
-            raster.getPixels(row, 0, WIDTH, 0, height - 1 - y, WIDTH, 1);
-            for (int xb = 0; xb < bytesPerRow; xb++) {
-                int value = 0;
-                for (int bit = 0; bit < 8; bit++) {
-                    int color = row[WIDTH - 1 - (xb * 8 + bit)];
-                    int luminance = (Color.red(color) * 299 + Color.green(color) * 587 + Color.blue(color) * 114) / 1000;
-                    if (luminance < 150) value |= (0x80 >> bit);
-                }
-                data.write(value);
-            }
-        }
-
-        out.write(new byte[]{0x1b, 0x40}); // ESC @ : initialise
-        out.flush();
-        Thread.sleep(180);
-        out.write(new byte[]{0x1d, 0x49, (byte)0xf0, 0x19}); // observed YHK start sequence
-        out.flush();
-        Thread.sleep(180);
-        out.write(new byte[]{0x1d, 0x76, 0x30, 0x00, 0x30, 0x00, (byte)(height & 0xff), (byte)((height >> 8) & 0xff)}); // GS v 0, 384 px
-        out.write(data.toByteArray());
-        out.write(new byte[]{0x0a,0x0a,0x0a,0x0a});
-        out.flush();
+        int w = raster.getWidth(), h = raster.getHeight();
+        int[] px = new int[w * h];
+        raster.getPixels(px, 0, w, 0, 0, w, h);
         raster.recycle();
+        boolean header = true;
+        for (byte[] chunk : YhkJobEncoder.chunks(px, w, h)) {
+            out.write(chunk);
+            out.flush();
+            Thread.sleep(header ? 180 : 60);
+            if (chunk.length > 8) header = false;
+        }
+        return YhkJobEncoder.printMillis(h);
     }
 
     private Bitmap prepareBitmap(Bitmap source) {
+        // L'étiquette approuvée fait déjà 384 pts : copie exacte, sans rééchantillonnage ni lissage.
+        if (source.getWidth() == WIDTH) return source.copy(Bitmap.Config.ARGB_8888, false);
         float scale = Math.min(1f, WIDTH / (float) source.getWidth());
         int targetWidth = Math.max(1, Math.round(source.getWidth() * scale));
         int targetHeight = Math.max(1, Math.round(source.getHeight() * scale));
-        Bitmap scaled = Bitmap.createScaledBitmap(source, targetWidth, targetHeight, true);
+        Bitmap scaled = Bitmap.createScaledBitmap(source, targetWidth, targetHeight, false);
         Bitmap canvasBitmap = Bitmap.createBitmap(WIDTH, targetHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(canvasBitmap);
         canvas.drawColor(Color.WHITE);
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        canvas.drawBitmap(scaled, Math.max(0, (WIDTH - targetWidth) / 2f), 0, paint);
+        canvas.drawBitmap(scaled, Math.max(0, (WIDTH - targetWidth) / 2f), 0, null);
         if (scaled != source) scaled.recycle();
         return canvasBitmap;
     }
