@@ -39,3 +39,4 @@ export async function supabaseSignOut(){
   const {error}=await supabase.auth.signOut()
   if(error) throw error
 }
+export { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY }

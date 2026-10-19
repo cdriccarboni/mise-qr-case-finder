@@ -1,13 +1,13 @@
 import { DATA_STORES } from './data-bruitage.js'
 import { isOwnerPrivateAccount } from './owner-private.js'
 import { supabaseClient, supabaseSession } from './supabase-client.js'
+import { decideSync, conflictEntry, appendConflicts, stripSyncMeta, localTime } from './sync-decision.js'
+import { photoRemotePath, QUEUE_ID, enqueuePhoto, markPhotoDone, markPhotoFailed, pendingPhotos } from './photos.js'
 
 const BUCKET='mises-photos'
 const SYNC_STORES=[...DATA_STORES,'kits','learnings'].filter(name=>name!=='settings')
-const photoField='photo'
 
 const isoNow=()=>new Date().toISOString()
-const localTime=row=>row?.updatedAt||row?.createdAt||'1970-01-01T00:00:00.000Z'
 const clone=value=>structuredClone(value)
 
 function dataUrlParts(value){
@@ -53,40 +53,6 @@ async function ensurePersonalSpace(supabase,user){
   if(memberError) throw memberError
   return space.id
 }
-async function uploadPhoto(supabase,spaceId,store,row){
-  const parsed=dataUrlParts(row?.[photoField])
-  if(!parsed) return null
-  const path=remotePath(spaceId,store,row.id)
-  const blob=await dataUrlBlob(row[photoField])
-  const {error}=await supabase.storage.from(BUCKET).upload(path,blob,{
-    upsert:true,contentType:parsed.mime,cacheControl:'31536000'
-  })
-  if(error) throw error
-  const {error:assetError}=await supabase.from('mises_assets').upsert({
-    space_id:spaceId,store_name:store,record_id:row.id,path,mime_type:parsed.mime,bytes:blob.size,created_by:(await supabaseSession()).user.id,updated_at:isoNow()
-  },{onConflict:'path'})
-  if(assetError) throw assetError
-  return path
-}
-async function preparePayload(supabase,spaceId,store,row){
-  const payload=clone(row)
-  if(payload.photo){
-    const photoAssetPath=await uploadPhoto(supabase,spaceId,store,row)
-    if(photoAssetPath){
-      delete payload.photo
-      payload.photoAssetPath=photoAssetPath
-    }
-  }
-  return payload
-}
-async function hydratePhoto(supabase,payload){
-  if(!payload?.photoAssetPath||payload.photo) return payload
-  const {data,error}=await supabase.storage.from(BUCKET).download(payload.photoAssetPath)
-  if(error) throw error
-  const next=clone(payload)
-  next.photo=await blobDataUrl(data)
-  return next
-}
 // Supabase/PostgREST limits the number of rows returned per request (often 1,000).
 // Read every page before comparing any local record: a partial cloud snapshot could
 // otherwise make an existing remote entry look missing and overwrite it.
@@ -107,41 +73,142 @@ export async function fetchAllRemoteRecords(supabase,spaceId,{pageSize=500}={}){
   }
 }
 
+async function uploadBlob(supabase,spaceId,store,recordId,path,dataUrl,kind='photo'){
+  const parsed=dataUrlParts(dataUrl)
+  if(!parsed) return null
+  const blob=await dataUrlBlob(dataUrl)
+  const {error}=await supabase.storage.from(BUCKET).upload(path,blob,{upsert:true,contentType:parsed.mime,cacheControl:'31536000'})
+  if(error) throw error
+  const {error:assetError}=await supabase.from('mises_assets').upsert({
+    space_id:spaceId,store_name:store,record_id:recordId,path,mime_type:parsed.mime,bytes:blob.size,kind,created_by:(await supabaseSession()).user.id,updated_at:isoNow()
+  },{onConflict:'path'})
+  if(assetError) throw assetError
+  return path
+}
+/** Envoie les photos locales (photos[] + ancienne photo unique) ; le payload distant ne garde que chemins + miniatures. */
+async function preparePayload(supabase,spaceId,store,row){
+  const payload=stripSyncMeta(clone(row))
+  if(Array.isArray(payload.photos)){
+    for(const p of payload.photos){
+      if(!p.remotePath&&p.dataUrl){
+        p.remotePath=await uploadBlob(supabase,spaceId,store,row.id,photoRemotePath(spaceId,store,row.id,p.id),p.dataUrl)
+      }
+      if(p.remotePath){delete p.dataUrl;p.status='uploaded'}
+    }
+    payload.photoAssetPaths=payload.photos.map(p=>p.remotePath).filter(Boolean)
+  }
+  if(payload.photo){
+    const legacy=payload.photos?.find(p=>p.legacy&&p.remotePath)
+    const path=legacy?.remotePath||await uploadBlob(supabase,spaceId,store,row.id,remotePath(spaceId,store,row.id),payload.photo)
+    if(path){delete payload.photo;payload.photoAssetPath=path}
+  }
+  return payload
+}
+async function hydratePhoto(supabase,payload){
+  if(!payload?.photoAssetPath||payload.photo) return payload
+  const next=clone(payload)
+  try{
+    const {data,error}=await supabase.storage.from(BUCKET).download(payload.photoAssetPath)
+    if(error) throw error
+    next.photo=await blobDataUrl(data)
+  }catch{ /* hors-ligne : la miniature reste, l'original sera relu via URL signée */ }
+  return next
+}
+/** URL signée (bucket privé). */
+export async function signedPhotoUrl(path,{expiresIn=3600}={}){
+  const supabase=await supabaseClient()
+  const {data,error}=await supabase.storage.from(BUCKET).createSignedUrl(path,expiresIn)
+  if(error) throw error
+  return data.signedUrl
+}
+/** Vide la file hors-ligne : chaque photo locale est envoyée puis marquée remotePath dans la fiche. */
+async function flushPhotoQueue(db,supabase,spaceId){
+  const entry=await db.get('settings',QUEUE_ID)
+  let queue=entry?.queue||[];let sent=0
+  for(const item of pendingPhotos(queue)){
+    try{
+      const row=await db.get(item.store,item.recordId)
+      const photo=row?.photos?.find(p=>p.id===item.photoId)
+      if(!photo||photo.remotePath||!photo.dataUrl){queue=markPhotoDone(queue,item);continue}
+      photo.remotePath=await uploadBlob(supabase,spaceId,item.store,row.id,photoRemotePath(spaceId,item.store,row.id,photo.id),photo.dataUrl)
+      photo.status='uploaded'
+      row.updatedAt=isoNow()
+      await db.put(item.store,row)
+      queue=markPhotoDone(queue,item);sent++
+    }catch(error){queue=markPhotoFailed(queue,item,error)}
+  }
+  await db.put('settings',{id:QUEUE_ID,queue,at:isoNow()})
+  return sent
+}
+export async function queuePhotoUpload(db,item){
+  const entry=await db.get('settings',QUEUE_ID)
+  await db.put('settings',{id:QUEUE_ID,queue:enqueuePhoto(entry?.queue||[],item),at:isoNow()})
+}
+
+async function pushRecord(supabase,spaceId,store,row,cloud,base,session){
+  const payload=await preparePayload(supabase,spaceId,store,row)
+  const lt=localTime(row), revision=(cloud?.revision||0)+1
+  if(!cloud){
+    const {error}=await supabase.from('mises_records').insert({space_id:spaceId,store_name:store,record_id:row.id,payload,updated_by:session.user.id,updated_at:lt,revision:1})
+    if(error){ if(error.code==='23505') return {conflict:true}; throw error }
+    return {revision:1,payload}
+  }
+  // Mise à jour conditionnelle : échoue (0 ligne) si quelqu'un a poussé entre-temps.
+  const {data,error}=await supabase.from('mises_records')
+    .update({payload,updated_by:session.user.id,updated_at:lt,revision})
+    .eq('space_id',spaceId).eq('store_name',store).eq('record_id',row.id).eq('revision',cloud.revision||0)
+    .select('revision')
+  if(error) throw error
+  if(!data?.length) return {conflict:true}
+  return {revision,payload}
+}
+
 export async function syncMises(db,{onProgress=()=>{}}={}){
   const session=await supabaseSession()
-  if(!session?.user) return {ok:false,reason:'not-authenticated',pushed:0,pulled:0,photos:0}
+  if(!session?.user) return {ok:false,reason:'not-authenticated',pushed:0,pulled:0,photos:0,conflicts:0}
   const supabase=await supabaseClient()
   const spaceId=await ensurePersonalSpace(supabase,session.user)
+  let photos=await flushPhotoQueue(db,supabase,spaceId).catch(()=>0)
   const remote=await fetchAllRemoteRecords(supabase,spaceId)
   const remoteMap=new Map((remote||[]).map(r=>[`${r.store_name}::${r.record_id}`,r]))
-  let pushed=0,pulled=0,photos=0
-  const total=SYNC_STORES.reduce((n,s)=>n+1+n,0)
-  let step=0
+  let pushed=0,pulled=0,step=0
+  const conflicts=[]
+  const total=SYNC_STORES.length
   for(const store of SYNC_STORES){
     const localRows=await db.getAll(store)
     for(const row of localRows){
       if(!shouldSync(store,row,session)) continue
-      const key=`${store}::${row.id}`
-      const cloud=remoteMap.get(key)
-      const lt=localTime(row)
-      const rt=cloud?.updated_at||'1970-01-01T00:00:00.000Z'
-      if(!cloud || lt>rt){
-        const payload=await preparePayload(supabase,spaceId,store,row)
-        const {error}=await supabase.from('mises_records').upsert({
-          space_id:spaceId,store_name:store,record_id:row.id,payload,updated_by:session.user.id,updated_at:lt,revision:(cloud?.revision||0)+1
-        },{onConflict:'space_id,store_name,record_id'})
-        if(error) throw error
+      const cloud=remoteMap.get(`${store}::${row.id}`)
+      const decision=decideSync(row,cloud)
+      const now=isoNow()
+      if(decision.action==='push'){
+        const result=await pushRecord(supabase,spaceId,store,row,cloud,decision.base,session)
+        if(result.conflict){conflicts.push(conflictEntry(store,row,cloud));continue}
+        await db.put(store,{...row,photos:result.payload.photos??row.photos,_syncRevision:result.revision,_syncedAt:localTime(row)>now?localTime(row):now})
         pushed++
-        if(payload.photoAssetPath) photos++
-      }else if(rt>lt){
+        photos+=(result.payload.photoAssetPaths||[]).length
+      }else if(decision.action==='pull'){
         const payload=await hydratePhoto(supabase,cloud.payload)
-        await db.put(store,payload)
+        await db.put(store,{...payload,_syncRevision:cloud.revision||0,_syncedAt:localTime(payload)>now?localTime(payload):now})
         pulled++
-        if(payload.photoAssetPath) photos++
+      }else if(decision.action==='conflict'){
+        conflicts.push(conflictEntry(store,row,cloud))
+      }else if(decision.adopt&&cloud){
+        await db.put(store,{...row,_syncRevision:cloud.revision||0,_syncedAt:now})
       }
-      step++;onProgress({step,total,pushed,pulled,photos})
     }
+    // Fiches distantes absentes localement
+    for(const cloud of remote) if(cloud.store_name===store&&!cloud.deleted_at&&!(await db.get(store,cloud.record_id))){
+      const payload=await hydratePhoto(supabase,cloud.payload)
+      await db.put(store,{...payload,_syncRevision:cloud.revision||0,_syncedAt:isoNow()})
+      pulled++
+    }
+    step++;onProgress({step,total,pushed,pulled,photos,conflicts:conflicts.length})
   }
-  await db.put('settings',{id:'supabase-sync',spaceId,at:isoNow(),pushed,pulled,photos,status:'ok'})
-  return {ok:true,spaceId,pushed,pulled,photos}
+  if(conflicts.length){
+    const log=await db.get('settings','sync-conflicts')
+    await db.put('settings',{id:'sync-conflicts',entries:appendConflicts(log?.entries||[],conflicts),at:isoNow()})
+  }
+  await db.put('settings',{id:'supabase-sync',spaceId,at:isoNow(),pushed,pulled,photos,conflicts:conflicts.length,status:conflicts.length?'conflicts':'ok'})
+  return {ok:true,spaceId,pushed,pulled,photos,conflicts:conflicts.length}
 }
