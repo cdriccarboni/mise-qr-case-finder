@@ -1,3 +1,7 @@
+## 0.4.0-beta.26 — 19 octobre 2026 (#45)
+
+- Contenant intégré SAC-MICRO-02 renommé « PETIT SAC TECHNIQUE · MICRO » (ID et QR inchangés) ; empreinte d’étiquette approuvée mise à jour.
+
 ## 0.4.0-beta.25 — 19 octobre 2026 (#45)
 
 - Étiquette de contenant **unique et approuvée** partout : la fiche contenant (« Créer / imprimer le QR ») et l’impression d’un contenant utilisent désormais le même rendu que 🏷 ÉTIQUETTES (QR en haut, « mises! », nom sur 2 lignes, ID ; QR `?case=<id>`). L’ancien gabarit reste réservé aux objets.

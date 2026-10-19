@@ -4,7 +4,7 @@
  */
 export const BUILTIN_CONTAINERS = Object.freeze([
   { id: 'SAC-NOIR-TECH-01', name: 'SAC NOIR TECHNIQUE' },
-  { id: 'SAC-MICRO-02', name: 'PETIT SAC TECHNIQUE · MICRO BLEU' },
+  { id: 'SAC-MICRO-02', name: 'PETIT SAC TECHNIQUE · MICRO' },
   { id: 'SAC-VIE-QUOT-01', name: 'VIE QUOTIDIENNE — 1/2' },
   { id: 'SAC-VIE-QUOT-02', name: 'VIE QUOTIDIENNE — 2/2' },
   { id: 'SAC-ANIM-MUS-PERC-01', name: 'ANIMAUX · MUSIQUE · PERCUSSIONS' },
