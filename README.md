@@ -2,7 +2,7 @@
 
 MISES! — QR Case Finder · PWA de bruitage, inventaire et mises.
 
-Version en cours de validation : **0.4.0-beta.25** (Android versionCode 36).
+Version en cours de validation : **0.4.0-beta.25** (Android versionCode 37).
 
 Pour travailler dans Cursor : [docs/CURSOR.md](docs/CURSOR.md). Prise en main générale : [docs/COMMENCER.md](docs/COMMENCER.md). Dossier Play Console : [docs/PLAY-CONSOLE.md](docs/PLAY-CONSOLE.md).
 
