@@ -41,7 +41,7 @@ test('QR contenant -> page publique sans compte ; recherche globale ; écriture 
   await hit.locator('[data-pub-case]').click()
   await expect(page.locator('[data-testid="pub-title"]')).toHaveText('Valise fictive')
 
-  const status = await page.evaluate(async () => (await fetch('https://jemqozyqqsgabljnhfvn.supabase.co/rest/v1/mises_records', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"record_id":"x"}' })).status)
+  const status = await page.evaluate(async () => (await fetch('https://errsklrioqfovhkdiejd.supabase.co/rest/v1/mises_records', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"record_id":"x"}' })).status)
   expect(status).toBe(401)
   expect(writes).toEqual(['POST'])
   await context.close()
