@@ -45,7 +45,11 @@ import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSet
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
 import { applyBackup, backupItemCount } from './backup.js'
 import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut } from './supabase-client.js'
-import { syncMises } from './sync-core.js'
+import { syncMises, queuePhotoUpload, signedPhotoUrl } from './sync-core.js'
+import { parseCsvText, planInventoryImport, applyInventoryPlan, inventoryColumnMap } from './inventory-import.js'
+import { buildCentralIndex, centralSearch } from './central-search.js'
+import { migrateObjectPhotos, addPhoto, compressImage } from './photos.js'
+import { csvMappingHtml, csvPreviewHtml, centralResultsHtml, photoGalleryHtml } from './v2-ui.js'
 migrateLocalKeys()
 migrateSessionKeys()
 applyInk(localStorage.getItem(LOCAL_KEYS.ink))
@@ -188,12 +192,13 @@ async function migrateDataBruitage(){
 }
 await migrateDataBruitage()
 
-let objects=[],cases=[],kits=[],mises=[],learnings=[],catalogueSounds=[],catalogueObjectSounds=[],activeMise=null, scanner=null, photoTargetMiseId=null, pendingExerciseMinutes=1, lastParticipantCount=1
+let centralIndex=null,objects=[],cases=[],kits=[],mises=[],learnings=[],catalogueSounds=[],catalogueObjectSounds=[],activeMise=null, scanner=null, photoTargetMiseId=null, pendingExerciseMinutes=1, lastParticipantCount=1
 let scanPurpose='browse',moveScanState=null
 let projectSyncFailed=false
 async function refresh(){
   const data=await readData(db)
-  objects=enrichObjects(data)
+  objects=enrichObjects(data).map(migrateObjectPhotos)
+  centralIndex=null
   catalogueSounds=data.sounds||[]
   catalogueObjectSounds=data.objectSounds||[]
   cases=await db.getAll('cases')
@@ -663,6 +668,7 @@ function showObjectScanned(o){
   d.innerHTML=`<div class="form objectScannedView">
     <div class="dialoghead"><div><b>${esc(o.name)}${o.nickname?` — ${esc(o.nickname.toUpperCase())}`:''}</b><small>${esc(provenanceLabel(o.provenance||'user-document'))}</small></div><button id="closeScannedObj" class="ghost" type="button">×</button></div>
     ${o.photo?`<img class="photoPreview" src="${o.photo}" alt="${esc(o.name)}">`:''}
+    ${photoGalleryHtml(o,esc)}<button id="scanAddPhoto" type="button" class="ghost">＋ Photo</button><input id="scanPhotoInput" type="file" accept="image/*" capture="environment" multiple hidden>
     <div class="scannedInfo">
       <p class="scannedLocation">Emplacement : <b>${esc(path)}</b> ${hasSpare?'<span class="spareBadge">SPARE</span>':''}</p>
       ${(o.aliases||[]).length?`<p class="hint">Alias / surnoms : ${esc(o.aliases.join(', '))}</p>`:''}
@@ -688,6 +694,7 @@ function showObjectScanned(o){
   $('#scanMove').onclick=()=>{d.close();openMoveModal(o)}
   $('#scanPrintQr').onclick=()=>{d.close();openEntityLabel('object',o)}
   $('#scanAddList').onclick=()=>{d.close();addToActiveMise(o.id)}
+  wirePhotoGallery(o,d)
 }
 function pageOrigin(){return location.href.split('?')[0].split('#')[0]}
 function downloadLabelPng(dataUrl, name='Étiquette'){
@@ -1016,7 +1023,7 @@ $('#app').innerHTML=`
  <details class="createGoals"><summary>Créer</summary><div><span class="inventoryNavGroup inventoryOnly"><button id="goalQuickAdd" type="button">⚡ Ajout rapide</button><button id="goalCasePhoto" type="button">📷 Caisse par photo</button><button id="goalVoiceLabel" type="button">🎙 Étiquette vocale</button><button id="goalAddObjectSimple" type="button">+ Objet</button><button id="goalAddCaseSimple" type="button">+ Contenant</button><button id="goalQrSimple" type="button">Étiquettes QR</button></span><button id="goalPlay" class="foleyOnly" type="button">Jouer</button><button id="goalWorkshop" class="foleyOnly" type="button">Préparer un atelier</button><button id="goalChallenge" class="foleyOnly" type="button">Défi bruitage</button><button id="goalPublic" class="foleyOnly" data-tab="publicLibrary" type="button">Bibliothèque publique</button><button id="goalFabrications" class="foleyOnly" data-tab="fabrications" type="button">Fabrications</button><button id="goalActivities" class="foleyOnly" data-tab="activities" type="button">Activités pédagogiques</button><button id="goalPedagogySpaces" class="foleyOnly" type="button">Atelier & 10 jeux</button><button id="goalRandomUniverse" class="foleyOnly" type="button">Univers aléatoire</button><button id="goalHands" class="foleyOnly" type="button">Crée ton bruitage</button><button id="goalExercise" class="foleyOnly" type="button">Exercice</button><button id="goalGroupPhoto" class="foleyOnly" type="button">Photo de groupe</button><button id="goalUniverse" class="foleyOnly" type="button">Univers d’une photo</button></div></details>
  <details><summary>Ranger</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
- <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalPromoStickers" type="button">Stickers QR · MISES!</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
+ <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalPromoStickers" type="button">Stickers QR · MISES!</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalCsvImport" type="button">Importer un inventaire CSV</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><div class="row"><button id="filterSpareBtn" class="ghost" type="button">Filtrer SPARE</button><button id="quickAddObjectBtn" class="ghost" type="button">⚡ Ajout rapide</button><button id="addObject">+ Objet</button></div></div><div id="objectCards" class="cards"></div></section>
 <section id="halloween" class="tab"><div class="panel"><h2>🎭 Ambiances · Explorer les bruitages</h2><p class="hint">Des pistes sonores classées par thème, sans inventer d’objets dans tes caisses. Les recettes publiques sont des idées ; seul ton inventaire indique ce que tu possèdes.</p><div class="grid2"><label>Univers<select id="themePack" aria-label="Choisir un univers sonore"></select></label><label>Rechercher dans<select id="themeSource" aria-label="Source des résultats"><option value="all">Tout · stock et bibliothèque</option><option value="mine">Mon inventaire uniquement</option><option value="public">Recettes et ressources publiques</option></select></label></div><div id="halloweenThemes" class="row" aria-label="Sous-ambiances"></div><label>Affiner les résultats<input id="halloweenFilter" type="text" inputmode="search" placeholder="Ex. grincement, grelot, pluie, créature…"></label><div id="halloweenResults" aria-live="polite"></div></div></section>
@@ -1057,7 +1064,7 @@ $('#app').innerHTML=`
   <div id="preferencesGoogleState" class="preferenceState"><b>Google Drive</b><span>Non connecté</span></div>
   <button id="preferencesGoogle" type="button">Raccorder Google Drive</button>
   <div id="folderDropZone" class="folderDropZone" tabindex="0"><b>Dossier de travail</b><span id="folderLinkState">Choisis un dossier local pour préparer un lot d’import. Aucun fichier source ne sera modifié.</span><small>PDF · Word · Excel · ODS · CSV/TSV · JSON · Markdown · ZIP · images</small><input id="folderDropInput" type="file" webkitdirectory multiple hidden><button id="chooseFolder" type="button" class="ghost">Choisir un dossier</button></div>
-  <div class="preferenceActionBlock"><b>Données locales</b><small>La sauvegarde contient la base privée, les mises, kits, réglages et apprentissages de cet appareil.</small><div class="row"><button id="preferencesBackup" type="button">SAUVEGARDER</button><button id="preferencesRestore" type="button" class="ghost">IMPORTER UNE SAUVEGARDE</button></div></div>
+  <div class="preferenceActionBlock"><b>Données locales</b><small>La sauvegarde contient la base privée, les mises, kits, réglages et apprentissages de cet appareil.</small><div class="row"><button id="preferencesBackup" type="button">SAUVEGARDER</button><button id="preferencesRestore" type="button" class="ghost">IMPORTER UNE SAUVEGARDE</button><button id="preferencesCsvImport" type="button" class="ghost">IMPORTER UN CSV</button></div></div>
   <div class="preferenceActionBlock"><b>Actualisation de la PWA</b><small>Si la version reste ancienne malgré le message de mise à jour, utilise la page de réparation. Ton inventaire local est conservé.</small><a id="pwaRecoveryLink" href="${MISES_RECOVERY_URL}" target="_self" rel="noopener noreferrer">Réparer la mise à jour sans effacer mes données ↗</a></div>\n  <div class="preferenceActionBlock"><b>Index global</b><div id="indexState" class="hint">Calcul de l’index…</div><div class="row"><button id="preferencesIndexState" type="button" class="ghost">ÉTAT DE L’INDEX</button><button id="preferencesRebuildIndex" type="button" class="ghost">RECONSTRUIRE L’INDEX</button></div></div>
   <div class="preferenceActionBlock"><b>MISES Vision</b><div id="visionState" class="hint">Vision standard disponible · Vision avancée non installée</div></div>
   <button id="preferencesShare" type="button" class="ghost">Partager</button>
@@ -1127,7 +1134,9 @@ function renderSearch(target='#searchResults'){
     $(target).innerHTML=''
     return
   }
-  let h=answer?answerBlock(answer,esc):''
+  if(!centralIndex)centralIndex=buildCentralIndex({objects,cases,sounds:catalogueSounds,objectSounds:catalogueObjectSounds})
+  let h=centralResultsHtml(centralSearch(centralIndex,q),esc)
+  h+=answer?answerBlock(answer,esc):''
   const entityCount=entities.cases.length+entities.kits.length+entities.mises.length
   if(entityCount){
     h+=`<div class="resultHead"><b>${entityCount} contenant${entityCount>1?'s':''} · kit${entityCount>1?'s':''} · mise${entityCount>1?'s':''}</b><span>Accès direct depuis la recherche globale.</span></div>`
@@ -1146,6 +1155,7 @@ function renderSearch(target='#searchResults'){
     <div class="thumb">·</div><div><h3>${esc(i.name)}</h3><p>${(i.sounds||[]).map(chip).join(' ')}</p>
     <small>Source externe · ${esc(i.source||'base de référence')} · pas un document de l’utilisateur${i.technique?' · toucher pour voir la technique':''}</small></div><div class="resultActions">${i.technique?`<button class="miniAction" type="button" data-technique-button="${esc(i.id||i.name)}" title="Comment faire" aria-label="Comment faire">?</button>`:''}<button class="plus" type="button" data-idea="${esc(i.id||i.name)}" title="Ajouter à mon stock" aria-label="Ajouter à mon stock">+</button></div></article>`).join('')
   $(target).innerHTML=h
+  $$('[data-central-case]',$(target)).forEach(b=>b.onclick=()=>showCase(b.dataset.centralCase))
   $$('[data-open]',$(target)).forEach(b=>b.onclick=()=>openObject(objectBy(b.dataset.open)||{id:b.dataset.open}))
   $$('[data-add]',$(target)).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.add))
   $$('[data-fav]',$(target)).forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.fav))
@@ -1941,6 +1951,7 @@ $('#closePreferences').onclick=()=>$('#preferencesDlg').close()
 $('#preferencesGoogle').onclick=()=>connectGoogle()
 $('#preferencesBackup').onclick=()=>$('#backupBtn').click()
 $('#preferencesRestore').onclick=()=>$('#restoreInput').click()
+$('#preferencesCsvImport').onclick=()=>openCsvImport()
 $('#preferencesIndexState').onclick=()=>openIndexDiagnostics()
 $('#preferencesRebuildIndex').onclick=()=>{refreshDiagnostics();toast('Index reconstruit localement · données métier inchangées')}
 $('#chooseFolder').onclick=()=>$('#folderDropInput').click()
@@ -2017,6 +2028,7 @@ document.addEventListener('click',event=>{
 })
 $('#goalBackup').onclick=()=>$('#backupBtn').click()
 $('#goalRestore').onclick=()=>$('#restoreInput').click()
+$('#goalCsvImport').onclick=()=>openCsvImport()
 $('#goalGroupPhoto').onclick=()=>$('#groupPhotoInput').click()
 $('#goalHands').onclick=()=>{$('#handsPhotoInput').click()}
 $('#goalUniverse').onclick=()=>$('#universePhotoInput').click()
@@ -2270,3 +2282,70 @@ else if(params.get('kit'))setTimeout(()=>showKit(params.get('kit')),250)
 else if(params.get('mise'))setTimeout(()=>{const found=miseBy(params.get('mise'));if(found)openMise(found)},250)
 else if(params.get('object'))setTimeout(()=>{const o=objectBy(params.get('object'));if(o)openObject(o)},250)
 window.__mise={version:APP_VERSION,ingestQrImage,parseScannedTarget,handleBack:handleBackNavigation,openPedagogyModal}
+
+// ===== V2 : photos multiples =====
+function wirePhotoGallery(o,d){
+  const btn=$('#scanAddPhoto',d),input=$('#scanPhotoInput',d)
+  if(!btn||!input)return
+  btn.onclick=()=>input.click()
+  input.onchange=async()=>{
+    let current=await db.get('objects',o.id)||o
+    for(const file of input.files||[]){
+      try{
+        const compressed=await compressImage(file)
+        const res=addPhoto(current,compressed);current=res.object
+        await db.put('objects',current)
+        await queuePhotoUpload(db,{store:'objects',recordId:current.id,photoId:res.photo.id})
+      }catch(error){toast('Photo illisible')}
+    }
+    toast('Photo(s) enregistrée(s) · envoi à la prochaine synchro');await refresh();render();d.close()
+  }
+  $$('img[data-remote]',d).forEach(async img=>{try{img.src=await signedPhotoUrl(img.dataset.remote)}catch{}})
+}
+
+// ===== V2 : import CSV inventaire =====
+async function openCsvImport(){
+  const d=$('#modal')
+  d.innerHTML=`<div class="form csvImport"><div class="dialoghead"><div><b>Importer un inventaire CSV</b><small>Aperçu obligatoire · sauvegarde JSON automatique avant écriture · rien n'est supprimé</small></div><button id="closeCsv" class="ghost" type="button">×</button></div>
+  <input id="csvFile" type="file" accept=".csv,text/csv,text/plain" data-testid="csv-file">
+  <div id="csvMap"></div><div id="csvPreview"></div>
+  <label class="check"><input id="csvApplyUpdates" type="checkbox"><span>Appliquer aussi les conflits (complète sans effacer)</span></label>
+  <div class="row"><button id="csvApply" type="button" disabled>Importer</button></div><p id="csvStatus" class="hint" data-testid="csv-status"></p></div>`
+  d.showModal()
+  $('#closeCsv').onclick=()=>d.close()
+  let parsed=null,plan=null,columns=null
+  const replan=()=>{
+    try{
+      plan=planInventoryImport(parsed.rows,{objects,cases},columns)
+      $('#csvPreview').innerHTML=csvPreviewHtml(plan,esc)
+      $('#csvApply').disabled=!(plan.summary.create||plan.summary.review)
+    }catch(error){$('#csvPreview').innerHTML=`<p class="hint">${esc(error.message)}</p>`;$('#csvApply').disabled=true}
+  }
+  $('#csvFile').onchange=async e=>{
+    const file=e.target.files?.[0];if(!file)return
+    parsed=parseCsvText(await file.text())
+    columns=inventoryColumnMap(parsed.headers)
+    $('#csvMap').innerHTML=csvMappingHtml(parsed.headers,columns,esc)
+    $$('[data-map]',d).forEach(sel=>sel.onchange=()=>{columns={...columns,[sel.dataset.map]:sel.value||undefined};replan()})
+    replan()
+  }
+  $('#csvApply').onclick=async()=>{
+    if(!plan)return
+    $('#csvApply').disabled=true
+    const backup=await privateStatePayload()
+    await db.put('settings',{id:'backup-before-csv-import',at:new Date().toISOString(),payload:{...backup,settings:[]}})
+    try{
+      const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob)
+      const a=document.createElement('a');a.href=url;a.download=`MISES-backup-avant-import-${Date.now()}.json`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)
+    }catch{}
+    const result=applyInventoryPlan(plan,{objects,cases},{applyUpdates:$('#csvApplyUpdates').checked,sourceId:$('#csvFile').files?.[0]?.name||'csv'})
+    const tx=db.transaction(['cases','objects'],'readwrite')
+    for(const c of result.cases)tx.objectStore('cases').put(c)
+    for(const o of result.objects)tx.objectStore('objects').put(o)
+    await tx.done
+    $('#csvStatus').textContent=`Import terminé : ${result.objects.length} fiche(s) écrite(s), ${result.cases.length} contenant(s) créé(s), ${result.conflicts.length} conflit(s) non appliqué(s). Sauvegarde enregistrée.`
+    await refresh();render();if(typeof scheduleDriveSync==='function')scheduleDriveSync()
+    replan()
+  }
+}
+window.__mises_v2={openCsvImport}
