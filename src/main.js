@@ -2316,6 +2316,9 @@ async function finishSupabaseAuthReturn(){
     try{await completeSupabaseAuthFromUrl(href);supabaseSyncAnnounce=true;toast('☁ Connectée · synchronisation…')}
     catch(error){toast(`☁ Connexion non terminée : ${error instanceof Error?error.message:'lien invalide ou expiré'}. Redemande un lien depuis ☁ dans l’app.`)}
   }
+  // Sans session enregistrée, ne charge pas le client Supabase (aucune requête réseau au démarrage).
+  let stored=false;try{stored=Object.keys(localStorage).some(k=>/^sb-.*-auth-token/.test(k))}catch{}
+  if(!stored)return
   const session=await supabaseSession().catch(()=>null)
   if(session?.user){await ensureSupabaseAuthListener();await updateSupabaseStatus();scheduleSupabaseSync()}
 }
