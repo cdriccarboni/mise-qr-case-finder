@@ -1,3 +1,7 @@
+## 0.4.0-beta.23 — 19 octobre 2026 (#45)
+
+- **Étiquettes sans aucune étape** : les 6 contenants MISES! (ID + nom d’étiquette uniquement, aucun objet) sont intégrés à l’app — 🏷 ÉTIQUETTES → IMPRIMER, sans compte, sans import, hors ligne. Fusion par ID avec les contenants locaux (jamais de doublon, nom choisi localement prioritaire). QR inchangés `?case=<id>`.
+
 ## 0.4.0-beta.22 — 19 octobre 2026 (#45)
 
 - Accueil : bouton direct **🏷 ÉTIQUETTES** (pleine largeur sur mobile) → Étiquettes · Mes contenants (Tout sélectionner, IMPRIMER LA SÉLECTION).
