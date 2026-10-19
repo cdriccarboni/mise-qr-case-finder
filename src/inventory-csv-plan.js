@@ -3,7 +3,7 @@ import { textDigest } from './ids.js'
 const tidy = value => String(value ?? '').trim()
 export const normKey = value => tidy(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 const key = normKey
-export const INVENTORY_FIELDS = ['id', 'name', 'container', 'compartment', 'quantity', 'category', 'status', 'length', 'color', 'location', 'notes']
+export const INVENTORY_FIELDS = ['id', 'name', 'container', 'compartment', 'quantity', 'category', 'status', 'length', 'color', 'location', 'notes', 'containerName']
 const aliases = {
   name: ['nom', 'objet', 'article', 'designation', 'désignation', 'materiel', 'matériel'],
   container: ['contenant', 'valise', 'caisse', 'sac', 'case', 'container', 'sac contenant', 'sac/contenant'],
@@ -15,6 +15,7 @@ const aliases = {
   status: ['statut', 'etat', 'état', 'status'],
   location: ['emplacement', 'localisation', 'location'],
   notes: ['notes', 'note', 'remarque', 'remarques', 'commentaire'],
+  containerName: ['nom contenant', 'nom du contenant', 'nom du sac', 'container name', 'libelle contenant', 'libellé contenant'],
   id: ['id', 'identifiant', 'reference', 'référence', 'sku']
 }
 export function inventoryColumnMap(headers) {
