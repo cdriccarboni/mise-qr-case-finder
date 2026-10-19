@@ -22,7 +22,7 @@ test('accueil mobile : ÉTIQUETTES ouvre Étiquettes · Mes contenants avec noms
   await expect(list).toContainText('SAC-FICTIF-01')
   await expect(page.locator('#labelsAll')).toBeVisible()
   await page.locator('#labelsAll').check()
-  await expect(page.locator('[data-print-case]:checked')).toHaveCount(2 + 6)
+  await expect(page.locator('[data-print-case]:checked')).toHaveCount(2)
   await expect(page.locator('#printSelected')).toHaveText('IMPRIMER LA SÉLECTION')
 })
 
