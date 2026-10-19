@@ -24,3 +24,18 @@ export function readEntityUrl(text) {
     return null
   }
 }
+
+/**
+ * Retrouve l'entité visée par un QR. ID complet prioritaire ; compatibilité avec
+ * les anciens QR portant un ID court (6 derniers caractères) uniquement si non ambigu.
+ */
+export function resolveEntityId(scanned, list = []) {
+  const value = String(scanned || '').trim()
+  if (!value) return null
+  const exact = list.find(item => item?.id === value)
+  if (exact) return exact
+  const compact = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+  if (compact.length < 4 || compact.length > 8) return null
+  const matches = list.filter(item => shortId(item?.id).endsWith(compact) || String(item?.id || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().endsWith(compact))
+  return matches.length === 1 ? matches[0] : null
+}

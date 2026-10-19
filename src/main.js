@@ -15,7 +15,7 @@ import { openLocalPhoto } from './vision-ui.js'
 import { APP_VERSION } from './version.js'
 import wordmarkSvg from './brand/wordmark.svg?raw'
 import { FAMILIES } from './constants.js'
-import { entityUrl, shortId, readEntityUrl } from './qr-link.js'
+import { entityUrl, shortId, readEntityUrl, resolveEntityId } from './qr-link.js'
 import { renderLabelDataUrl } from './label-render.js'
 import { proposeVibe } from './vibe-engine.js'
 import { generateExercises } from './exercise-engine.js'
@@ -436,7 +436,7 @@ async function settleArtProject(){
   renderProjectContext()
 }
 
-const caseBy=id=>cases.find(c=>c.id===id)
+const caseBy=id=>cases.find(c=>c.id===id)||resolveEntityId(id,cases)
 const objectBy=id=>objects.find(o=>o.id===id)
 const kitBy=id=>kits.find(k=>k.id===id)
 const miseBy=id=>mises.find(m=>m.id===id)
@@ -1353,6 +1353,7 @@ $('#addCase').onclick=()=>openCase()
 
 async function showCase(id){
   const c=caseBy(id);if(!c)return
+  id=c.id
   const items=objects.filter(o=>(o.caseId||o.container_id)===id)
   const url=entityUrl(location.href,'case',id)
   const qr=await QRCode.toDataURL(url,{width:520,margin:2,errorCorrectionLevel:'M'})
