@@ -3,6 +3,7 @@ import './style.css'
 import Fuse from 'fuse.js'
 import QRCode from 'qrcode'
 import { BrowserQRCodeReader } from '@zxing/browser'
+import { DecodeHintType } from '@zxing/library'
 import { openDB } from 'idb'
 import { registerSW } from 'virtual:pwa-register'
 import { createPwaUpdateCoordinator, MISES_RECOVERY_URL } from './pwa-update.js'
@@ -45,7 +46,7 @@ import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSet
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
 import { applyBackup, backupItemCount } from './backup.js'
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-client.js'
-import { fetchPublicInventory, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
+import { fetchPublicInventory, publicNoticeHtml, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
 import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut } from './supabase-client.js'
 import { syncMises, queuePhotoUpload, signedPhotoUrl } from './sync-core.js'
 import { parseCsvText, planInventoryImport, applyInventoryPlan, inventoryColumnMap } from './inventory-import.js'
@@ -1010,6 +1011,7 @@ $('#app').innerHTML=`
   <div class="searchbox"><input id="q" autocomplete="off" aria-label="Recherche MISES!" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="searchGo" class="searchGo" type="button" title="Lancer la recherche" aria-label="Lancer la recherche">→</button><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
   <section id="search" class="tab active searchImmediate" aria-label="Réponse à la recherche"><div id="searchResults"></div></section>
   <div class="quick fieldShortcuts" aria-label="Raccourcis terrain">
+    <button type="button" data-action="labels" class="labelsShortcut" data-testid="home-labels">🏷 ÉTIQUETTES</button>
     <button type="button" data-action="quick-add">⚡ Ajout rapide</button>
     <button type="button" data-action="case-photo">📷 Caisse par photo</button>
     <button type="button" data-action="voice-label">🎙 Étiquette vocale</button>
@@ -1811,17 +1813,21 @@ async function captureScanFrame(){
   stopScan()
   if(blob) await runLocalPhoto(new File([blob],'camera.jpg',{type:'image/jpeg'}), null, 'group')
 }
+// TRY_HARDER + plusieurs échelles : le détecteur zxing-js rate parfois un QR exact selon la taille du module
+// (ex. étiquette 384 pts, 7 pts/module) ; réduire l'image comme un téléphone plus éloigné suffit.
+const QR_HINTS=new Map([[DecodeHintType.TRY_HARDER,true]])
 async function decodeQrElement(img){
-  const reader=new BrowserQRCodeReader()
+  const reader=new BrowserQRCodeReader(QR_HINTS)
   const width=img.naturalWidth||img.width, height=img.naturalHeight||img.height
-  const regions=[[0,0,width,height],[width*.12,height*.28,width*.76,height*.5],[width*.18,height*.36,width*.64,height*.42]]
+  const side=Math.min(width,height)
+  const regions=[[0,0,width,height],[0,0,side,side],[width*.12,height*.28,width*.76,height*.5],[width*.18,height*.36,width*.64,height*.42]]
   const canvas=document.createElement('canvas')
   let last
-  for(const [x,y,w,h] of regions){
-    canvas.width=Math.max(32,Math.round(w));canvas.height=Math.max(32,Math.round(h))
+  for(const scale of [1,.5,.75])for(const [x,y,w,h] of regions){
+    canvas.width=Math.max(32,Math.round(w*scale));canvas.height=Math.max(32,Math.round(h*scale))
     const ctx=canvas.getContext('2d',{willReadFrequently:true})
     ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height)
-    ctx.imageSmoothingEnabled=false
+    ctx.imageSmoothingEnabled=scale!==1
     ctx.drawImage(img,x,y,w,h,0,0,canvas.width,canvas.height)
     try{return await reader.decodeFromCanvas(canvas)}catch(error){last=error}
   }
@@ -2179,6 +2185,7 @@ $('#filterSpareBtn')?.addEventListener('click', ()=>{
 
 $$('[data-action]').forEach(b=>b.onclick=()=>{
   const a=b.dataset.action
+  if(a==='labels'){openBatchPrint();return}
   if(a==='quick-add')openQuickAddFlow()
   if(a==='case-photo')$('#casePhotoInput').click()
   if(a==='voice-label')openVoiceLabelFlow()
@@ -2367,10 +2374,11 @@ async function openPublicInventory({caseId=''}={}){
   <div id="pubBody" data-testid="pub-body"><p class="hint">Chargement…</p></div>`
   $('#pubClose').onclick=()=>{root.hidden=true;document.body.classList.remove('pubOpen');history.replaceState(null,'',location.pathname)}
   try{publicInventoryCache=publicInventoryCache||await fetchPublicInventory({url:SUPABASE_URL,key:SUPABASE_PUBLISHABLE_KEY})}
-  catch(error){$('#pubBody').innerHTML=`<div class="pubEmpty">${esc(error.message||'Inventaire indisponible hors ligne')}</div>`;return}
+  catch(error){$('#pubBody').innerHTML=publicNoticeHtml(error.kind||'unavailable',caseId,esc);const r=$('[data-pub-retry]',root);if(r)r.onclick=()=>openPublicInventory({caseId});return}
   const inv=publicInventoryCache,photoUrl=path=>publicPhotoUrl(SUPABASE_URL,path)
   const showCase_=(id,query='')=>{
     $('#pubBody').innerHTML=publicContainerHtml(inv,id,esc,{query,photoUrl})
+    const retry=$('[data-pub-retry]',root);if(retry)retry.onclick=()=>{publicInventoryCache=null;openPublicInventory({caseId:id})}
     history.replaceState(null,'',`${location.pathname}?case=${encodeURIComponent(id)}`)
     const box=$('#pubCaseSearch');if(box){box.oninput=()=>{const v=box.value;showCase_(id,v);const nb=$('#pubCaseSearch');nb.focus();nb.setSelectionRange(v.length,v.length)}}
     wire()

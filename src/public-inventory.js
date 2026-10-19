@@ -16,10 +16,33 @@ export function sanitizePublicInventory(data = {}) {
   out.objects = out.objects.map(o => ({ ...o, methods: Array.isArray(o.methods) ? o.methods.map(m => pick(m, ['technique', 'name', 'sound'])) : undefined }))
   return out
 }
-export async function fetchPublicInventory({ url, key, fetchImpl = globalThis.fetch } = {}) {
-  const res = await fetchImpl(`${url}/rest/v1/rpc/get_public_inventory`, { method: 'POST', headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: '{}' })
-  if (!res.ok) throw new Error(`Inventaire public indisponible (${res.status})`)
+export class PublicInventoryError extends Error { constructor(kind, message) { super(message); this.kind = kind } }
+/** Charge l'inventaire public. Erreurs typées : not-published (RPC absente / migration non appliquée), offline, unavailable. */
+export async function fetchPublicInventory({ url, key, fetchImpl = globalThis.fetch, timeoutMs = 12000 } = {}) {
+  const ctrl = typeof AbortController === 'function' ? new AbortController() : null
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : null
+  let res
+  try {
+    res = await fetchImpl(`${url}/rest/v1/rpc/get_public_inventory`, { method: 'POST', headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: '{}', signal: ctrl?.signal })
+  } catch { throw new PublicInventoryError('offline', 'Inventaire public injoignable (hors ligne ?)') } finally { if (timer) clearTimeout(timer) }
+  if (res.status === 404) throw new PublicInventoryError('not-published', 'Inventaire public pas encore publié')
+  if (!res.ok) {
+    let code = ''; try { code = (await res.json())?.code || '' } catch {}
+    if (code === 'PGRST202' || code === '42883') throw new PublicInventoryError('not-published', 'Inventaire public pas encore publié')
+    throw new PublicInventoryError('unavailable', `Inventaire public indisponible (${res.status})`)
+  }
   return sanitizePublicInventory(await res.json())
+}
+/** Message clair (jamais de page blanche) quand l'inventaire ou le contenant n'est pas disponible. */
+export function publicNoticeHtml(kind, caseId, esc) {
+  const id = caseId ? `<p class="pubId">Contenant scanné : <code>${esc(caseId)}</code></p>` : ''
+  const msg = {
+    'not-published': ['Inventaire pas encore publié', 'Le QR est valide, mais l’inventaire public de MISES! n’est pas encore en ligne. Il apparaîtra ici dès sa publication.'],
+    'case-missing': ['Contenant pas encore publié', 'Ce contenant n’apparaît pas encore dans l’inventaire public. Il apparaîtra après la prochaine synchronisation.'],
+    offline: ['Inventaire injoignable', 'Vérifie la connexion réseau puis réessaie.'],
+    unavailable: ['Inventaire momentanément indisponible', 'Réessaie dans quelques minutes.']
+  }[kind] || ['Inventaire indisponible', 'Réessaie plus tard.']
+  return `<div class="pubEmpty pubNotice" data-testid="pub-notice" data-kind="${esc(kind)}"><h1>${msg[0]}</h1><p>${msg[1]}</p>${id}<button type="button" class="ghost" data-pub-retry>Réessayer</button></div>`
 }
 export function publicPhotoUrl(url, path) { return `${url}/storage/v1/object/public/mises-photos/${String(path).split('/').map(encodeURIComponent).join('/')}` }
 
@@ -31,7 +54,7 @@ function objectRow(o, inv, esc, photoUrl) {
 }
 export function publicContainerHtml(inv, caseId, esc, { query = '', photoUrl = null } = {}) {
   const c = inv.cases.find(x => x.id === caseId)
-  if (!c) return `<div class="pubEmpty" data-testid="pub-missing">Contenant introuvable dans l'inventaire public.</div>`
+  if (!c) return publicNoticeHtml(inv.cases.length ? 'case-missing' : 'not-published', caseId, esc)
   const ids = new Set([caseId, ...allDescendantCaseIds(caseId, inv.cases)])
   const q = query.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const match = o => !q || [o.name, o.nickname, o.family, o.compartment].join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q)

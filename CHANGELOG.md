@@ -1,3 +1,11 @@
+## 0.4.0-beta.22 — 19 octobre 2026 (#45)
+
+- Accueil : bouton direct **🏷 ÉTIQUETTES** (pleine largeur sur mobile) → Étiquettes · Mes contenants (Tout sélectionner, IMPRIMER LA SÉLECTION).
+- Page publique d’un QR : message clair au lieu d’une page vide quand l’inventaire public n’est pas encore publié (RPC absente / vide), quand le contenant n’y figure pas encore, ou hors ligne (bouton Réessayer, délai 12 s).
+- Import CSV « Nom contenant » : un contenant existant n’est renommé que si son nom est encore son ID.
+- Lecture d’un QR depuis une image (import photo / ingestion) : TRY_HARDER + essais à plusieurs échelles — zxing-js ratait certaines étiquettes 384 pts pourtant exactes (cause réelle de l’échec CI de parcours-030).
+- Tests : décodeur QR de test plus robuste (zxing-js ratait un QR exact au module près) ; parcours-030 corrigé (menu collant recouvrant le bouton).
+
 ## 0.4.0-beta.21 — 19 octobre 2026 (#45)
 
 - Import CSV : colonne optionnelle **« Nom contenant »** — un contenant à ID permanent (ex. `SAC-VIE-QUOT-01`) reçoit un nom lisible pour l’étiquette (ex. « VIE QUOTIDIENNE — 1/2 ») ; l’ID et le QR `?case=<id>` ne changent pas ; un nom déjà choisi n’est jamais écrasé ; réimport idempotent.
