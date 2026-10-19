@@ -44,6 +44,8 @@ import { openQuickAddObject, findSmartCompletions } from './quick-add.js'
 import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSetting, parseInk } from './ink.js'
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
 import { applyBackup, backupItemCount } from './backup.js'
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-client.js'
+import { fetchPublicInventory, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
 import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut } from './supabase-client.js'
 import { syncMises, queuePhotoUpload, signedPhotoUrl } from './sync-core.js'
 import { parseCsvText, planInventoryImport, applyInventoryPlan, inventoryColumnMap } from './inventory-import.js'
@@ -1023,7 +1025,7 @@ $('#app').innerHTML=`
  <details class="createGoals"><summary>Créer</summary><div><span class="inventoryNavGroup inventoryOnly"><button id="goalQuickAdd" type="button">⚡ Ajout rapide</button><button id="goalCasePhoto" type="button">📷 Caisse par photo</button><button id="goalVoiceLabel" type="button">🎙 Étiquette vocale</button><button id="goalAddObjectSimple" type="button">+ Objet</button><button id="goalAddCaseSimple" type="button">+ Contenant</button><button id="goalQrSimple" type="button">Étiquettes QR</button></span><button id="goalPlay" class="foleyOnly" type="button">Jouer</button><button id="goalWorkshop" class="foleyOnly" type="button">Préparer un atelier</button><button id="goalChallenge" class="foleyOnly" type="button">Défi bruitage</button><button id="goalPublic" class="foleyOnly" data-tab="publicLibrary" type="button">Bibliothèque publique</button><button id="goalFabrications" class="foleyOnly" data-tab="fabrications" type="button">Fabrications</button><button id="goalActivities" class="foleyOnly" data-tab="activities" type="button">Activités pédagogiques</button><button id="goalPedagogySpaces" class="foleyOnly" type="button">Atelier & 10 jeux</button><button id="goalRandomUniverse" class="foleyOnly" type="button">Univers aléatoire</button><button id="goalHands" class="foleyOnly" type="button">Crée ton bruitage</button><button id="goalExercise" class="foleyOnly" type="button">Exercice</button><button id="goalGroupPhoto" class="foleyOnly" type="button">Photo de groupe</button><button id="goalUniverse" class="foleyOnly" type="button">Univers d’une photo</button></div></details>
  <details><summary>Ranger</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
- <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalPromoStickers" type="button">Stickers QR · MISES!</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalCsvImport" type="button">Importer un inventaire CSV</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
+ <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalPromoStickers" type="button">Stickers QR · MISES!</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalCsvImport" type="button">Importer un inventaire CSV</button><button id="goalPublicInventory" type="button">Inventaire public (lecture seule)</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><div class="row"><button id="filterSpareBtn" class="ghost" type="button">Filtrer SPARE</button><button id="quickAddObjectBtn" class="ghost" type="button">⚡ Ajout rapide</button><button id="addObject">+ Objet</button></div></div><div id="objectCards" class="cards"></div></section>
 <section id="halloween" class="tab"><div class="panel"><h2>🎭 Ambiances · Explorer les bruitages</h2><p class="hint">Des pistes sonores classées par thème, sans inventer d’objets dans tes caisses. Les recettes publiques sont des idées ; seul ton inventaire indique ce que tu possèdes.</p><div class="grid2"><label>Univers<select id="themePack" aria-label="Choisir un univers sonore"></select></label><label>Rechercher dans<select id="themeSource" aria-label="Source des résultats"><option value="all">Tout · stock et bibliothèque</option><option value="mine">Mon inventaire uniquement</option><option value="public">Recettes et ressources publiques</option></select></label></div><div id="halloweenThemes" class="row" aria-label="Sous-ambiances"></div><label>Affiner les résultats<input id="halloweenFilter" type="text" inputmode="search" placeholder="Ex. grincement, grelot, pluie, créature…"></label><div id="halloweenResults" aria-live="polite"></div></div></section>
@@ -2029,6 +2031,7 @@ document.addEventListener('click',event=>{
 $('#goalBackup').onclick=()=>$('#backupBtn').click()
 $('#goalRestore').onclick=()=>$('#restoreInput').click()
 $('#goalCsvImport').onclick=()=>openCsvImport()
+$('#goalPublicInventory').onclick=()=>openPublicInventory({})
 $('#goalGroupPhoto').onclick=()=>$('#groupPhotoInput').click()
 $('#goalHands').onclick=()=>{$('#handsPhotoInput').click()}
 $('#goalUniverse').onclick=()=>$('#universePhotoInput').click()
@@ -2277,7 +2280,8 @@ $('#restoreInput').onchange=async event=>{
 
 await settleArtProject()
 if(params.get('shareFile'))setTimeout(()=>openSharedPackage(params.get('shareFile')),300)
-else if(params.get('case'))setTimeout(()=>showCase(params.get('case')),250)
+else if(params.get('case'))setTimeout(()=>caseBy(params.get('case'))?showCase(params.get('case')):openPublicInventory({caseId:params.get('case')}),250)
+else if(params.has('inventaire'))setTimeout(()=>openPublicInventory({}),100)
 else if(params.get('kit'))setTimeout(()=>showKit(params.get('kit')),250)
 else if(params.get('mise'))setTimeout(()=>{const found=miseBy(params.get('mise'));if(found)openMise(found)},250)
 else if(params.get('object'))setTimeout(()=>{const o=objectBy(params.get('object'));if(o)openObject(o)},250)
@@ -2348,4 +2352,29 @@ async function openCsvImport(){
     replan()
   }
 }
-window.__mises_v2={openCsvImport}
+window.__mises_v2={openCsvImport,openPublicInventory}
+
+// ===== V2 : inventaire public lecture seule (QR contenant sans compte) =====
+let publicInventoryCache=null
+async function openPublicInventory({caseId=''}={}){
+  let root=$('#publicInventory')
+  if(!root){root=document.createElement('section');root.id='publicInventory';root.setAttribute('aria-label','Inventaire public MISES!');document.body.append(root)}
+  root.hidden=false;document.body.classList.add('pubOpen')
+  root.innerHTML=`<div class="pubBar"><b>MISES! · Inventaire</b><span class="pubRo">Lecture seule</span><button id="pubClose" type="button" class="ghost" aria-label="Fermer">×</button></div>
+  <input id="pubGlobalSearch" type="search" placeholder="Chercher un objet, un son, un contenant…" aria-label="Recherche dans tout l'inventaire public">
+  <div id="pubBody" data-testid="pub-body"><p class="hint">Chargement…</p></div>`
+  $('#pubClose').onclick=()=>{root.hidden=true;document.body.classList.remove('pubOpen');history.replaceState(null,'',location.pathname)}
+  try{publicInventoryCache=publicInventoryCache||await fetchPublicInventory({url:SUPABASE_URL,key:SUPABASE_PUBLISHABLE_KEY})}
+  catch(error){$('#pubBody').innerHTML=`<div class="pubEmpty">${esc(error.message||'Inventaire indisponible hors ligne')}</div>`;return}
+  const inv=publicInventoryCache,photoUrl=path=>publicPhotoUrl(SUPABASE_URL,path)
+  const showCase_=(id,query='')=>{
+    $('#pubBody').innerHTML=publicContainerHtml(inv,id,esc,{query,photoUrl})
+    history.replaceState(null,'',`${location.pathname}?case=${encodeURIComponent(id)}`)
+    const box=$('#pubCaseSearch');if(box){box.oninput=()=>{const v=box.value;showCase_(id,v);const nb=$('#pubCaseSearch');nb.focus();nb.setSelectionRange(v.length,v.length)}}
+    wire()
+  }
+  const showSearch=q=>{$('#pubBody').innerHTML=publicSearchHtml(inv,q,esc);wire()}
+  function wire(){$$('[data-pub-case]',root).forEach(b=>b.onclick=()=>{$('#pubGlobalSearch').value='';showCase_(b.dataset.pubCase)})}
+  $('#pubGlobalSearch').oninput=e=>e.target.value.trim()?showSearch(e.target.value):(caseId?showCase_(caseId):showSearch(''))
+  caseId?showCase_(caseId):showSearch('')
+}

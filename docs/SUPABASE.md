@@ -5,7 +5,7 @@ La clé publishable (anon) côté front est publique par nature ; la sécurité 
 
 ## Fichiers
 - `supabase/migrations/20261019000001_mises_core.sql` : tables `mises_spaces`, `mises_memberships`, `mises_records`, `mises_assets`, helpers `mises_is_space_member/owner`, RLS, bucket privé `mises-photos` + policies Storage par appartenance à l'espace (1er segment du chemin = `space_id`).
-- `supabase/migrations/20261019000002_mises_container_shares.sql` : table `mises_container_shares` (token aléatoire 192 bits, `revoked_at`, `expires_at`, `created_by`, compteur d'accès) et RPC `get_shared_container(token)` (security definer, lecture seule : le contenant, ses descendants, leurs objets ; photos seulement si `include_photos`).
+- `supabase/migrations/20261019000002_mises_public_inventory.sql` : colonne `mises_spaces.public_inventory` (false par défaut), RPC `get_public_inventory()` (security definer, anon) renvoyant seulement contenants, compartiments, objets, quantités, emplacements, sons/techniques et chemins photo — liste blanche de champs, fiches `PRIVE_ONLY` / `private` / `data-bruitage-v5` exclues ; lecture anon des photos uniquement sous un espace public. Aucune lecture anon directe des tables, aucune écriture anon.
 - `supabase/rls-owner-private.sql` : ancien script, conservé (il contient des `drop policy`, ne plus l'utiliser).
 
 Toutes les migrations sont idempotentes (`if not exists`, policies créées seulement si absentes) et ne contiennent aucun `DROP TABLE`, `DELETE` ni `TRUNCATE`.
@@ -18,8 +18,9 @@ Toutes les migrations sont idempotentes (`if not exists`, policies créées seul
    - Dashboard → SQL editor : coller chaque fichier dans l'ordre.
 4. Contrôles :
    - `select public from storage.buckets where id='mises-photos'` → `false` ;
-   - en anon : `select * from mises_records` → 0 ligne ; `select get_shared_container('x')` → `null` ;
-   - créer un partage, appeler la RPC, puis `update mises_container_shares set revoked_at=now()` → `null`.
+   - en anon : `select * from mises_records` → 0 ligne ;
+   - `update mises_spaces set public_inventory=true where id='<space>'` puis en anon `select get_public_inventory()` → inventaire sans notes/emails/membres ;
+   - en anon : `insert into mises_records ...` → refusé (RLS).
 
 Si une policy existante a un autre nom/contenu, la migration ne la modifie pas : comparer manuellement.
 
