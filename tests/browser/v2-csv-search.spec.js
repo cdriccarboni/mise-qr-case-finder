@@ -51,8 +51,8 @@ test('Étiquettes · Mes contenants : aperçu 384 pts pour chaque contenant', as
   await page.locator('#closeCsv').click()
   await page.evaluate(() => document.querySelector('#goalBatchPrint').click())
   const imgs = page.locator('[data-label-img]')
-  await expect(imgs).toHaveCount(4)
+  await expect(imgs).toHaveCount(4 + 6) // 4 importés + 6 contenants intégrés
   await expect.poll(() => imgs.evaluateAll(list => list.every(i => i.naturalWidth === 384 && i.naturalHeight > 340))).toBe(true)
-  await expect(page.locator('[data-print-one]')).toHaveCount(4)
+  await expect(page.locator('[data-print-one]')).toHaveCount(10)
   await expect(page.locator('#printSelected')).toBeVisible()
 })

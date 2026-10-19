@@ -46,6 +46,7 @@ import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSet
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
 import { applyBackup, backupItemCount } from './backup.js'
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-client.js'
+import { mergeLabelContainers } from './builtin-containers.js'
 import { fetchPublicInventory, publicNoticeHtml, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
 import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut } from './supabase-client.js'
 import { syncMises, queuePhotoUpload, signedPhotoUrl } from './sync-core.js'
@@ -1685,10 +1686,14 @@ async function printContainerLabels(list){
 }
 async function openBatchPrint(){
   const d=$('#printDlg')
-  const sorted=cases.slice().sort((x,y)=>casePathString(x.id,cases).localeCompare(casePathString(y.id,cases),'fr'))
+  // Contenants intégrés (ID + nom) fusionnés avec les contenants locaux : fonctionne sans compte, sans import, hors ligne.
+  const all=mergeLabelContainers(cases)
+  const caseBy=id=>all.find(c=>c.id===id)
+  const builtinFirst=c=>c.builtin||!c.parentId&&/^[A-Z0-9][A-Z0-9_-]{2,}$/.test(c.id)?0:1
+  const sorted=all.slice().sort((x,y)=>builtinFirst(x)-builtinFirst(y)||casePathString(x.id,all).localeCompare(casePathString(y.id,all),'fr'))
   d.innerHTML=`<div class="form labelsDlg"><div class="dialoghead"><div><b>Étiquettes · Mes contenants</b><small>WalkPrint / YHK · 48 mm (384 pts) · longueur automatique · QR permanent</small></div><button id="closeBatch" class="ghost" type="button">×</button></div>
   <label class="check"><input id="labelsAll" type="checkbox"><span>Tout sélectionner (${sorted.length})</span></label>
-  <div class="labelsList" data-testid="labels-list">${sorted.map(c=>`<article class="labelCard"><label class="check"><input type="checkbox" data-print-case value="${esc(c.id)}"><span><b>${esc(caseName(c))}</b><small>${esc(casePathString(c.id,cases))} · ${esc(c.id)}</small></span></label><img loading="lazy" data-label-img="${esc(c.id)}" alt="Étiquette ${esc(caseName(c))}"><div class="row"><button type="button" data-print-one="${esc(c.id)}">IMPRIMER</button><button type="button" class="ghost" data-save-one="${esc(c.id)}">PNG</button></div></article>`).join('')||'<p>Aucun contenant.</p>'}</div>
+  <div class="labelsList" data-testid="labels-list">${sorted.map(c=>`<article class="labelCard"><label class="check"><input type="checkbox" data-print-case value="${esc(c.id)}"><span><b>${esc(caseName(c))}</b><small>${esc(casePathString(c.id,all))} · ${esc(c.id)}</small></span></label><img loading="lazy" data-label-img="${esc(c.id)}" alt="Étiquette ${esc(caseName(c))}"><div class="row"><button type="button" data-print-one="${esc(c.id)}">IMPRIMER</button><button type="button" class="ghost" data-save-one="${esc(c.id)}">PNG</button></div></article>`).join('')||'<p>Aucun contenant.</p>'}</div>
   <div class="row labelsBar"><button id="printSelected" type="button" class="ctaBig">IMPRIMER LA SÉLECTION</button></div>
   <p class="hint">Aperçu exact du raster envoyé à l’imprimante. Le texte peut changer, le QR vise toujours ${esc(PUBLIC_APP_URL)}?case=&lt;id&gt;.</p></div>`
   d.showModal()
