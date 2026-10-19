@@ -730,7 +730,8 @@ async function sendSystemPrint(dataUrl, jobName='MISES!'){
 async function openEntityLabel(kind, entity, {next}={}){
   const name=kind==='case'?caseName(entity):(entity.name||'MISES!')
   const spec={name, shortId:shortId(entity.id), id:entity.id, qrText:entityUrl(pageOrigin(), kind, entity.id), location:kind==='object'?caseName(caseBy(entity.caseId||entity.container_id)):'', category:entity.family||entity.type||kind, spare:Boolean(entity.spare), ink:getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()}
-  const image=renderLabelDataUrl(spec)
+  // Contenant : toujours l'étiquette approuvée (renderer « Étiquettes · Mes contenants », QR ?case=<id>).
+  const image=kind==='case'?containerLabelImage(entity):renderLabelDataUrl(spec)
   const d=$('#printDlg')
   d.innerHTML=`<div class="labelPreview"><img alt="Étiquette ${esc(name)}" src="${image}"><small>${esc(name)} · ${esc(spec.shortId)}</small></div><div class="row"><button id="btPrint" type="button">${hasNativePrinter()?'Mini-imprimante Bluetooth':'Aide mini-imprimante'}</button><button id="saveLabelPng" class="ghost" type="button">Exporter PNG 384 px</button>${next?'<button id="labelNext" type="button">Objet suivant</button>':''}<button id="closePrint" class="ghost">Fermer</button></div><p class="hint">${hasNativePrinter()?'Android : uniquement le pilote Bluetooth de la mini-imprimante ; jamais Epson.':'Mac : impression directe via la petite application MISES Mini Printer ; jamais de dialogue Epson.'}</p>`
   d.showModal()
@@ -1662,7 +1663,7 @@ async function printCaseNative(c,qr){
 }
 
 function openPrint(c,qr){
-  const image=renderLabelDataUrl({name:caseName(c),id:c.id,shortId:shortId(c.id),qrText:entityUrl(pageOrigin(),'case',c.id),category:c.type||'Contenant'})
+  const image=containerLabelImage(c) // même rendu que l'étiquette approuvée (Étiquettes · Mes contenants)
   const d=$('#printDlg')
   d.innerHTML=`<div class="labelPreview"><strong>${esc(caseName(c))}</strong><img src="${image}" alt="Étiquette QR de ${esc(caseName(c))}"><small>${esc(c.id)}</small></div>
   <div class="row"><button id="btPrint">${hasNativePrinter()?'Mini-imprimante Bluetooth':'Aide mini-imprimante'}</button><button id="saveCaseLabelPng" type="button" class="ghost">Exporter PNG 384 px</button><button id="printerTestFromLabel" class="ghost">${hasNativePrinter()?'Test 2 étiquettes':'Comment imprimer sur Mac ?'}</button><button id="closePrint" class="ghost">Fermer</button></div>
@@ -1675,7 +1676,7 @@ function openPrint(c,qr){
 }
 // Étiquettes → Mes contenants : étiquette longue horizontale 384 pts (WalkPrint/YHK), QR = URL publique permanente.
 function containerLabelName(c){return c.part&&c.total?`${c.name} / ${c.part} SUR ${c.total}`:c.name}
-function containerLabelImage(c){return renderContainerLabelDataUrl({id:c.id,name:containerLabelName(c),subtitle:c.id,qrText:containerQrUrl(c.id)})}
+function containerLabelImage(c){c=mergeLabelContainers([c])[0];return renderContainerLabelDataUrl({id:c.id,name:containerLabelName(c),subtitle:c.id,qrText:containerQrUrl(c.id)})}
 async function printContainerLabels(list){
   if(!list.length){toast('Sélectionne au moins un contenant');return}
   const images=list.map(c=>({box:c,image:containerLabelImage(c)}))

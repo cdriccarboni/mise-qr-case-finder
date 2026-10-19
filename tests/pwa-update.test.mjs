@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createPwaUpdateCoordinator, MISES_RECOVERY_URL } from '../src/pwa-update.js'
 
-function fixture({remote='0.4.0-beta.24',active=true,timeoutMs=90,online=true}={}){
+function fixture({remote='0.4.0-beta.25',active=true,timeoutMs=90,online=true}={}){
   const saved=new Map()
   const listeners=new Map()
   let registrations=0,updates=0,skips=0,reloads=0,progress=0,stuck=0
