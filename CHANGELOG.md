@@ -1,3 +1,7 @@
+## 0.4.0-beta.21 — 19 octobre 2026 (#45)
+
+- Import CSV : colonne optionnelle **« Nom contenant »** — un contenant à ID permanent (ex. `SAC-VIE-QUOT-01`) reçoit un nom lisible pour l’étiquette (ex. « VIE QUOTIDIENNE — 1/2 ») ; l’ID et le QR `?case=<id>` ne changent pas ; un nom déjà choisi n’est jamais écrasé ; réimport idempotent.
+
 ## 0.4.0-beta.20 — 19 octobre 2026 (#45)
 
 - **Étiquettes · Mes contenants** (menu Partager) : tous les contenants avec aperçu exact, IMPRIMER à l’unité ou par sélection, réimpression. Étiquette longue horizontale WalkPrint/YHK 384 pts (48 mm), longueur automatique, nom jamais tronqué (2 lignes), QR ≈ 39 mm vers l’URL publique permanente `?case=<id>`.

@@ -1,6 +1,6 @@
 /** Rendus HTML V2 (purs) : aperçu import CSV, résultats de recherche centrale, galerie photos. */
 import { INVENTORY_FIELDS } from './inventory-csv-plan.js'
-const FIELD_LABELS = { id: 'Identifiant', name: 'Objet *', container: 'Sac / contenant', compartment: 'Compartiment', quantity: 'Quantité', category: 'Catégorie', status: 'Statut', length: 'Longueur', color: 'Couleur', location: 'Emplacement', notes: 'Notes' }
+const FIELD_LABELS = { id: 'Identifiant', name: 'Objet *', container: 'Sac / contenant', compartment: 'Compartiment', quantity: 'Quantité', category: 'Catégorie', status: 'Statut', length: 'Longueur', color: 'Couleur', location: 'Emplacement', notes: 'Notes', containerName: 'Nom du contenant (étiquette)' }
 const ACTION_LABELS = { create: 'Nouveau', review: 'Conflit / à revoir', unchanged: 'Inchangé' }
 
 export function csvMappingHtml(headers, columns, esc) {

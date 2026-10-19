@@ -52,3 +52,23 @@ test('colonnes ID,Nom,Contenant,Quantité,Longueur,Couleur,Catégorie,Emplacemen
   const b = run(renamed, csv)
   assert.deepEqual(b.plan.summary, { create: 0, review: 0, unchanged: 2, errors: 0 })
 })
+
+test('colonne « Nom contenant » : ID permanent conservé, nom lisible sur l’étiquette, ré-import idempotent', () => {
+  const rows = [
+    { ID: 'SAC-FICTIF-A-01-X', Nom: 'Objet fictif', Contenant: 'SAC-FICTIF-A-01', 'Nom contenant': 'SAC FICTIF — 1/2', Quantité: '1' },
+    { ID: 'SAC-FICTIF-A-01-Y', Nom: 'Autre objet fictif', Contenant: 'SAC-FICTIF-A-01', 'Nom contenant': 'SAC FICTIF — 1/2', Quantité: '' }
+  ]
+  const first = applyInventoryPlan(planInventoryImport(rows), {}, { now: 'T' })
+  assert.equal(first.cases.length, 1)
+  assert.equal(first.cases[0].id, 'SAC-FICTIF-A-01')
+  assert.equal(first.cases[0].name, 'SAC FICTIF — 1/2')
+  assert.equal(first.objects.length, 2)
+  assert.equal(first.objects[1].quantity, null)
+  const again = applyInventoryPlan(planInventoryImport(rows, first), first, { now: 'T2' })
+  assert.equal(again.cases.length, 0)
+  assert.equal(again.objects.length, 0)
+  // un nom déjà choisi n'est jamais écrasé
+  const named = [{ ...first.cases[0], name: 'Nom choisi' }]
+  const third = applyInventoryPlan(planInventoryImport(rows), { cases: named }, { now: 'T3' })
+  assert.equal(third.cases.length, 0)
+})

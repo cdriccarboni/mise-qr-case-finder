@@ -57,17 +57,25 @@ export function planInventoryImport(rows, { objects = [], cases = [] } = {}, map
 export function applyInventoryPlan(plan, { objects = [], cases = [] } = {}, { applyUpdates = false, now = new Date().toISOString(), sourceId = 'csv' } = {}) {
   const allCases = cases.slice(), newCases = [], writes = [], conflicts = []
   const findCase = (name, parentId = null) => (!parentId && allCases.find(c => c.id === name)) || allCases.find(c => normKey(caseLabel(c)) === normKey(name) && (parentId ? c.parentId === parentId : true) && (!parentId ? !c.parentId || c.importRole !== 'compartment' : true))
-  const ensureCase = (name, parentId = null) => {
+  // displayName (colonne « Nom contenant ») : nom lisible d'un contenant à ID permanent, posé seulement à la création
+  // ou si le contenant porte encore son ID comme nom (jamais d'écrasement d'un nom choisi).
+  const ensureCase = (name, parentId = null, displayName = '') => {
     let c = findCase(name, parentId)
+    if (c && displayName && !parentId && c.id === name && (c.name || '') === name && displayName !== name) {
+      c = { ...c, name: displayName, updatedAt: now }
+      allCases[allCases.findIndex(x => x.id === c.id)] = c
+      const k = newCases.findIndex(x => x.id === c.id); if (k === -1) newCases.push(c); else newCases[k] = c
+    }
     if (!c) {
-      c = { id: !parentId && ID_LIKE.test(name) ? name : stableId('case'), name, importName: name, parentId: parentId || '', type: parentId ? 'compartiment' : 'contenant', importRole: parentId ? 'compartment' : 'container', provenance: 'user-document', createdAt: now, updatedAt: now }
+      const isId = !parentId && ID_LIKE.test(name)
+      c = { id: isId ? name : stableId('case'), name: isId && displayName ? displayName : name, importName: name, parentId: parentId || '', type: parentId ? 'compartiment' : 'contenant', importRole: parentId ? 'compartment' : 'container', provenance: 'user-document', createdAt: now, updatedAt: now }
       allCases.push(c); newCases.push(c)
     }
     return c
   }
   const targetCaseId = row => {
     if (!row.container) return ''
-    const top = ensureCase(row.container)
+    const top = ensureCase(row.container, null, row.containerName || '')
     return row.compartment ? ensureCase(row.compartment, top.id).id : top.id
   }
   for (const change of plan.changes) {
