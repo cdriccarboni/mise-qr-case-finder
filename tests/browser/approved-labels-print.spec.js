@@ -35,6 +35,7 @@ test('ÉTIQUETTES : bitmap envoyé au pilote = aperçu (pixel à pixel) ; Archiv
   // Supprimer : jamais pour un contenant protégé ; confirmation pour les autres
   await expect(page.locator('[data-delete-one="CASE-DEMO-01"]')).toHaveCount(0)
   page.once('dialog', d => d.accept())
+  await page.locator('[data-delete-one="CASE-DEMO-02"]').locator('xpath=..').locator('summary').click()
   await page.locator('[data-delete-one="CASE-DEMO-02"]').click()
   await expect(page.locator('[data-print-one]')).toHaveCount(5)
   await ctx.close()

@@ -14,8 +14,8 @@ android {
         applicationId = playApplicationId
         minSdk = 26
         targetSdk = 36
-        versionCode = 40
-        versionName = "0.4.0-beta.28"
+        versionCode = 41
+        versionName = "0.4.0-beta.32"
     }
 
     signingConfigs {
@@ -50,6 +50,7 @@ android {
 dependencies {
     implementation("androidx.core:core:1.15.0")
     implementation("androidx.webkit:webkit:1.12.1")
+    implementation("androidx.browser:browser:1.8.0")
 }
 
 tasks.named("preBuild") {

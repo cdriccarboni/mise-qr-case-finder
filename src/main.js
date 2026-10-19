@@ -48,8 +48,8 @@ import { applyBackup, backupItemCount } from './backup.js'
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-client.js'
 import { activeLabelCases, archivedLabelCases, archiveCase, restoreCase, deleteCase, canDeleteCase, isProtectedCase, labelState } from './label-archive.js'
 import { fetchPublicInventory, publicNoticeHtml, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
-import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut } from './supabase-client.js'
-import { syncMises, queuePhotoUpload, signedPhotoUrl } from './sync-core.js'
+import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut, signInWithGoogleSupabase, completeSupabaseAuthFromUrl, parseAuthReturn, cleanAuthUrl } from './supabase-client.js'
+import { syncMises, queuePhotoUpload, signedPhotoUrl, setPublicInventory, getPublicInventory } from './sync-core.js'
 import { parseCsvText, planInventoryImport, applyInventoryPlan, inventoryColumnMap } from './inventory-import.js'
 import { buildCentralIndex, centralSearch } from './central-search.js'
 import { migrateObjectPhotos, addPhoto, compressImage } from './photos.js'
@@ -222,9 +222,9 @@ async function updateSupabaseStatus(){
   try{
     const session=await supabaseSession().catch(()=>null)
     button.hidden=false
-    button.textContent=session?.user?.email?`☁ ${session.user.email}`:'☁ Synchroniser'
+    button.textContent=session?.user?.email?`☁ ${session.user.email}`:'☁ Se connecter'
     button.classList.toggle('connected',Boolean(session))
-  }catch{button.hidden=false;button.textContent='☁ Synchroniser'}
+  }catch{button.hidden=false;button.textContent='☁ Se connecter'}
 }
 async function openSupabaseSync(){
   if(!supabaseConfigured){toast('Synchronisation indisponible');return}
@@ -232,8 +232,10 @@ async function openSupabaseSync(){
   if(session?.user) await ensureSupabaseAuthListener()
   const d=$('#modal')
   if(session?.user){
-    d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Synchronisation MISES!</b><small>${esc(session.user.email||'Compte connecté')}</small></div><button id="closeSupabaseSync" class="ghost" type="button">×</button></div><p>Les fiches restent locales et sont synchronisées en arrière-plan. Les photos sont stockées séparément et compressées côté appareil avant envoi.</p><div class="row"><button id="syncNow">Synchroniser maintenant</button><button id="supabaseSignOut" class="ghost" type="button">Déconnecter</button></div><p id="syncNowStatus" class="hint"></p></div>`
+    d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Synchronisation MISES!</b><small>${esc(session.user.email||'Compte connecté')}</small></div><button id="closeSupabaseSync" class="ghost" type="button">×</button></div><p>Les fiches restent locales et sont synchronisées en arrière-plan. Les photos sont stockées séparément et compressées côté appareil avant envoi.</p><div class="row"><button id="syncNow">Synchroniser maintenant</button><button id="supabaseSignOut" class="ghost" type="button">Déconnecter</button></div><p id="syncNowStatus" class="hint"></p><label class="check"><input id="publishInventory" type="checkbox" disabled><span><b>Publier mon inventaire</b><small>Quiconque scanne une de tes étiquettes voit le contenu du contenant (lecture seule, sans tes fiches privées).</small></span></label></div>`
     d.showModal()
+    getPublicInventory().then(v=>{const c=$('#publishInventory');if(c){c.checked=v;c.disabled=false}}).catch(()=>{})
+    $('#publishInventory').onchange=async e=>{const c=e.target;c.disabled=true;try{await setPublicInventory(c.checked);publicInventoryCache=null;toast(c.checked?'Inventaire publié (lecture seule)':'Inventaire retiré de la page publique')}catch(error){c.checked=!c.checked;toast(`Publication impossible : ${error.message||error}`)}finally{c.disabled=false}}
     $('#closeSupabaseSync').onclick=()=>d.close()
     $('#supabaseSignOut').onclick=async()=>{await supabaseSignOut();d.close();await updateSupabaseStatus();toast('Compte MISES déconnecté')}
     $('#syncNow').onclick=async()=>{
@@ -246,8 +248,9 @@ async function openSupabaseSync(){
     }
     return
   }
-  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Synchroniser MISES!</b><small>Compte personnel · sans Google</small></div><button value="cancel" class="ghost">×</button></div><p>Entre ton adresse e-mail. MISES enverra un lien de connexion sécurisé. Aucun mot de passe ni compte Google n’est nécessaire.</p><label>E-mail<input id="supabaseEmail" type="email" autocomplete="email" required placeholder="ton@email.fr"></label><button id="sendSupabaseLink">Recevoir le lien de connexion</button><p id="supabaseAuthStatus" class="hint"></p></form>`
+  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Synchroniser MISES!</b><small>Compte personnel · sans Google</small></div><button value="cancel" class="ghost">×</button></div><p>Entre ton adresse e-mail. MISES enverra un lien de connexion sécurisé. Aucun mot de passe ni compte Google n’est nécessaire.</p><label>E-mail<input id="supabaseEmail" type="email" autocomplete="email" required placeholder="ton@email.fr"></label><button id="googleSupabaseLogin" type="button" class="ghost">Continuer avec Google</button><button id="sendSupabaseLink">Recevoir le lien de connexion</button><p id="supabaseAuthStatus" class="hint"></p></form>`
   d.showModal()
+  $('#googleSupabaseLogin')?.addEventListener('click',async e=>{e.preventDefault();const status=$('#supabaseAuthStatus');status.textContent='Ouverture de Google…';try{await signInWithGoogleSupabase();status.textContent='Termine la connexion Google : MISES! reprendra automatiquement.'}catch(error){status.textContent=error instanceof Error?error.message:'Connexion Google impossible'}})
   $('#sendSupabaseLink').onclick=async e=>{
     e.preventDefault()
     const email=$('#supabaseEmail').value.trim(),status=$('#supabaseAuthStatus')
@@ -261,12 +264,15 @@ async function runSupabaseSync(){
   const session=await supabaseSession().catch(()=>null)
   if(!session)return
   supabaseSyncBusy=true
-  try{await syncMises(db);await refresh();render()}
-  catch(error){console.warn('[MISES] Supabase sync:',error)}
+  try{
+    const r=await syncMises(db);await refresh();render()
+    if(supabaseSyncAnnounce){supabaseSyncAnnounce=false;toast(`☁ Synchronisé · ${r.pulled} récupérée(s) · ${r.pushed} envoyée(s)${r.conflicts?` · ${r.conflicts} conflit(s)`:''}`)}
+  }
+  catch(error){console.warn('[MISES] Supabase sync:',error);toast(`☁ Synchronisation impossible : ${error instanceof Error?error.message:'erreur inconnue'}. Réessaie depuis ☁.`)}
   finally{supabaseSyncBusy=false;await updateSupabaseStatus()}
 }
 function scheduleSupabaseSync(){clearTimeout(supabaseSyncTimer);supabaseSyncTimer=setTimeout(()=>runSupabaseSync(),1400)}
-let supabaseAuthListenerReady=false,supabaseAutoSyncBound=false
+let supabaseSyncAnnounce=false,supabaseAuthListenerReady=false,supabaseAutoSyncBound=false
 function bindSupabaseAutoSync(){
   if(supabaseAutoSyncBound)return
   supabaseAutoSyncBound=true
@@ -683,7 +689,7 @@ function showObjectScanned(o){
       <button id="scanLocate" type="button">📍 LOCALISER</button>
       <button id="scanEdit" type="button" class="ghost">✏ MODIFIER</button>
       <button id="scanMove" type="button" class="ghost">⇄ DÉPLACER</button>
-      <button id="scanPrintQr" type="button" class="ghost">🖨 IMPRIMER QR</button>
+      <button id="scanPrintQr" type="button" class="ghost">🖨 Imprimer le QR</button>
       <button id="scanAddList" type="button" class="ghost">➕ AJOUTER À UNE LISTE</button>
     </div>
   </div>`
@@ -995,15 +1001,15 @@ async function openSharedPackage(fileId){
 $('#app').innerHTML=`
 <header>
   <div class="brand miseBrand">
-    <div class="miseBrandCopy"><div class="wordmark">${wordmarkSvg}</div><div class="sub">QR CASE FINDER</div><div class="tag">Cherche ta mise · <span id="appVersion">${APP_VERSION}</span></div></div>
+    <div class="miseBrandCopy"><div class="wordmark">${wordmarkSvg}</div><div class="tag">Cherche ta mise</div></div>
   </div>
   <div class="headerTools">
     <span id="networkStatus" class="status" role="status"></span>
     <button id="undoBtn" class="headerChip" type="button" hidden>Annuler</button>
     <button id="printerBtn" class="headerChip" type="button">Imprimante · À connecter</button>
-    <button id="preferencesBtn" class="headerIcon" type="button" aria-label="Préférences">⚙</button>
-    <button id="manualBtn" class="headerIcon" type="button" aria-label="Mini-manuel">?</button>
-    <button id="supabaseSyncBtn" class="headerChip" type="button" hidden>☁ Synchroniser</button><button id="accountBtn" type="button" hidden>Google · Non connecté</button>
+    <button id="preferencesBtn" class="headerIcon" type="button" aria-label="Préférences" title="Préférences">⚙<span class="iconLabel">Réglages</span></button>
+    <button id="manualBtn" class="headerIcon" type="button" aria-label="Mini-manuel" title="Mini-manuel">?<span class="iconLabel">Aide</span></button>
+    <button id="supabaseSyncBtn" class="headerChip" type="button" hidden>☁ Se connecter</button><button id="accountBtn" type="button" hidden>Google · Non connecté</button>
     <button id="backupBtn" type="button" hidden aria-label="Sauvegarder">⇩</button>
   </div>
 </header>
@@ -1013,23 +1019,27 @@ $('#app').innerHTML=`
   <div class="searchbox"><input id="q" autocomplete="off" aria-label="Recherche MISES!" placeholder="Objet, son, ambiance, contenant, mise, kit… ex. tonnerre"><button id="searchGo" class="searchGo" type="button" title="Lancer la recherche" aria-label="Lancer la recherche">→</button><button id="mic" title="Dicter une recherche" aria-label="Dicter une recherche">Dicter</button></div>
   <section id="search" class="tab active searchImmediate" aria-label="Réponse à la recherche"><div id="searchResults"></div></section>
   <div class="quick fieldShortcuts" aria-label="Raccourcis terrain">
-    <button type="button" data-action="labels" class="labelsShortcut" data-testid="home-labels">🏷 ÉTIQUETTES</button>
-    <button type="button" data-action="quick-add">⚡ Ajout rapide</button>
-    <button type="button" data-action="case-photo">📷 Caisse par photo</button>
+    <button type="button" data-action="new-case" class="corePrimary" data-testid="home-new-case">1 · Créer un contenant</button>
+    <button type="button" data-action="quick-add" class="corePrimary">2 · Ajouter des objets</button>
+    <button type="button" data-action="labels" class="labelsShortcut corePrimary" data-testid="home-labels">3 · Imprimer les étiquettes</button>
+    <button type="button" data-action="scan" class="coreScan">Scanner un QR</button>
+    <details class="moreShortcuts" data-testid="home-more"><summary>Plus d’actions</summary><div>
+    <button type="button" data-action="case-photo">📷 Contenant par photo</button>
     <button type="button" data-action="voice-label">🎙 Étiquette vocale</button>
-    <button type="button" data-action="scan">Scanner un QR</button>
     <button type="button" data-action="photo">Ajouter une photo</button>
     <button type="button" data-action="inventory">Inventaire photo</button>
     <button type="button" data-action="last-mise">Dernière mise</button>
-    <button type="button" data-action="label">Créer une étiquette</button>
+    <button type="button" data-action="label">Créer une étiquette libre</button>
+    </div></details>
   </div>
+  <section id="onboarding" class="onboarding panel" data-testid="onboarding" hidden><b>Bienvenue dans MISES!</b><p>Tu as déjà un stock ? <b>Connecte-toi</b> (e-mail ou Google) pour le retrouver sur cet appareil. Sinon, commence par créer ton premier contenant : tu y rangeras tes objets, puis tu imprimeras son étiquette QR.</p><div class="row"><button type="button" id="onboardSignIn">☁ Se connecter</button><button type="button" id="onboardNewCase" class="ghost">Créer mon premier contenant</button></div></section>
 </section>
 <div class="goalNav" aria-label="Navigation MISES">
- <details open><summary>Trouver</summary><div><button data-tab="halloween">🎭 Ambiances</button><button class="foleyOnly" data-tab="creator">Créateur d’ambiance</button><button class="foleyOnly" data-tab="vibe">Vibe bruitage</button></div></details>
  <details class="createGoals"><summary>Créer</summary><div><span class="inventoryNavGroup inventoryOnly"><button id="goalQuickAdd" type="button">⚡ Ajout rapide</button><button id="goalCasePhoto" type="button">📷 Caisse par photo</button><button id="goalVoiceLabel" type="button">🎙 Étiquette vocale</button><button id="goalAddObjectSimple" type="button">+ Objet</button><button id="goalAddCaseSimple" type="button">+ Contenant</button><button id="goalQrSimple" type="button">Étiquettes QR</button></span><button id="goalPlay" class="foleyOnly" type="button">Jouer</button><button id="goalWorkshop" class="foleyOnly" type="button">Préparer un atelier</button><button id="goalChallenge" class="foleyOnly" type="button">Défi bruitage</button><button id="goalPublic" class="foleyOnly" data-tab="publicLibrary" type="button">Bibliothèque publique</button><button id="goalFabrications" class="foleyOnly" data-tab="fabrications" type="button">Fabrications</button><button id="goalActivities" class="foleyOnly" data-tab="activities" type="button">Activités pédagogiques</button><button id="goalPedagogySpaces" class="foleyOnly" type="button">Atelier & 10 jeux</button><button id="goalRandomUniverse" class="foleyOnly" type="button">Univers aléatoire</button><button id="goalHands" class="foleyOnly" type="button">Crée ton bruitage</button><button id="goalExercise" class="foleyOnly" type="button">Exercice</button><button id="goalGroupPhoto" class="foleyOnly" type="button">Photo de groupe</button><button id="goalUniverse" class="foleyOnly" type="button">Univers d’une photo</button></div></details>
  <details><summary>Ranger</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
  <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Étiquettes · Mes contenants</button><button id="goalPromoStickers" type="button">Stickers QR · MISES!</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalCsvImport" type="button">Importer un inventaire CSV</button><button id="goalPublicInventory" type="button">Inventaire public (lecture seule)</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
+ <details class="secondaryTools"><summary>Ambiances & jeux</summary><div><button data-tab="halloween">🎭 Ambiances</button><button class="foleyOnly" data-tab="creator">Créateur d’ambiance</button><button class="foleyOnly" data-tab="vibe">Vibe bruitage</button></div></details>
 </div>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><div class="row"><button id="filterSpareBtn" class="ghost" type="button">Filtrer SPARE</button><button id="quickAddObjectBtn" class="ghost" type="button">⚡ Ajout rapide</button><button id="addObject">+ Objet</button></div></div><div id="objectCards" class="cards"></div></section>
 <section id="halloween" class="tab"><div class="panel"><h2>🎭 Ambiances · Explorer les bruitages</h2><p class="hint">Des pistes sonores classées par thème, sans inventer d’objets dans tes caisses. Les recettes publiques sont des idées ; seul ton inventaire indique ce que tu possèdes.</p><div class="grid2"><label>Univers<select id="themePack" aria-label="Choisir un univers sonore"></select></label><label>Rechercher dans<select id="themeSource" aria-label="Source des résultats"><option value="all">Tout · stock et bibliothèque</option><option value="mine">Mon inventaire uniquement</option><option value="public">Recettes et ressources publiques</option></select></label></div><div id="halloweenThemes" class="row" aria-label="Sous-ambiances"></div><label>Affiner les résultats<input id="halloweenFilter" type="text" inputmode="search" placeholder="Ex. grincement, grelot, pluie, créature…"></label><div id="halloweenResults" aria-live="polite"></div></div></section>
@@ -1048,7 +1058,7 @@ $('#app').innerHTML=`
   <div id="creatorResults"></div>
 </section>
 </main>
-<footer class="appFooter" aria-label="Informations MISES"><span>MISES! · QR Case Finder · <b id="footerVersion">${APP_VERSION}</b> · © Cédric Carboni</span></footer>
+<footer class="appFooter" aria-label="Informations MISES"><span>MISES! · QR Case Finder · <b id="footerVersion"><span id="appVersion">${APP_VERSION}</span></b> · © Cédric Carboni</span></footer>
 
 <input id="photoInput" type="file" accept="image/*" hidden>
 <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
@@ -1693,23 +1703,24 @@ async function openBatchPrint({archived=false}={}){
   const list=archived?archivedLabelCases(all):activeLabelCases(all)
   const sorted=list.slice().sort((x,y)=>Number(isProtectedCase(y))-Number(isProtectedCase(x))||casePathString(x.id,all).localeCompare(casePathString(y.id,all),'fr'))
   const nArch=archivedLabelCases(all).length
-  const actions=c=>archived?`<button type="button" data-restore-one="${esc(c.id)}">Restaurer</button>`:`<button type="button" data-print-one="${esc(c.id)}">IMPRIMER</button><button type="button" class="ghost" data-save-one="${esc(c.id)}">PNG</button><button type="button" class="ghost" data-archive-one="${esc(c.id)}">Archiver</button>${canDeleteCase(c,objects).ok?`<button type="button" class="ghost danger" data-delete-one="${esc(c.id)}">Supprimer</button>`:''}`
-  d.innerHTML=`<div class="form labelsDlg"><div class="dialoghead"><div><b>Étiquettes · ${archived?'Archivées':'Mes contenants'}</b><small>WalkPrint / YHK · 48 mm (384 pts) · longueur automatique · QR permanent</small></div><button id="closeBatch" class="ghost" type="button">×</button></div>
-  <div class="row"><button id="labelsView" type="button" class="ghost">${archived?'← Mes contenants':`Archivées (${nArch})`}</button></div>
-  ${archived?'':`<label class="check"><input id="labelsAll" type="checkbox"><span>Tout sélectionner (${sorted.length})</span></label>`}
-  <div class="labelsList" data-testid="labels-list">${sorted.map(c=>`<article class="labelCard"><label class="check">${archived?'':`<input type="checkbox" data-print-case value="${esc(c.id)}">`}<span><b>${esc(caseName(c))}</b><small>${esc(casePathString(c.id,all))} · ${esc(c.id)}</small></span></label><img loading="lazy" data-label-img="${esc(c.id)}" alt="Étiquette ${esc(caseName(c))}"><div class="row">${actions(c)}</div></article>`).join('')||`<p>${archived?'Aucune étiquette archivée.':'Aucun contenant. Crée ton premier contenant pour imprimer son étiquette.'}</p>`}</div>
-  ${archived?'':'<div class="row labelsBar"><button id="printSelected" type="button" class="ctaBig">IMPRIMER LA SÉLECTION</button></div>'}
-  <p class="hint">Aperçu exact du raster envoyé à l’imprimante. Archiver garde l’ID et le QR. Le QR vise toujours ${esc(PUBLIC_APP_URL)}?case=&lt;id&gt;.</p></div>`
+  const actions=c=>archived?`<button type="button" data-restore-one="${esc(c.id)}">Restaurer</button>`:`<button type="button" data-print-one="${esc(c.id)}">Imprimer</button><button type="button" class="ghost" data-save-one="${esc(c.id)}">PNG</button><button type="button" class="ghost" data-archive-one="${esc(c.id)}">Archiver</button>${canDeleteCase(c,objects).ok?`<details class="moreMenu"><summary aria-label="Plus d’actions pour ${esc(caseName(c))}">⋯</summary><button type="button" class="ghost danger" data-delete-one="${esc(c.id)}">Supprimer…</button></details>`:''}`
+  d.innerHTML=`<div class="form labelsDlg"><div class="dialoghead"><div><b>Étiquettes · ${archived?'Archivées':'Mes contenants'}</b><small>Étiquette 48 mm · QR permanent</small></div><button id="closeBatch" class="ghost" type="button">×</button></div>
+  ${archived||nArch?`<div class="row"><button id="labelsView" type="button" class="ghost">${archived?'← Mes contenants':`Archivées (${nArch})`}</button></div>`:''}
+  ${archived||!sorted.length?'':`<label class="check"><input id="labelsAll" type="checkbox"><span>Tout sélectionner (${sorted.length})</span></label>`}
+  <div class="labelsList" data-testid="labels-list">${sorted.map(c=>`<article class="labelCard"><label class="check">${archived?'':`<input type="checkbox" data-print-case value="${esc(c.id)}">`}<span><b>${esc(caseName(c))}</b><small>${esc(casePathString(c.id,all))} · ${esc(c.id)}</small></span></label><img loading="lazy" data-label-img="${esc(c.id)}" alt="Étiquette ${esc(caseName(c))}"><div class="row">${actions(c)}</div></article>`).join('')||`<p>${archived?'Aucune étiquette archivée.':'Aucun contenant pour l’instant.'}</p>${archived?'':'<button id="labelsCreateCase" type="button" class="ctaBig" data-testid="labels-create-case">Créer un contenant</button>'}`}</div>
+  ${archived||!sorted.length?'':'<div class="row labelsBar"><button id="printSelected" type="button" class="ctaBig">Imprimer la sélection</button></div>'}
+  <p class="hint">Aperçu exact de l’étiquette imprimée. Archiver garde l’étiquette et son QR : tu peux la restaurer à tout moment.</p></div>`
   if(!d.open)d.showModal()
   $('#closeBatch').onclick=()=>d.close()
-  $('#labelsView').onclick=()=>openBatchPrint({archived:!archived})
+  $('#labelsView')?.addEventListener('click',()=>openBatchPrint({archived:!archived}))
+  $('#labelsCreateCase')?.addEventListener('click',()=>{d.close();openCase()})
   const save=async next=>{await db.put('cases',next);await refresh();render();scheduleSupabaseSync();openBatchPrint({archived})}
   $$('[data-archive-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.archiveOne);if(c){save(archiveCase(c));toast('Étiquette archivée (ID et QR conservés)')}})
   $$('[data-restore-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.restoreOne);if(c){save(restoreCase(c));toast('Étiquette restaurée')}})
   $$('[data-delete-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.deleteOne);if(!c)return;if(!confirm(`Supprimer « ${caseName(c)} » (${c.id}) ? Elle disparaîtra de la liste.`))return;try{save(deleteCase(c,objects));toast('Étiquette supprimée')}catch(e){toast(e.message)}})
   const imgs=$$('[data-label-img]',d)
   for(let i=0;i<imgs.length;i++){const c=caseBy(imgs[i].dataset.labelImg);if(c)imgs[i].src=containerLabelImage(c);if(i%8===7)await new Promise(r=>setTimeout(r,0))}
-  if(archived)return
+  if(archived||!sorted.length)return
   $('#labelsAll').onchange=e=>$$('[data-print-case]',d).forEach(x=>x.checked=e.target.checked)
   $$('[data-print-one]',d).forEach(b=>b.onclick=()=>printContainerLabels([caseBy(b.dataset.printOne)].filter(Boolean)))
   $$('[data-save-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.saveOne);if(c)downloadLabelPng(containerLabelImage(c),caseName(c))})
@@ -2000,7 +2011,7 @@ $('#closeManual').onclick=()=>$('#manualDlg').close()
 
 $('#preferencesShare').onclick=()=>{$('#preferencesDlg').close();void openAppShareDialog()}
 $('#supabaseSyncBtn').onclick=()=>openSupabaseSync()
-if(supabaseConfigured){$('#supabaseSyncBtn').hidden=false;$('#supabaseSyncBtn').textContent='☁ Synchroniser'}
+if(supabaseConfigured){$('#supabaseSyncBtn').hidden=false;$('#supabaseSyncBtn').textContent='☁ Se connecter'}
 
 
 function isDialogBackdropClick(dialog,event){
@@ -2198,9 +2209,12 @@ $('#filterSpareBtn')?.addEventListener('click', ()=>{
   render()
 })
 
+$('#onboardSignIn').onclick=()=>openSupabaseSync()
+$('#onboardNewCase').onclick=()=>openCase()
 $$('[data-action]').forEach(b=>b.onclick=()=>{
   const a=b.dataset.action
   if(a==='labels'){openBatchPrint();return}
+  if(a==='new-case'){openCase();return}
   if(a==='quick-add')openQuickAddFlow()
   if(a==='case-photo')$('#casePhotoInput').click()
   if(a==='voice-label')openVoiceLabelFlow()
@@ -2227,6 +2241,7 @@ function renderCreator(){
 }
 
 function render(){
+  const ob=$('#onboarding');if(ob)ob.hidden=Boolean(cases.length||objects.length)
   renderSearch()
   renderPublicSections()
   if($('#halloween').classList.contains('active'))renderHalloween()
@@ -2303,6 +2318,22 @@ $('#restoreInput').onchange=async event=>{
 }
 
 await settleArtProject()
+// Retour de connexion Supabase (lien magique / Google) : code PKCE échangé ICI, puis synchro automatique.
+async function finishSupabaseAuthReturn(){
+  if(!supabaseConfigured)return
+  const href=location.href
+  if(parseAuthReturn(href)){
+    history.replaceState(null,'',cleanAuthUrl(href))
+    try{await completeSupabaseAuthFromUrl(href);supabaseSyncAnnounce=true;toast('☁ Connectée · synchronisation…')}
+    catch(error){toast(`☁ Connexion non terminée : ${error instanceof Error?error.message:'lien invalide ou expiré'}. Redemande un lien depuis ☁ dans l’app.`)}
+  }
+  // Sans session enregistrée, ne charge pas le client Supabase (aucune requête réseau au démarrage).
+  let stored=false;try{stored=Object.keys(localStorage).some(k=>/^sb-.*-auth-token/.test(k))}catch{}
+  if(!stored)return
+  const session=await supabaseSession().catch(()=>null)
+  if(session?.user){await ensureSupabaseAuthListener();await updateSupabaseStatus();scheduleSupabaseSync()}
+}
+setTimeout(()=>finishSupabaseAuthReturn(),0)
 if(params.get('shareFile'))setTimeout(()=>openSharedPackage(params.get('shareFile')),300)
 else if(params.get('case'))setTimeout(()=>caseBy(params.get('case'))?showCase(params.get('case')):openPublicInventory({caseId:params.get('case')}),250)
 else if(params.has('inventaire'))setTimeout(()=>openPublicInventory({}),100)
@@ -2383,11 +2414,13 @@ let publicInventoryCache=null
 async function openPublicInventory({caseId=''}={}){
   let root=$('#publicInventory')
   if(!root){root=document.createElement('section');root.id='publicInventory';root.setAttribute('aria-label','Inventaire public MISES!');document.body.append(root)}
-  root.hidden=false;document.body.classList.add('pubOpen')
-  root.innerHTML=`<div class="pubBar"><b>MISES! · Inventaire</b><span class="pubRo">Lecture seule</span><button id="pubClose" type="button" class="ghost" aria-label="Fermer">×</button></div>
+  // Visiteur (QR scanné, contenant absent de cet appareil) : page publique seule, sans l'accueil ni les boutons du propriétaire.
+  const standalone=Boolean(params.get('case'))&&!caseBy(caseId)
+  root.hidden=false;document.body.classList.add('pubOpen');document.body.classList.toggle('pubStandalone',standalone)
+  root.innerHTML=`<div class="pubBar"><b>MISES! · Inventaire</b><span class="pubRo">Lecture seule</span>${standalone?'':'<button id="pubClose" type="button" class="ghost" aria-label="Retour à mon application">← Retour</button>'}</div>
   <input id="pubGlobalSearch" type="search" placeholder="Chercher un objet, un son, un contenant…" aria-label="Recherche dans tout l'inventaire public">
   <div id="pubBody" data-testid="pub-body"><p class="hint">Chargement…</p></div>`
-  $('#pubClose').onclick=()=>{root.hidden=true;document.body.classList.remove('pubOpen');history.replaceState(null,'',location.pathname)}
+  if($('#pubClose'))$('#pubClose').onclick=()=>{root.hidden=true;document.body.classList.remove('pubOpen');history.replaceState(null,'',location.pathname)}
   try{publicInventoryCache=publicInventoryCache||await fetchPublicInventory({url:SUPABASE_URL,key:SUPABASE_PUBLISHABLE_KEY})}
   catch(error){$('#pubBody').innerHTML=publicNoticeHtml(error.kind||'unavailable',caseId,esc);const r=$('[data-pub-retry]',root);if(r)r.onclick=()=>openPublicInventory({caseId});return}
   const inv=publicInventoryCache,photoUrl=path=>publicPhotoUrl(SUPABASE_URL,path)

@@ -25,10 +25,10 @@ test('the visible name is MISES! and the wordmark says mises !', () => {
   assert.equal(read('../src/identity.css').includes('--ink:#D12A74'), true)
 })
 
-test('home navigation exposes five separate goal cartouches', () => {
+test('home navigation exposes five goal cartouches (secondary tools grouped last)', () => {
   const main = read('../src/main.js')
-  for (const label of ['Trouver', 'Créer', 'Ranger', 'Préparer', 'Partager']) {
-    assert.match(main, new RegExp(`<summary>${label}</summary>`))
+  for (const label of ['Créer', 'Ranger', 'Préparer', 'Partager', 'Ambiances & jeux']) {
+    assert.match(main, new RegExp(`<summary>${label}<\/summary>`))
   }
   assert.doesNotMatch(main, /Trouver & créer|Ranger & préparer|Partager & outils/)
 })
@@ -42,7 +42,7 @@ test('home keeps a single global search field and no redundant Recherche cartouc
   assert.doesNotMatch(main, /data-action="search">Rechercher/)
   assert.doesNotMatch(main, /data-action="speak">Dictée vocale/)
   assert.doesNotMatch(main, /<button data-tab="search"[^>]*>Recherche</)
-  assert.match(main, /data-action="scan">Scanner un QR/)
+  assert.match(main, /data-action="scan"[^>]*>Scanner un QR/)
   assert.match(main, /data-action="photo">Ajouter une photo/)
   assert.match(main, /data-action="inventory">Inventaire photo/)
   assert.match(main, /data-action="last-mise">Dernière mise/)

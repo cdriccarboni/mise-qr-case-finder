@@ -43,6 +43,21 @@ function shouldSync(store,row,session){
   if(isOwnerPrivateRow(row) && !isOwnerPrivateAccount(session?.user?.email)) return false
   return true
 }
+/** Publication de l'inventaire (opt-in propriétaire, RLS update owner-only) : lecture seule via les QR. */
+export async function setPublicInventory(published){
+  const session=await supabaseSession();if(!session?.user)throw new Error('Connecte-toi d’abord')
+  const supabase=await supabaseClient()
+  const spaceId=await ensurePersonalSpace(supabase,session.user)
+  const {error}=await supabase.from('mises_spaces').update({public_inventory:Boolean(published)}).eq('id',spaceId).eq('owner_id',session.user.id)
+  if(error)throw error
+  return Boolean(published)
+}
+export async function getPublicInventory(){
+  const session=await supabaseSession();if(!session?.user)return false
+  const supabase=await supabaseClient()
+  const {data}=await supabase.from('mises_spaces').select('public_inventory').eq('owner_id',session.user.id).limit(1)
+  return Boolean(data?.[0]?.public_inventory)
+}
 export async function claimOwnerSeed(supabase){
   try{const {data,error}=await supabase.rpc('mises_claim_owner_seed');if(error)throw error;return Number(data)||0}
   catch{return 0}

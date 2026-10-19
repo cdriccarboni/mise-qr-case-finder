@@ -34,13 +34,15 @@ export async function fetchPublicInventory({ url, key, fetchImpl = globalThis.fe
   return sanitizePublicInventory(await res.json())
 }
 /** Message clair (jamais de page blanche) quand l'inventaire ou le contenant n'est pas disponible. */
-export function publicNoticeHtml(kind, caseId, esc) {
-  const id = caseId ? `<p class="pubId">Contenant scanné : <code>${esc(caseId)}</code></p>` : ''
+export function publicNoticeHtml(kind, caseId, esc, { online = globalThis.navigator?.onLine !== false } = {}) {
+  if (kind === 'unavailable' && !online) kind = 'offline'
+  // Jamais « QR valide » sans vérification : l'ID n'est affiché qu'à titre de référence.
+  const id = caseId ? `<p class="pubId">Identifiant scanné : <code>${esc(caseId)}</code></p>` : ''
   const msg = {
-    'not-published': ['Inventaire pas encore publié', 'Le QR est valide, mais l’inventaire public de MISES! n’est pas encore en ligne. Il apparaîtra ici dès sa publication.'],
-    'case-missing': ['Contenant pas encore publié', 'Ce contenant n’apparaît pas encore dans l’inventaire public. Il apparaîtra après la prochaine synchronisation.'],
-    offline: ['Inventaire injoignable', 'Vérifie la connexion réseau puis réessaie.'],
-    unavailable: ['Inventaire momentanément indisponible', 'Réessaie dans quelques minutes.']
+    'not-published': ['Inventaire non publié', 'Le propriétaire de ce contenant n’a pas publié son inventaire. Aucune information n’est affichée.'],
+    'case-missing': ['Contenant inconnu', 'Aucun contenant publié ne porte cet identifiant. Vérifie l’étiquette ou demande au propriétaire.'],
+    offline: ['Hors ligne', 'Pas de connexion réseau. Reconnecte-toi puis touche Réessayer.'],
+    unavailable: ['Inventaire momentanément indisponible', 'Le serveur ne répond pas. Réessaie dans quelques minutes.']
   }[kind] || ['Inventaire indisponible', 'Réessaie plus tard.']
   return `<div class="pubEmpty pubNotice" data-testid="pub-notice" data-kind="${esc(kind)}"><h1>${msg[0]}</h1><p>${msg[1]}</p>${id}<button type="button" class="ghost" data-pub-retry>Réessayer</button></div>`
 }

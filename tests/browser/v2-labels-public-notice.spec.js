@@ -23,13 +23,13 @@ test('accueil mobile : ÉTIQUETTES ouvre Étiquettes · Mes contenants avec noms
   await expect(page.locator('#labelsAll')).toBeVisible()
   await page.locator('#labelsAll').check()
   await expect(page.locator('[data-print-case]:checked')).toHaveCount(2)
-  await expect(page.locator('#printSelected')).toHaveText('IMPRIMER LA SÉLECTION')
+  await expect(page.locator('#printSelected')).toHaveText('Imprimer la sélection')
 })
 
 for (const [label, status, body, kind, title] of [
-  ['RPC absente (migration non appliquée)', 404, '{"code":"PGRST202","message":"Could not find the function"}', 'not-published', 'Inventaire pas encore publié'],
-  ['inventaire vide', 200, '{"cases":[],"objects":[],"sounds":[],"objectSounds":[]}', 'not-published', 'Inventaire pas encore publié'],
-  ['contenant absent', 200, '{"cases":[{"id":"AUTRE-01","name":"Autre"}],"objects":[],"sounds":[],"objectSounds":[]}', 'case-missing', 'Contenant pas encore publié']
+  ['RPC absente (migration non appliquée)', 404, '{"code":"PGRST202","message":"Could not find the function"}', 'not-published', 'Inventaire non publié'],
+  ['inventaire vide', 200, '{"cases":[],"objects":[],"sounds":[],"objectSounds":[]}', 'not-published', 'Inventaire non publié'],
+  ['contenant absent', 200, '{"cases":[{"id":"AUTRE-01","name":"Autre"}],"objects":[],"sounds":[],"objectSounds":[]}', 'case-missing', 'Contenant inconnu']
 ]) test(`QR public : message clair si ${label}`, async ({ page }) => {
   await page.route('**/rest/v1/rpc/get_public_inventory', route => route.fulfill({ status, contentType: 'application/json', body }))
   await page.goto('/?case=SAC-FICTIF-01')

@@ -1,6 +1,10 @@
 import { APP_VERSION } from '../../src/version.js'
 import { test, expect } from '@playwright/test'
 
+// 0.4.0-beta.32 : actions secondaires repliées (« Plus d’actions », « Ambiances & jeux ») — ouvertes pour ces parcours.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => { const t = setInterval(() => { const ds = document.querySelectorAll('.moreShortcuts,.secondaryTools'); if (ds.length) { ds.forEach(d => { d.open = true }); clearInterval(t) } }, 20) }) })
+
+
 test('label editor uses mini-printer only, import surface and index diagnostics', async ({ page }) => {
   const errors=[]
   page.on('pageerror', error=>errors.push(error.message))

@@ -5,6 +5,7 @@ test('the screen says MISES! and Preferences exposes Share instead of About', as
   await expect(page).toHaveTitle('MISES! — QR Case Finder')
   await expect(page.locator('header .miseWordmark')).toHaveAttribute('aria-label', 'mises !')
   await expect(page.locator('header')).toContainText('Cherche ta mise')
+  await expect(page.locator('header #appVersion')).toHaveCount(0)
   const dots = await page.locator('header .miseWordmark .markDot').count()
   expect(dots).toBe(2)
   await page.locator('#preferencesBtn').click()

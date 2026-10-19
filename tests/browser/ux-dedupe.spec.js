@@ -18,10 +18,12 @@ test('un seul champ recherche, pas de cartouches Recherche/Rechercher redondants
   await expect(page.locator('[data-tab="search"]')).toHaveCount(0)
   await expect(page.getByText('Dictée vocale', { exact: true })).toHaveCount(0)
   await expect(page.locator('#mic')).toBeVisible()
-  for (const label of ['Trouver', 'Créer', 'Ranger', 'Préparer', 'Partager']) {
+  for (const label of ['Ambiances & jeux', 'Créer', 'Ranger', 'Préparer', 'Partager']) {
     await expect(page.locator('.goalNav summary', { hasText: label })).toHaveCount(1)
   }
   await expect(page.locator('[data-action="scan"]')).toBeVisible()
+  // Actions secondaires regroupées dans « Plus d’actions » (audit 0.4.0-beta.32)
+  await page.locator('.moreShortcuts > summary').click()
   await expect(page.locator('[data-action="photo"]')).toBeVisible()
   await expect(page.locator('[data-action="inventory"]')).toBeVisible()
   await expect(page.locator('[data-action="last-mise"]')).toBeVisible()
@@ -35,8 +37,8 @@ test('grille 2 colonnes : dernier cartouche impair en pleine largeur (360 et Pix
   for (const size of [[360, 740], [412, 915], [1280, 800]]) {
     await page.setViewportSize({ width: size[0], height: size[1] })
     await page.goto('/')
-    await page.getByText('Trouver', { exact: true }).click()
-    const trouver = page.locator('.goalNav details').filter({ has: page.locator('summary', { hasText: 'Trouver' }) })
+    await page.getByText('Ambiances & jeux', { exact: true }).click()
+    const trouver = page.locator('.goalNav details').filter({ has: page.locator('summary', { hasText: 'Ambiances & jeux' }) })
     await trouver.evaluate(node => { node.open = true })
     const buttons = trouver.locator('div > button')
     const count = await buttons.count()
