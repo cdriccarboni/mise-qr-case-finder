@@ -1,3 +1,8 @@
+## 0.4.0-beta.25 — 19 octobre 2026 (#45)
+
+- Étiquette de contenant **unique et approuvée** partout : la fiche contenant (« Créer / imprimer le QR ») et l’impression d’un contenant utilisent désormais le même rendu que 🏷 ÉTIQUETTES (QR en haut, « mises! », nom sur 2 lignes, ID ; QR `?case=<id>`). L’ancien gabarit reste réservé aux objets.
+- Tests d’égalité pixel à pixel (SHA-256 RGBA) des 6 étiquettes approuvées : rendu, aperçu écran et bitmap transmis au pilote WalkPrint/YHK.
+
 ## 0.4.0-beta.24 — 19 octobre 2026 (#45)
 
 - Supabase : l’app pointe désormais vers le projet `errsklrioqfovhkdiejd` (migrations MISES! appliquées) avec sa clé publiable publique ; ancien projet `jemqozyqqsgabljnhfvn` abandonné (web, Android : hôte de vérification e-mail / App Link).
