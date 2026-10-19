@@ -417,3 +417,6 @@ body.pubOpen{overflow:hidden}
 .pubPath{display:block;opacity:.75;font-size:.8rem;background:none;border:0;padding:0;color:inherit;text-align:left}
 .pubSub h2{font-size:1rem;margin:.8rem 0 .2rem}.pubSub button,.pubList li>button{background:none;border:0;font:inherit;color:inherit;padding:.4rem 0}
 .pubEmpty{padding:1rem;opacity:.75}
+.labelsList{display:grid;gap:.6rem;max-height:60vh;overflow:auto}.labelCard{border:1px solid #8884;border-radius:10px;padding:.5rem}
+.labelCard img{display:block;max-height:220px;max-width:100%;margin:.4rem auto;image-rendering:pixelated;border:1px dashed #8886}
+.labelCard small{display:block;opacity:.7}.labelsBar{position:sticky;bottom:0;background:inherit;padding-top:.4rem}

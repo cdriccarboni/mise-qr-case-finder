@@ -212,3 +212,77 @@ export function renderLabelDataUrl(spec) {
   canvas.getContext('2d').putImageData(new ImageData(image.rgba, image.width, image.height), 0, 0)
   return canvas.toDataURL('image/png')
 }
+
+// ===== Étiquette longue horizontale de contenant (WalkPrint/YHK) =====
+// Pilotes Android (NativePrinterBridge.WIDTH) et Mac (MisesRaster) : tête 384 points (48 mm, 203 dpi = 8 pts/mm),
+// rotation 180° faite par le pilote à la sortie papier ; hauteur raster plafonnée à 1800 points côté Mac.
+export const PRINTHEAD_DOTS = 384
+export const DOTS_PER_MM = 8
+export const MAX_LABEL_DOTS = 1800
+export const PUBLIC_APP_URL = 'https://cdriccarboni.github.io/mise-qr-case-finder/'
+export function containerQrUrl(id) { return `${PUBLIC_APP_URL}?case=${encodeURIComponent(id)}` }
+
+function wrapAll(text, scale, maxWidth) {
+  // Séparateur explicite « / » : coupure préférée (ex. « VIE QUOTIDIENNE / 1 SUR 2 »).
+  const parts = String(text || '').split(/\s+\/\s+/)
+  if (parts.length === 2) {
+    const a = foldLabel(parts[0]), b = foldLabel(parts[1])
+    if (a.length * 6 * scale <= maxWidth && b.length * 6 * scale <= maxWidth) return [a, b]
+  }
+  const words = foldLabel(text).split(' ').filter(Boolean)
+  const lines = []; let line = ''
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word
+    if (line && next.length * 6 * scale > maxWidth) { lines.push(line); line = word } else line = next
+  }
+  if (line) lines.push(line)
+  return lines
+}
+/** Mise en page : nom jamais tronqué (2 lignes max, échelle réduite si besoin, longueur auto). */
+export function containerLabelLayout(spec) {
+  const H = PRINTHEAD_DOTS, margin = 16
+  const qrBox = H - margin * 2 // 352 pts = 44 mm
+  const maxText = MAX_LABEL_DOTS - margin * 3 - qrBox - margin
+  let scale = 7, lines
+  for (; scale >= 3; scale--) {
+    const lineLimit = Math.min(maxText, Math.max(560, 6 * scale * 18))
+    lines = wrapAll(spec.name || 'MISES', scale, lineLimit)
+    const fits = lines.length <= 2 && lines.every(l => l.length * 6 * scale <= maxText) && lines.length * 8 * scale + 52 + 24 + 30 <= H - margin * 2
+    if (fits) break
+  }
+  if (scale < 3) { scale = 3; lines = wrapAll(spec.name, 3, maxText) }
+  const sub = foldLabel(spec.subtitle || '')
+  const textWidth = Math.max(WORDMARK_BITMAP.width, ...lines.map(l => l.length * 6 * scale), sub.length * 12)
+  const length = Math.min(MAX_LABEL_DOTS, margin + qrBox + margin * 2 + textWidth + margin)
+  return { H, margin, qrBox, scale, lines, sub, textWidth, length, textLeft: margin + qrBox + margin * 2 }
+}
+/** Rend l'étiquette à plat (longueur × 384) puis la tourne de 90° : image finale 384 pts de large. */
+export function renderContainerLabelRgba(spec) {
+  const L = containerLabelLayout(spec)
+  const flat = createImage(L.length, L.H, PAPER)
+  const qrText = spec.qrText || containerQrUrl(spec.id)
+  const qr = QRCode.create(qrText, { errorCorrectionLevel: 'M' })
+  const n = qr.modules.size, quiet = 4
+  const mod = Math.floor(L.qrBox / (n + quiet * 2))
+  const qrSize = (n + quiet * 2) * mod
+  const qx = L.margin + Math.floor((L.qrBox - qrSize) / 2), qy = Math.floor((L.H - qrSize) / 2)
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.modules.get(r, c)) flat.fillRect(qx + (c + quiet) * mod, qy + (r + quiet) * mod, mod, mod, INK)
+  const blockH = 52 + 16 + L.lines.length * 8 * L.scale + (L.sub ? 28 : 0)
+  let y = Math.max(L.margin, Math.floor((L.H - blockH) / 2))
+  blitWordmark(flat, L.textLeft, y, INK); y += 52 + 16
+  for (const line of L.lines) { drawText(flat, line, L.textLeft, y, L.scale, INK); y += 8 * L.scale }
+  if (L.sub) drawText(flat, L.sub, L.textLeft, y + 8, 2, INK)
+  // Rotation 90° horaire : largeur finale = tête d'impression.
+  const out = createImage(L.H, L.length, PAPER)
+  for (let y0 = 0; y0 < L.H; y0++) for (let x0 = 0; x0 < L.length; x0++) {
+    const i = (y0 * L.length + x0) * 4, j = (x0 * L.H + (L.H - 1 - y0)) * 4
+    out.rgba[j] = flat.rgba[i]; out.rgba[j + 1] = flat.rgba[i + 1]; out.rgba[j + 2] = flat.rgba[i + 2]; out.rgba[j + 3] = 255
+  }
+  return { rgba: out.rgba, width: L.H, height: L.length, qrText, layout: L, qrModuleDots: mod, qrMm: qrSize / DOTS_PER_MM, flat }
+}
+export function renderContainerLabelDataUrl(spec) {
+  const image = renderContainerLabelRgba(spec)
+  const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height
+  canvas.getContext('2d').putImageData(new ImageData(image.rgba, image.width, image.height), 0, 0)
+  return canvas.toDataURL('image/png')
+}

@@ -16,7 +16,7 @@ import { APP_VERSION } from './version.js'
 import wordmarkSvg from './brand/wordmark.svg?raw'
 import { FAMILIES } from './constants.js'
 import { entityUrl, shortId, readEntityUrl, resolveEntityId } from './qr-link.js'
-import { renderLabelDataUrl } from './label-render.js'
+import { renderLabelDataUrl, renderContainerLabelDataUrl, containerQrUrl, PUBLIC_APP_URL } from './label-render.js'
 import { proposeVibe } from './vibe-engine.js'
 import { generateExercises } from './exercise-engine.js'
 import { buildRelationGraph, summarizeInventory, OBJECT_STATUSES } from './relations.js'
@@ -1025,7 +1025,7 @@ $('#app').innerHTML=`
  <details class="createGoals"><summary>Créer</summary><div><span class="inventoryNavGroup inventoryOnly"><button id="goalQuickAdd" type="button">⚡ Ajout rapide</button><button id="goalCasePhoto" type="button">📷 Caisse par photo</button><button id="goalVoiceLabel" type="button">🎙 Étiquette vocale</button><button id="goalAddObjectSimple" type="button">+ Objet</button><button id="goalAddCaseSimple" type="button">+ Contenant</button><button id="goalQrSimple" type="button">Étiquettes QR</button></span><button id="goalPlay" class="foleyOnly" type="button">Jouer</button><button id="goalWorkshop" class="foleyOnly" type="button">Préparer un atelier</button><button id="goalChallenge" class="foleyOnly" type="button">Défi bruitage</button><button id="goalPublic" class="foleyOnly" data-tab="publicLibrary" type="button">Bibliothèque publique</button><button id="goalFabrications" class="foleyOnly" data-tab="fabrications" type="button">Fabrications</button><button id="goalActivities" class="foleyOnly" data-tab="activities" type="button">Activités pédagogiques</button><button id="goalPedagogySpaces" class="foleyOnly" type="button">Atelier & 10 jeux</button><button id="goalRandomUniverse" class="foleyOnly" type="button">Univers aléatoire</button><button id="goalHands" class="foleyOnly" type="button">Crée ton bruitage</button><button id="goalExercise" class="foleyOnly" type="button">Exercice</button><button id="goalGroupPhoto" class="foleyOnly" type="button">Photo de groupe</button><button id="goalUniverse" class="foleyOnly" type="button">Univers d’une photo</button></div></details>
  <details><summary>Ranger</summary><div><button data-tab="inventory">Objets & photos</button><button data-tab="cases">Valises & QR code</button><button id="goalMove" type="button">Déplacer par scans</button></div></details>
  <details><summary>Préparer</summary><div><button data-tab="kits">Kits</button><button data-tab="mises">Mises</button></div></details>
- <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Créer / imprimer des QR</button><button id="goalPromoStickers" type="button">Stickers QR · MISES!</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalCsvImport" type="button">Importer un inventaire CSV</button><button id="goalPublicInventory" type="button">Inventaire public (lecture seule)</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
+ <details><summary>Partager</summary><div><button id="goalShare" type="button">Partager par QR</button><button id="goalGoogle" type="button">Connexion Google</button><button id="goalPrinter" type="button">Imprimante</button><button id="goalBatchPrint" type="button">Étiquettes · Mes contenants</button><button id="goalPromoStickers" type="button">Stickers QR · MISES!</button><button id="goalManual" type="button">Mini-manuel</button><button id="goalDataBruitage" type="button">Importer des données · Data Bruitage</button><button id="goalBackup" type="button">Sauvegarde</button><button id="goalRestore" type="button">Importer sauvegarde</button><button id="goalCsvImport" type="button">Importer un inventaire CSV</button><button id="goalPublicInventory" type="button">Inventaire public (lecture seule)</button><button id="goalIosInstall" type="button" hidden>Installer sur iPhone</button></div></details>
 </div>
 <section id="inventory" class="tab"><div class="sectionhead"><h2>Objets</h2><div class="row"><button id="filterSpareBtn" class="ghost" type="button">Filtrer SPARE</button><button id="quickAddObjectBtn" class="ghost" type="button">⚡ Ajout rapide</button><button id="addObject">+ Objet</button></div></div><div id="objectCards" class="cards"></div></section>
 <section id="halloween" class="tab"><div class="panel"><h2>🎭 Ambiances · Explorer les bruitages</h2><p class="hint">Des pistes sonores classées par thème, sans inventer d’objets dans tes caisses. Les recettes publiques sont des idées ; seul ton inventaire indique ce que tu possèdes.</p><div class="grid2"><label>Univers<select id="themePack" aria-label="Choisir un univers sonore"></select></label><label>Rechercher dans<select id="themeSource" aria-label="Source des résultats"><option value="all">Tout · stock et bibliothèque</option><option value="mine">Mon inventaire uniquement</option><option value="public">Recettes et ressources publiques</option></select></label></div><div id="halloweenThemes" class="row" aria-label="Sous-ambiances"></div><label>Affiner les résultats<input id="halloweenFilter" type="text" inputmode="search" placeholder="Ex. grincement, grelot, pluie, créature…"></label><div id="halloweenResults" aria-live="polite"></div></div></section>
@@ -1158,6 +1158,7 @@ function renderSearch(target='#searchResults'){
     <small>Source externe · ${esc(i.source||'base de référence')} · pas un document de l’utilisateur${i.technique?' · toucher pour voir la technique':''}</small></div><div class="resultActions">${i.technique?`<button class="miniAction" type="button" data-technique-button="${esc(i.id||i.name)}" title="Comment faire" aria-label="Comment faire">?</button>`:''}<button class="plus" type="button" data-idea="${esc(i.id||i.name)}" title="Ajouter à mon stock" aria-label="Ajouter à mon stock">+</button></div></article>`).join('')
   $(target).innerHTML=h
   $$('[data-central-case]',$(target)).forEach(b=>b.onclick=()=>showCase(b.dataset.centralCase))
+  $$('[data-central-open]',$(target)).forEach(b=>b.onclick=()=>openObject(objectBy(b.dataset.centralOpen)||{id:b.dataset.centralOpen}))
   $$('[data-open]',$(target)).forEach(b=>b.onclick=()=>openObject(objectBy(b.dataset.open)||{id:b.dataset.open}))
   $$('[data-add]',$(target)).forEach(b=>b.onclick=()=>addToActiveMise(b.dataset.add))
   $$('[data-fav]',$(target)).forEach(b=>b.onclick=()=>toggleFavorite(b.dataset.fav))
@@ -1669,32 +1670,33 @@ function openPrint(c,qr){
   $('#btPrint').onclick=()=>sendSystemPrint(image,caseName(c))
   $('#printerTestFromLabel').onclick=()=>hasNativePrinter()?openNativePrinterDialog():openDesktopPrinterDialog()
 }
+// Étiquettes → Mes contenants : étiquette longue horizontale 384 pts (WalkPrint/YHK), QR = URL publique permanente.
+function containerLabelName(c){return c.part&&c.total?`${c.name} / ${c.part} SUR ${c.total}`:c.name}
+function containerLabelImage(c){return renderContainerLabelDataUrl({id:c.id,name:containerLabelName(c),subtitle:c.id,qrText:containerQrUrl(c.id)})}
+async function printContainerLabels(list){
+  if(!list.length){toast('Sélectionne au moins un contenant');return}
+  const images=list.map(c=>({box:c,image:containerLabelImage(c)}))
+  if(hasNativePrinter()){const saved=await db.get('settings','printer');if(!saved?.native)return openNativePrinterDialog();await nativePrint(saved.deviceId,images.map(e=>e.image));return}
+  if(!(await macPrinterHealth()))return openDesktopPrinterDialog()
+  for(const entry of images)await sendMacThermalPrint(entry.image,caseName(entry.box))
+  toast(images.length+' étiquette(s) envoyée(s) à la mini-imprimante Mac')
+}
 async function openBatchPrint(){
   const d=$('#printDlg')
-  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Créer / imprimer des QR</b><small>Étiquettes pour valises et caisses</small></div><button id="closeBatch" class="ghost">×</button></div><p class="hint">Coche les contenants puis prépare leurs QR. Tu peux imprimer la planche ou exporter chaque étiquette en PNG 384 px, même sans pilote Bluetooth sur l’ordinateur.</p><div class="checklist">${cases.map(c=>`<label class="check"><input type="checkbox" data-print-case value="${c.id}" checked><span>${esc(caseName(c))}</span></label>`).join('')||'<p>Aucun contenant.</p>'}</div><button id="makeBatch">Créer les QR / préparer l’impression</button><div id="batchLabels" class="batchLabels"></div></div>`
+  const sorted=cases.slice().sort((x,y)=>casePathString(x.id,cases).localeCompare(casePathString(y.id,cases),'fr'))
+  d.innerHTML=`<div class="form labelsDlg"><div class="dialoghead"><div><b>Étiquettes · Mes contenants</b><small>WalkPrint / YHK · 48 mm (384 pts) · longueur automatique · QR permanent</small></div><button id="closeBatch" class="ghost" type="button">×</button></div>
+  <label class="check"><input id="labelsAll" type="checkbox"><span>Tout sélectionner (${sorted.length})</span></label>
+  <div class="labelsList" data-testid="labels-list">${sorted.map(c=>`<article class="labelCard"><label class="check"><input type="checkbox" data-print-case value="${esc(c.id)}"><span><b>${esc(caseName(c))}</b><small>${esc(casePathString(c.id,cases))} · ${esc(c.id)}</small></span></label><img loading="lazy" data-label-img="${esc(c.id)}" alt="Étiquette ${esc(caseName(c))}"><div class="row"><button type="button" data-print-one="${esc(c.id)}">IMPRIMER</button><button type="button" class="ghost" data-save-one="${esc(c.id)}">PNG</button></div></article>`).join('')||'<p>Aucun contenant.</p>'}</div>
+  <div class="row labelsBar"><button id="printSelected" type="button" class="ctaBig">IMPRIMER LA SÉLECTION</button></div>
+  <p class="hint">Aperçu exact du raster envoyé à l’imprimante. Le texte peut changer, le QR vise toujours ${esc(PUBLIC_APP_URL)}?case=&lt;id&gt;.</p></div>`
   d.showModal()
   $('#closeBatch').onclick=()=>d.close()
-  $('#makeBatch').onclick=async()=>{
-    const ids=$$('[data-print-case]:checked',d).map(x=>x.value),selected=cases.filter(c=>ids.includes(c.id))
-    if(!selected.length){toast('Sélectionne au moins une valise');return}
-    const button=$('#makeBatch')
-    button.disabled=true
-    const prepared=[]
-    try{
-      for(let i=0;i<selected.length;i++){
-        const box=selected[i]
-        prepared.push({box,image:renderLabelDataUrl({name:caseName(box),id:box.id,shortId:shortId(box.id),qrText:entityUrl(pageOrigin(),'case',box.id),category:box.type||'Contenant'})})
-        if(i%12===11)await new Promise(resolve=>setTimeout(resolve,0))
-      }
-      $('#batchLabels').innerHTML=prepared.map(({box,image},i)=>`<div class="labelPreview batchLabel"><strong>${esc(caseName(box))}</strong><img src="${image}" alt="Étiquette QR de ${esc(caseName(box))}"><small>${esc(box.id)}</small><button type="button" class="ghost" data-save-batch="${i}">Exporter PNG</button></div>`).join('')+`<div class="row"><button id="printBatchNow" type="button">Mini-imprimante · étiquettes</button></div>`
-      $$('[data-save-batch]',d).forEach(item=>item.onclick=()=>{
-        const entry=prepared[Number(item.dataset.saveBatch)]
-        if(entry)downloadLabelPng(entry.image,caseName(entry.box))
-      })
-      $('#printBatchNow').onclick=async()=>{if(!prepared.length)return;if(hasNativePrinter()){const saved=await db.get('settings','printer');if(!saved?.native)return openNativePrinterDialog();await nativePrint(saved.deviceId,prepared.map(e=>e.image));return}if(!(await macPrinterHealth()))return openDesktopPrinterDialog();for(const entry of prepared)await sendMacThermalPrint(entry.image,caseName(entry.box));toast(prepared.length+' étiquette(s) envoyée(s) à la mini-imprimante Mac')}
-    }catch(error){toast('Impossible de préparer les étiquettes')}
-    finally{button.disabled=false}
-  }
+  const imgs=$$('[data-label-img]',d)
+  for(let i=0;i<imgs.length;i++){const c=caseBy(imgs[i].dataset.labelImg);if(c)imgs[i].src=containerLabelImage(c);if(i%8===7)await new Promise(r=>setTimeout(r,0))}
+  $('#labelsAll').onchange=e=>$$('[data-print-case]',d).forEach(x=>x.checked=e.target.checked)
+  $$('[data-print-one]',d).forEach(b=>b.onclick=()=>printContainerLabels([caseBy(b.dataset.printOne)].filter(Boolean)))
+  $$('[data-save-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.saveOne);if(c)downloadLabelPng(containerLabelImage(c),caseName(c))})
+  $('#printSelected').onclick=()=>printContainerLabels($$('[data-print-case]:checked',d).map(x=>caseBy(x.value)).filter(Boolean))
 }
 
 async function updatePrinterStatus(){

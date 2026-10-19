@@ -1,3 +1,11 @@
+## 0.4.0-beta.20 — 19 octobre 2026 (#45)
+
+- **Étiquettes · Mes contenants** (menu Partager) : tous les contenants avec aperçu exact, IMPRIMER à l’unité ou par sélection, réimpression. Étiquette longue horizontale WalkPrint/YHK 384 pts (48 mm), longueur automatique, nom jamais tronqué (2 lignes), QR ≈ 39 mm vers l’URL publique permanente `?case=<id>`.
+- **Inventaire public en lecture seule** : le QR d’un contenant ouvre sa page sans compte (objets, quantités, compartiments, photos, recherche), recherche globale publique. RPC Supabase `get_public_inventory` (migration à appliquer).
+- Import CSV d’inventaire (aperçu, conflits, sauvegarde automatique, réimport idempotent, IDs permanents conservés).
+- Recherche centrale objets / contenants / bruitages / techniques ; photos multiples avec file hors ligne ; synchro par révision avec journal de conflits.
+- Migrations Supabase versionnées et idempotentes (`supabase/migrations/`, voir `docs/SUPABASE.md`).
+
 ## 0.4.0-beta.19 — 10 octobre 2026
 
 - Corrige la boucle « nouvelle version disponible » de la PWA : plus de reload arbitraire après 900 ms ; la navigation est rechargée uniquement après prise de contrôle du nouveau Service Worker.

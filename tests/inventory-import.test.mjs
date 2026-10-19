@@ -41,3 +41,14 @@ test('modification = conflit, pas d\'écrasement sans accord ; accord = mise à 
   const emptied = run(first.state, CSV.replace('Câble XLR 3 m;4', 'Câble XLR 3 m;'), { applyUpdates: true })
   assert.equal(emptied.plan.summary.unchanged, 4) // vide n'efface jamais
 })
+test('colonnes ID,Nom,Contenant,Quantité,Longueur,Couleur,Catégorie,Emplacement,Statut : IDs permanents conservés', () => {
+  const csv = 'ID,Nom,Contenant,Quantité,Longueur,Couleur,Catégorie,Emplacement,Statut\nCASE-DEMO-01-XLR-1,XLR-XLR,CASE-DEMO-01,1,"1,5 m",rouge,Câble,,validé-source\nCASE-DEMO-01-XLR-2,XLR-XLR,CASE-DEMO-01,1,"1,5 m",blanc,Câble,poche,validé-source\n'
+  const a = run({ objects: [], cases: [] }, csv)
+  assert.deepEqual(a.res.objects.map(o => o.id), ['CASE-DEMO-01-XLR-1', 'CASE-DEMO-01-XLR-2'])
+  assert.equal(a.res.cases.length, 1); assert.equal(a.res.cases[0].id, 'CASE-DEMO-01')
+  assert.equal(a.res.objects[1].location, 'poche'); assert.equal(a.res.objects[0].length, '1,5 m'); assert.equal(a.res.objects[0].status, 'validé-source')
+  // renommage d'affichage du contenant puis réimport : 0 nouveau, 0 conflit
+  const renamed = { ...a.state, cases: a.state.cases.map(c => ({ ...c, name: 'NOM AFFICHÉ' })) }
+  const b = run(renamed, csv)
+  assert.deepEqual(b.plan.summary, { create: 0, review: 0, unchanged: 2, errors: 0 })
+})

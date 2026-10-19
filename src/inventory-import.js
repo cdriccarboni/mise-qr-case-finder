@@ -25,7 +25,8 @@ export function parseCsvText(text) {
   return { headers, rows: rows.map(r => Object.fromEntries(headers.map((h, i) => [h, r[i] ?? '']))) }
 }
 
-const caseLabel = c => c?.name || ''
+const caseLabel = c => c?.importName || c?.name || ''
+const ID_LIKE = /^[A-Z0-9][A-Z0-9_-]{2,}$/
 /** Projette objets/contenants existants au format du planificateur. */
 export function projectInventory(objects = [], cases = []) {
   const byId = new Map(cases.map(c => [c.id, c]))
@@ -55,11 +56,11 @@ export function planInventoryImport(rows, { objects = [], cases = [] } = {}, map
  */
 export function applyInventoryPlan(plan, { objects = [], cases = [] } = {}, { applyUpdates = false, now = new Date().toISOString(), sourceId = 'csv' } = {}) {
   const allCases = cases.slice(), newCases = [], writes = [], conflicts = []
-  const findCase = (name, parentId = null) => allCases.find(c => normKey(c.name) === normKey(name) && (parentId ? c.parentId === parentId : true) && (!parentId ? !c.parentId || c.importRole !== 'compartment' : true))
+  const findCase = (name, parentId = null) => (!parentId && allCases.find(c => c.id === name)) || allCases.find(c => normKey(caseLabel(c)) === normKey(name) && (parentId ? c.parentId === parentId : true) && (!parentId ? !c.parentId || c.importRole !== 'compartment' : true))
   const ensureCase = (name, parentId = null) => {
     let c = findCase(name, parentId)
     if (!c) {
-      c = { id: stableId('case'), name, parentId: parentId || '', type: parentId ? 'compartiment' : 'contenant', importRole: parentId ? 'compartment' : 'container', provenance: 'user-document', createdAt: now, updatedAt: now }
+      c = { id: !parentId && ID_LIKE.test(name) ? name : stableId('case'), name, importName: name, parentId: parentId || '', type: parentId ? 'compartiment' : 'contenant', importRole: parentId ? 'compartment' : 'container', provenance: 'user-document', createdAt: now, updatedAt: now }
       allCases.push(c); newCases.push(c)
     }
     return c

@@ -23,8 +23,8 @@ export function centralResultsHtml(results, esc) {
       ? [r.path ? `📦 ${esc(r.path)}` : 'Sans contenant', r.techniques?.length ? `Techniques : ${esc(r.techniques.join(', '))}` : '', r.sounds?.length ? `Sons : ${esc(r.sounds.slice(0, 4).join(', '))}` : ''].filter(Boolean).join(' · ')
       : r.kind === 'contenant' ? `${esc(r.path)} · ${r.objects.length} objet(s)`
       : [(r.objects || []).slice(0, 4).map(o => `${esc(o.name)}${o.path ? ` (${esc(o.path)})` : ''}`).join(', ') || 'Aucun objet lié', r.techniques?.length ? `Techniques : ${esc(r.techniques.join(', '))}` : ''].filter(Boolean).join(' · ')
-    const open = r.kind === 'objet' ? `data-open="${esc(r.id)}"` : r.kind === 'contenant' ? `data-central-case="${esc(r.id)}"` : (r.objects?.[0] ? `data-open="${esc(r.objects[0].id)}"` : '')
-    return `<article class="result centralResult" data-kind="${r.kind}"><div class="thumb">${KIND_ICON[r.kind]}</div><div><h3>${esc(r.label)} <small class="kindBadge">${r.kind}</small></h3><small>${sub}</small></div>${open ? `<button ${open} class="miniAction" type="button" aria-label="Ouvrir">↗</button>` : ''}</article>`
+    const open = r.kind === 'objet' ? `data-central-open="${esc(r.id)}"` : r.kind === 'contenant' ? `data-central-case="${esc(r.id)}"` : (r.objects?.[0] ? `data-central-open="${esc(r.objects[0].id)}"` : '')
+    return `<article class="result centralResult" data-kind="${r.kind}"><div class="thumb">${KIND_ICON[r.kind]}</div><div><h3>${esc(r.label)} <small class="kindBadge">${r.kind}</small></h3><small>${sub}</small></div>${open ? `<button ${open} class="miniAction" type="button" aria-label="Afficher le résultat">↗</button>` : ''}</article>`
   }).join('')
 }
 export function photoGalleryHtml(o, esc) {
