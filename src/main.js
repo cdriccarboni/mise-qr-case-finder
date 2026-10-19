@@ -3,6 +3,7 @@ import './style.css'
 import Fuse from 'fuse.js'
 import QRCode from 'qrcode'
 import { BrowserQRCodeReader } from '@zxing/browser'
+import { DecodeHintType } from '@zxing/library'
 import { openDB } from 'idb'
 import { registerSW } from 'virtual:pwa-register'
 import { createPwaUpdateCoordinator, MISES_RECOVERY_URL } from './pwa-update.js'
@@ -1812,17 +1813,21 @@ async function captureScanFrame(){
   stopScan()
   if(blob) await runLocalPhoto(new File([blob],'camera.jpg',{type:'image/jpeg'}), null, 'group')
 }
+// TRY_HARDER + plusieurs échelles : le détecteur zxing-js rate parfois un QR exact selon la taille du module
+// (ex. étiquette 384 pts, 7 pts/module) ; réduire l'image comme un téléphone plus éloigné suffit.
+const QR_HINTS=new Map([[DecodeHintType.TRY_HARDER,true]])
 async function decodeQrElement(img){
-  const reader=new BrowserQRCodeReader()
+  const reader=new BrowserQRCodeReader(QR_HINTS)
   const width=img.naturalWidth||img.width, height=img.naturalHeight||img.height
-  const regions=[[0,0,width,height],[width*.12,height*.28,width*.76,height*.5],[width*.18,height*.36,width*.64,height*.42]]
+  const side=Math.min(width,height)
+  const regions=[[0,0,width,height],[0,0,side,side],[width*.12,height*.28,width*.76,height*.5],[width*.18,height*.36,width*.64,height*.42]]
   const canvas=document.createElement('canvas')
   let last
-  for(const [x,y,w,h] of regions){
-    canvas.width=Math.max(32,Math.round(w));canvas.height=Math.max(32,Math.round(h))
+  for(const scale of [1,.5,.75])for(const [x,y,w,h] of regions){
+    canvas.width=Math.max(32,Math.round(w*scale));canvas.height=Math.max(32,Math.round(h*scale))
     const ctx=canvas.getContext('2d',{willReadFrequently:true})
     ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height)
-    ctx.imageSmoothingEnabled=false
+    ctx.imageSmoothingEnabled=scale!==1
     ctx.drawImage(img,x,y,w,h,0,0,canvas.width,canvas.height)
     try{return await reader.decodeFromCanvas(canvas)}catch(error){last=error}
   }
