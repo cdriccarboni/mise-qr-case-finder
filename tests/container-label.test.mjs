@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { renderContainerLabelRgba, containerQrUrl, PRINTHEAD_DOTS, MAX_LABEL_DOTS } from '../src/label-render.js'
 import { decodeQrImage } from './decode-qr.mjs'
-const NAMES = ['VIE QUOTIDIENNE / 1 SUR 2', 'Sac fictif démo', 'Grande valise fictive de démonstration très longue pour tester le retour à la ligne', 'A']
+const NAMES = ['CARTON FICTIF / 1 SUR 2', 'Sac fictif démo', 'Grande valise fictive de démonstration très longue pour tester le retour à la ligne', 'A']
 function decodeAnyOrientation(img) {
   const S = img.width, base = img.rgba.subarray(0, S * S * 4)
   for (let r = 0; r < 4; r++) {
@@ -34,7 +34,8 @@ test('modifier le texte ne change pas la cible du QR', () => {
   const a = renderContainerLabelRgba({ id: 'CASE-X', name: 'Nom 1' }), b = renderContainerLabelRgba({ id: 'CASE-X', name: 'Autre nom bien plus long' })
   assert.equal(a.qrText, b.qrText); assert.equal(a.qrText, 'https://cdriccarboni.github.io/mise-qr-case-finder/?case=CASE-X')
 })
-test('régression décodeur : QR d’un ID réel (KIT-ACOUSTIQUE-CC) décodé, matrice exacte', () => {
-  const img = renderContainerLabelRgba({ id: 'KIT-ACOUSTIQUE-CC', name: 'KIT ACOUSTIQUE CÉCÉ', subtitle: 'KIT-ACOUSTIQUE-CC' })
-  assert.equal(decodeAnyOrientation(img), containerQrUrl('KIT-ACOUSTIQUE-CC'))
+test('régression décodeur : QR d’un ID de 17 caractères (7 pts/module) décodé, matrice exacte', () => {
+  const img = renderContainerLabelRgba({ id: 'KIT-FICTIF-DEMO-X', name: 'KIT FICTIF DÉMO', subtitle: 'KIT-FICTIF-DEMO-X' })
+  assert.equal(img.qrModuleDots, 7)
+  assert.equal(decodeAnyOrientation(img), containerQrUrl('KIT-FICTIF-DEMO-X'))
 })

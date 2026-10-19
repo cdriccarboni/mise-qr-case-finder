@@ -28,7 +28,7 @@ function scale(image, f) {
 }
 /**
  * Décodeur de test (zxing-js). Son détecteur de motifs rate parfois un QR pourtant exact au module près
- * (cas « KIT-ACOUSTIQUE-CC » à 7 pts/module, décodé par zxing-cpp) : on réessaie à d'autres échelles,
+ * (cas d’un ID réel de 17 caractères à 7 pts/module, décodé par zxing-cpp) : on réessaie à d'autres échelles,
  * comme le ferait un téléphone à une autre distance.
  */
 export function decodeQrImage(image) {

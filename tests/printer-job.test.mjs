@@ -66,8 +66,8 @@ function checkJob(job, img, id) {
 function rot(img) { const S = img.width, c = new Uint8ClampedArray(S*S*4)
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) c.set(img.rgba.subarray((y*S+x)*4, (y*S+x)*4+4), (x*S + (S-1-y))*4); return { rgba: c, width: S, height: S } }
 
-const LABELS = [['SAC-NOIR-TECH', 'SAC NOIR TECHNIQUE'], ['SAC-MICRO-02', 'PETIT SAC TECHNIQUE · MICRO'], ['KIT-ACOUSTIQUE-CC', 'KIT ACOUSTIQUE CÉCÉ'],
-  ['VIE-Q-1', 'VIE QUOTIDIENNE — 1/2'], ['VIE-Q-2', 'VIE QUOTIDIENNE — 2/2'], ['ANIMAUX-MUS', 'ANIMAUX · MUSIQUE · PERCUSSIONS']]
+const LABELS = [['CASE-DEMO-01', 'SAC FICTIF DÉMO'], ['CASE-DEMO-02', 'PETITE BOÎTE · TEST'], ['CASE-DEMO-03', 'VALISE FICTIVE'],
+  ['CASE-DEMO-04', 'CARTON — 1/2'], ['CASE-DEMO-05', 'CARTON — 2/2'], ['CASE-DEMO-06', 'MALLE · ESSAI · LONGUE ÉTIQUETTE']]
 const render = ([id, name]) => renderContainerLabelRgba({ id, name, subtitle: id, qrText: containerQrUrl(id) })
 
 test('pilote Android : étiquette seule = bitmap approuvé exact + QR dans les octets', { skip: !JDK && 'JDK absent' }, () => {
@@ -86,4 +86,12 @@ test('chemins impression seule / sélection / réimpression : même rendu approu
   assert.match(main, /#printSelected'\)\.onclick=\(\)=>printContainerLabels\(/)
   const java = readFileSync('android/app/src/main/java/fr/acousmatictheatre/mises/NativePrinterBridge.java', 'utf8')
   assert.match(java, /YhkJobEncoder\.chunks/); assert.match(java, /Thread\.sleep\(wait\)/)
+})
+test('compagnon Mac : même encodage en bandes + marges de coupe + attente fin d’impression', () => {
+  const swift = readFileSync('mac/mini-printer/MisesMiniPrinter.swift', 'utf8')
+  assert.match(swift, /static let bandRows=64/); assert.match(swift, /static let cutMarginDots=80/)
+  assert.match(swift, /bytes \+= \[0x1d,0x76,0x30,0x00,UInt8\(bpr\),0x00,UInt8\(n&255\)/)
+  assert.match(swift, /packets\.append\(Array\(rest\.prefix\(MisesRaster\.bandBytes\)\)\)/)
+  assert.match(swift, /Thread\.sleep\(forTimeInterval:MisesRaster\.printSeconds\(data\)\)/)
+  assert.doesNotMatch(swift, /interpolationQuality = \.high/)
 })

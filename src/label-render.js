@@ -223,7 +223,7 @@ export const PUBLIC_APP_URL = 'https://cdriccarboni.github.io/mise-qr-case-finde
 export function containerQrUrl(id) { return `${PUBLIC_APP_URL}?case=${encodeURIComponent(id)}` }
 
 function wrapAll(text, scale, maxWidth) {
-  // Séparateur explicite « / » : coupure préférée (ex. « VIE QUOTIDIENNE / 1 SUR 2 »).
+  // Séparateur explicite « / » : coupure préférée (ex. « CARTON / 1 SUR 2 »).
   const parts = String(text || '').split(/\s+\/\s+/)
   if (parts.length === 2) {
     const a = foldLabel(parts[0]), b = foldLabel(parts[1])

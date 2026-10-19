@@ -43,6 +43,10 @@ function shouldSync(store,row,session){
   if(isOwnerPrivateRow(row) && !isOwnerPrivateAccount(session?.user?.email)) return false
   return true
 }
+export async function claimOwnerSeed(supabase){
+  try{const {data,error}=await supabase.rpc('mises_claim_owner_seed');if(error)throw error;return Number(data)||0}
+  catch{return 0}
+}
 async function ensurePersonalSpace(supabase,user){
   const {data:members,error}=await supabase.from('mises_memberships').select('space_id,role').eq('user_id',user.id)
   if(error) throw error
@@ -168,6 +172,9 @@ export async function syncMises(db,{onProgress=()=>{}}={}){
   if(!session?.user) return {ok:false,reason:'not-authenticated',pushed:0,pulled:0,photos:0,conflicts:0}
   const supabase=await supabaseClient()
   const spaceId=await ensurePersonalSpace(supabase,session.user)
+  // Seed owner-only (contenants privés du propriétaire, jamais dans le code public) : idempotent, côté serveur,
+  // limité au compte dont l'e-mail vérifié correspond. Sans seed pour ce compte : no-op.
+  await claimOwnerSeed(supabase)
   let photos=await flushPhotoQueue(db,supabase,spaceId).catch(()=>0)
   const remote=await fetchAllRemoteRecords(supabase,spaceId)
   const remoteMap=new Map((remote||[]).map(r=>[`${r.store_name}::${r.record_id}`,r]))
