@@ -58,7 +58,7 @@ test('sans compte ni import, puis hors ligne : ÉTIQUETTES liste les 6 contenant
   await page.reload()
   await page.locator('[data-testid="home-labels"]').click()
   const list = page.locator('[data-testid="labels-list"]')
-  for (const name of ['SAC NOIR TECHNIQUE', 'PETIT SAC TECHNIQUE · MICRO BLEU', 'VIE QUOTIDIENNE — 1/2', 'VIE QUOTIDIENNE — 2/2', 'ANIMAUX · MUSIQUE · PERCUSSIONS', 'KIT ACOUSTIQUE CÉCÉ']) await expect(list).toContainText(name)
+  for (const name of ['SAC NOIR TECHNIQUE', 'PETIT SAC TECHNIQUE · MICRO', 'VIE QUOTIDIENNE — 1/2', 'VIE QUOTIDIENNE — 2/2', 'ANIMAUX · MUSIQUE · PERCUSSIONS', 'KIT ACOUSTIQUE CÉCÉ']) await expect(list).toContainText(name)
   await expect(page.locator('[data-print-one]')).toHaveCount(6)
   await expect.poll(() => page.locator('[data-label-img]').evaluateAll(l => l.every(i => i.naturalWidth === 384))).toBe(true)
   await context.close()

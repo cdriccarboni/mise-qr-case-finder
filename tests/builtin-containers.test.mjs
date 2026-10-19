@@ -14,7 +14,7 @@ test('fusion par ID : pas de doublon, nom local choisi prioritaire, nom = ID rem
   assert.equal(all.length, 3 + 4)
   assert.equal(all.filter(c => c.id === 'SAC-NOIR-TECH-01').length, 1)
   assert.equal(all.find(c => c.id === 'SAC-NOIR-TECH-01').name, 'Mon grand sac')
-  assert.equal(all.find(c => c.id === 'SAC-MICRO-02').name, 'PETIT SAC TECHNIQUE · MICRO BLEU')
+  assert.equal(all.find(c => c.id === 'SAC-MICRO-02').name, 'PETIT SAC TECHNIQUE · MICRO')
   assert.equal(mergeLabelContainers([]).length, 6)
 })
 test('étiquettes intégrées : QR = URL publique ?case=<id>', () => {
