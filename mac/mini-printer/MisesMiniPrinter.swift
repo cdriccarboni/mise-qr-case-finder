@@ -243,6 +243,11 @@ struct MisesMiniPrinterApp: App {
 }
 
 enum MisesRaster {
+  static let bandRows=64
+  static let cutMarginDots=80 // 10 mm à 8 pts/mm
+  static var bandBytes: Int { 8+bandRows*48 }
+  /// Durée d'impression estimée (≈ 40 mm/s) avant de fermer le port / envoyer l'étiquette suivante.
+  static func printSeconds(_ data: Data) -> Double { 0.6+Double(max(0,data.count-8))/48.0/320.0 }
   static func make(png: Data) throws -> Data {
     guard let image=NSBitmapImageRep(data: png)?.cgImage else {
       throw NSError(domain:"MISES",code:1,userInfo:[NSLocalizedDescriptionKey:"Étiquette PNG illisible"])
@@ -258,26 +263,31 @@ enum MisesRaster {
     }
     context.setFillColor(NSColor.white.cgColor)
     context.fill(CGRect(x:0,y:0,width:width,height:height))
-    context.interpolationQuality = .high
+    context.interpolationQuality = .none // bitmap approuvé 384 pts copié tel quel
     context.draw(image,in:CGRect(x:0,y:0,width:width,height:height))
-    var bytes=[UInt8]()
-    bytes.reserveCapacity(2+4+8+(width/8)*height+4)
-    bytes += [0x1b,0x40,0x1d,0x49,0xf0,0x19]
-    bytes += [0x1d,0x76,0x30,0x00,0x30,0x00,UInt8(height&255),UInt8((height>>8)&255)]
-    // Match Android WalkPrint/YHK: rotate raster 180° on paper exit.
+    // #45 : même encodage que le pilote Android (YhkJobEncoder) — bandes GS v 0 de 64 lignes envoyées
+    // une par une (le bloc unique de ~1100 lignes débordait le tampon YHK et coupait le QR), 10 mm de
+    // blanc + pointillé de coupe avant et après l'étiquette.
+    let bpr=width/8, margin=cutMarginDots, total=height+2*margin
+    var rows=[[UInt8]](repeating:[UInt8](repeating:0,count:bpr),count:total)
+    for cut in [margin/2,total-1-margin/2] { for x in 16..<(width-16) where (x/8)%2==0 { rows[cut][x>>3] |= UInt8(0x80>>(x&7)) } }
     for y in 0..<height {
-      for group in 0..<(width/8) {
-        var value: UInt8=0
-        for bit in 0..<8 {
-          let x=width-1-(group*8+bit)
-          let i=((height-1-y)*width+x)*4
-          let lum=(Int(pixels[i])*299+Int(pixels[i+1])*587+Int(pixels[i+2])*114)/1000
-          if lum<150 { value |= UInt8(0x80>>bit) }
-        }
-        bytes.append(value)
+      for x in 0..<width {
+        let i=((height-1-y)*width+(width-1-x))*4 // rotation 180° (sortie papier)
+        let lum=(Int(pixels[i])*299+Int(pixels[i+1])*587+Int(pixels[i+2])*114)/1000
+        if lum<150 { rows[margin+y][x>>3] |= UInt8(0x80>>(x&7)) }
       }
     }
-    bytes += [10,10,10,10]
+    var bytes=[UInt8]()
+    bytes += [0x1b,0x40,0x1d,0x49,0xf0,0x19]
+    var start=0
+    while start<total {
+      let n=min(bandRows,total-start)
+      bytes += [0x1d,0x76,0x30,0x00,UInt8(bpr),0x00,UInt8(n&255),UInt8((n>>8)&255)]
+      for r in start..<(start+n) { bytes += rows[r] }
+      start+=n
+    }
+    bytes += [10,10]
     return Data(bytes)
   }
 }
@@ -310,7 +320,9 @@ enum MisesBluetooth {
     guard raw.count>=10,raw.starts(with:[0x1b,0x40]) else {
       throw NSError(domain:"MISES",code:6,userInfo:[NSLocalizedDescriptionKey:"Séquence d’impression incorrecte"])
     }
-    let packets=[Array(raw.prefix(2)),Array(raw.dropFirst(2).prefix(4)),Array(raw.dropFirst(6))]
+    var packets=[Array(raw.prefix(2)),Array(raw.dropFirst(2).prefix(4))]
+    var rest=Array(raw.dropFirst(6))
+    while !rest.isEmpty { packets.append(Array(rest.prefix(MisesRaster.bandBytes))); rest=Array(rest.dropFirst(MisesRaster.bandBytes)) }
     for packet in packets {
       var offset=0,waiting=0
       while offset < packet.count {
@@ -330,9 +342,10 @@ enum MisesBluetooth {
           throw NSError(domain:"MISES",code:Int(errno),userInfo:[NSLocalizedDescriptionKey:"Envoi série Bluetooth interrompu : "+String(cString:strerror(errno))])
         }
       }
-      Thread.sleep(forTimeInterval:0.180)
+      Thread.sleep(forTimeInterval:packet.count>8 ? 0.060 : 0.180)
     }
-    Thread.sleep(forTimeInterval:0.15)
+    // Ne ferme le port (ni n'accepte le job suivant) qu'une fois l'étiquette imprimée.
+    Thread.sleep(forTimeInterval:MisesRaster.printSeconds(data))
   }
 }
 

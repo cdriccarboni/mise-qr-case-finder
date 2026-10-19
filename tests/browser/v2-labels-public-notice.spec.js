@@ -58,8 +58,8 @@ test('sans compte ni import, puis hors ligne : ÉTIQUETTES liste les 6 contenant
   await page.reload()
   await page.locator('[data-testid="home-labels"]').click()
   const list = page.locator('[data-testid="labels-list"]')
-  for (const name of ['SAC NOIR TECHNIQUE', 'PETIT SAC TECHNIQUE · MICRO', 'VIE QUOTIDIENNE — 1/2', 'VIE QUOTIDIENNE — 2/2', 'ANIMAUX · MUSIQUE · PERCUSSIONS', 'KIT ACOUSTIQUE CÉCÉ']) await expect(list).toContainText(name)
-  await expect(page.locator('[data-print-one]')).toHaveCount(6)
-  await expect.poll(() => page.locator('[data-label-img]').evaluateAll(l => l.every(i => i.naturalWidth === 384))).toBe(true)
+  // Aucun contenant intégré : un nouvel utilisateur voit une liste vide et crée les siens.
+  await expect(list).toContainText('Aucun contenant')
+  await expect(page.locator('[data-print-one]')).toHaveCount(0)
   await context.close()
 })

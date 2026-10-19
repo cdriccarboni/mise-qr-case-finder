@@ -1,3 +1,11 @@
+## 0.4.0-beta.28 — 20 octobre 2026 (#45)
+
+- Confidentialité : plus aucun contenant intégré dans le code ni le bundle publics (`src/builtin-containers.js` supprimé). Un nouvel utilisateur voit une liste vide et crée ses contenants. Les contenants du propriétaire vivent uniquement dans SON espace Supabase (seed owner-only, RLS) et dans le cache local de son appareil.
+- Supabase : migration idempotente `mises_owner_seeds` (RLS sans policy) + RPC `mises_claim_owner_seed()` appelée à chaque synchro : copie, pour le seul compte à l'e-mail vérifié, les fiches de seed dans son espace sans jamais écraser l'existant. Les contenants supprimés ne sont jamais publiés.
+- Étiquettes · Mes contenants : **Archiver** (masque, ID et QR conservés), vue **Archivées** avec **Restaurer**, **Supprimer** (avec confirmation, contenants utilisateur vides uniquement ; suppression douce, aucune donnée effacée). Contenants protégés (seed) : archivables, jamais supprimables. État synchronisé avec le compte, stocké localement hors connexion.
+- Compagnon Mac : même correctif d'impression que l'Android (bandes de 64 lignes, marge de coupe 10 mm, attente fin d'impression, pas de lissage).
+- Page publique `?case=<ID>` : inchangée et neutre (« pas encore publié », sans nom) tant que l'inventaire n'est pas publié.
+
 ## 0.4.0-beta.27 — 20 octobre 2026 (#45)
 
 - Impression Bluetooth Android (WalkPrint/YHK) : le QR manquait ou était coupé. Cause : chaque étiquette partait en un seul bloc raster GS v 0 de ~1100 lignes sans contrôle de flux ; le tampon de l'imprimante débordait, la fin du job (le QR, imprimé en dernier après la rotation 180°) était perdue, puis le ESC @ du job suivant (250 ms plus tard) ou la fermeture du socket effaçait le reste. Désormais : un job par étiquette, envoyé en bandes de 64 lignes avec pauses, attente de la fin d'impression avant l'étiquette suivante / la déconnexion, bitmap approuvé copié sans rééchantillonnage.

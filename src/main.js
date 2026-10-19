@@ -46,7 +46,7 @@ import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSet
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
 import { applyBackup, backupItemCount } from './backup.js'
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-client.js'
-import { mergeLabelContainers } from './builtin-containers.js'
+import { activeLabelCases, archivedLabelCases, archiveCase, restoreCase, deleteCase, canDeleteCase, isProtectedCase, labelState } from './label-archive.js'
 import { fetchPublicInventory, publicNoticeHtml, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
 import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut } from './supabase-client.js'
 import { syncMises, queuePhotoUpload, signedPhotoUrl } from './sync-core.js'
@@ -205,7 +205,7 @@ async function refresh(){
   centralIndex=null
   catalogueSounds=data.sounds||[]
   catalogueObjectSounds=data.objectSounds||[]
-  cases=await db.getAll('cases')
+  cases=(await db.getAll('cases')).filter(c=>labelState(c)!=='deleted')
   kits=await db.getAll('kits')
   mises=await db.getAll('mises')
   learnings=await db.getAll('learnings')
@@ -1675,8 +1675,8 @@ function openPrint(c,qr){
   $('#printerTestFromLabel').onclick=()=>hasNativePrinter()?openNativePrinterDialog():openDesktopPrinterDialog()
 }
 // Étiquettes → Mes contenants : étiquette longue horizontale 384 pts (WalkPrint/YHK), QR = URL publique permanente.
-function containerLabelName(c){return c.part&&c.total?`${c.name} / ${c.part} SUR ${c.total}`:c.name}
-function containerLabelImage(c){c=mergeLabelContainers([c])[0];return renderContainerLabelDataUrl({id:c.id,name:containerLabelName(c),subtitle:c.id,qrText:containerQrUrl(c.id)})}
+function containerLabelName(c){return c.part&&c.total?`${c.name||c.id} / ${c.part} SUR ${c.total}`:(c.name||c.id)}
+function containerLabelImage(c){return renderContainerLabelDataUrl({id:c.id,name:containerLabelName(c),subtitle:c.id,qrText:containerQrUrl(c.id)})}
 async function printContainerLabels(list){
   if(!list.length){toast('Sélectionne au moins un contenant');return}
   const images=list.map(c=>({box:c,image:containerLabelImage(c)}))
@@ -1685,22 +1685,31 @@ async function printContainerLabels(list){
   for(const entry of images)await sendMacThermalPrint(entry.image,caseName(entry.box))
   toast(images.length+' étiquette(s) envoyée(s) à la mini-imprimante Mac')
 }
-async function openBatchPrint(){
+async function openBatchPrint({archived=false}={}){
   const d=$('#printDlg')
-  // Contenants intégrés (ID + nom) fusionnés avec les contenants locaux : fonctionne sans compte, sans import, hors ligne.
-  const all=mergeLabelContainers(cases)
+  // Aucun contenant intégré au code public : uniquement les contenants de l'utilisateur (locaux / son espace Supabase).
+  const all=cases
   const caseBy=id=>all.find(c=>c.id===id)
-  const builtinFirst=c=>c.builtin||!c.parentId&&/^[A-Z0-9][A-Z0-9_-]{2,}$/.test(c.id)?0:1
-  const sorted=all.slice().sort((x,y)=>builtinFirst(x)-builtinFirst(y)||casePathString(x.id,all).localeCompare(casePathString(y.id,all),'fr'))
-  d.innerHTML=`<div class="form labelsDlg"><div class="dialoghead"><div><b>Étiquettes · Mes contenants</b><small>WalkPrint / YHK · 48 mm (384 pts) · longueur automatique · QR permanent</small></div><button id="closeBatch" class="ghost" type="button">×</button></div>
-  <label class="check"><input id="labelsAll" type="checkbox"><span>Tout sélectionner (${sorted.length})</span></label>
-  <div class="labelsList" data-testid="labels-list">${sorted.map(c=>`<article class="labelCard"><label class="check"><input type="checkbox" data-print-case value="${esc(c.id)}"><span><b>${esc(caseName(c))}</b><small>${esc(casePathString(c.id,all))} · ${esc(c.id)}</small></span></label><img loading="lazy" data-label-img="${esc(c.id)}" alt="Étiquette ${esc(caseName(c))}"><div class="row"><button type="button" data-print-one="${esc(c.id)}">IMPRIMER</button><button type="button" class="ghost" data-save-one="${esc(c.id)}">PNG</button></div></article>`).join('')||'<p>Aucun contenant.</p>'}</div>
-  <div class="row labelsBar"><button id="printSelected" type="button" class="ctaBig">IMPRIMER LA SÉLECTION</button></div>
-  <p class="hint">Aperçu exact du raster envoyé à l’imprimante. Le texte peut changer, le QR vise toujours ${esc(PUBLIC_APP_URL)}?case=&lt;id&gt;.</p></div>`
-  d.showModal()
+  const list=archived?archivedLabelCases(all):activeLabelCases(all)
+  const sorted=list.slice().sort((x,y)=>Number(isProtectedCase(y))-Number(isProtectedCase(x))||casePathString(x.id,all).localeCompare(casePathString(y.id,all),'fr'))
+  const nArch=archivedLabelCases(all).length
+  const actions=c=>archived?`<button type="button" data-restore-one="${esc(c.id)}">Restaurer</button>`:`<button type="button" data-print-one="${esc(c.id)}">IMPRIMER</button><button type="button" class="ghost" data-save-one="${esc(c.id)}">PNG</button><button type="button" class="ghost" data-archive-one="${esc(c.id)}">Archiver</button>${canDeleteCase(c,objects).ok?`<button type="button" class="ghost danger" data-delete-one="${esc(c.id)}">Supprimer</button>`:''}`
+  d.innerHTML=`<div class="form labelsDlg"><div class="dialoghead"><div><b>Étiquettes · ${archived?'Archivées':'Mes contenants'}</b><small>WalkPrint / YHK · 48 mm (384 pts) · longueur automatique · QR permanent</small></div><button id="closeBatch" class="ghost" type="button">×</button></div>
+  <div class="row"><button id="labelsView" type="button" class="ghost">${archived?'← Mes contenants':`Archivées (${nArch})`}</button></div>
+  ${archived?'':`<label class="check"><input id="labelsAll" type="checkbox"><span>Tout sélectionner (${sorted.length})</span></label>`}
+  <div class="labelsList" data-testid="labels-list">${sorted.map(c=>`<article class="labelCard"><label class="check">${archived?'':`<input type="checkbox" data-print-case value="${esc(c.id)}">`}<span><b>${esc(caseName(c))}</b><small>${esc(casePathString(c.id,all))} · ${esc(c.id)}</small></span></label><img loading="lazy" data-label-img="${esc(c.id)}" alt="Étiquette ${esc(caseName(c))}"><div class="row">${actions(c)}</div></article>`).join('')||`<p>${archived?'Aucune étiquette archivée.':'Aucun contenant. Crée ton premier contenant pour imprimer son étiquette.'}</p>`}</div>
+  ${archived?'':'<div class="row labelsBar"><button id="printSelected" type="button" class="ctaBig">IMPRIMER LA SÉLECTION</button></div>'}
+  <p class="hint">Aperçu exact du raster envoyé à l’imprimante. Archiver garde l’ID et le QR. Le QR vise toujours ${esc(PUBLIC_APP_URL)}?case=&lt;id&gt;.</p></div>`
+  if(!d.open)d.showModal()
   $('#closeBatch').onclick=()=>d.close()
+  $('#labelsView').onclick=()=>openBatchPrint({archived:!archived})
+  const save=async next=>{await db.put('cases',next);await refresh();render();scheduleSupabaseSync();openBatchPrint({archived})}
+  $$('[data-archive-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.archiveOne);if(c){save(archiveCase(c));toast('Étiquette archivée (ID et QR conservés)')}})
+  $$('[data-restore-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.restoreOne);if(c){save(restoreCase(c));toast('Étiquette restaurée')}})
+  $$('[data-delete-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.deleteOne);if(!c)return;if(!confirm(`Supprimer « ${caseName(c)} » (${c.id}) ? Elle disparaîtra de la liste.`))return;try{save(deleteCase(c,objects));toast('Étiquette supprimée')}catch(e){toast(e.message)}})
   const imgs=$$('[data-label-img]',d)
   for(let i=0;i<imgs.length;i++){const c=caseBy(imgs[i].dataset.labelImg);if(c)imgs[i].src=containerLabelImage(c);if(i%8===7)await new Promise(r=>setTimeout(r,0))}
+  if(archived)return
   $('#labelsAll').onchange=e=>$$('[data-print-case]',d).forEach(x=>x.checked=e.target.checked)
   $$('[data-print-one]',d).forEach(b=>b.onclick=()=>printContainerLabels([caseBy(b.dataset.printOne)].filter(Boolean)))
   $$('[data-save-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.saveOne);if(c)downloadLabelPng(containerLabelImage(c),caseName(c))})
