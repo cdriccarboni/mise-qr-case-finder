@@ -1,3 +1,9 @@
+## 0.4.0-beta.27 — 20 octobre 2026 (#45)
+
+- Impression Bluetooth Android (WalkPrint/YHK) : le QR manquait ou était coupé. Cause : chaque étiquette partait en un seul bloc raster GS v 0 de ~1100 lignes sans contrôle de flux ; le tampon de l'imprimante débordait, la fin du job (le QR, imprimé en dernier après la rotation 180°) était perdue, puis le ESC @ du job suivant (250 ms plus tard) ou la fermeture du socket effaçait le reste. Désormais : un job par étiquette, envoyé en bandes de 64 lignes avec pauses, attente de la fin d'impression avant l'étiquette suivante / la déconnexion, bitmap approuvé copié sans rééchantillonnage.
+- Marge de coupe de 10 mm avant et après chaque étiquette, avec un pointillé fin dans le blanc (l'étiquette approuvée est inchangée).
+- Test : les octets envoyés à l'imprimante (encodeur Java `YhkJobEncoder`) redonnent le bitmap approuvé pixel à pixel et le QR se décode, pour une étiquette seule et pour une sélection de 6.
+
 ## 0.4.0-beta.26 — 19 octobre 2026 (#45)
 
 - Contenant intégré SAC-MICRO-02 renommé « PETIT SAC TECHNIQUE · MICRO » (ID et QR inchangés) ; empreinte d’étiquette approuvée mise à jour.
