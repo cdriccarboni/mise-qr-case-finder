@@ -1,0 +1,10 @@
+# MISES ! — livraison manuelle en test fermé Alpha
+
+Le workflow `.github/workflows/android.yml` propose, pour `track=alpha`, une **inspection** (`publish_to_play=false`) puis une **promotion** (`publish_to_play=true`). La promotion réutilise un `versionCode` déjà accepté en test interne : elle ne re-téléverse pas l'AAB et ne touche jamais à Production. Elle est idempotente si le code est déjà `completed` en Alpha ; elle refuse une source absente du test interne ou plus ancienne qu'Alpha/Production. Chaque exécution vérifie SHA, version, code, package et, sur branche de préparation, l'identité des sources applicatives avec `main`.
+
+1. Lire les versions et statuts actuels sur Play et la source `main` GitHub. Conserver l'autorisation explicite par version. Ne pas déduire le code maximum d'un ancien rapport.
+2. Construire/signer et charger **d'abord** le nouveau code dans le canal interne avec la procédure normale de l'application si le bundle correspondant n'y existe pas déjà ; vérifier le résultat avant toute promotion. Aucun ancien code ne peut être réutilisé pour un nouveau bundle.
+3. Relever le SHA exact de la ref à exécuter et les versions réelles dans `package.json` et `android/app/build.gradle.kts`. Faire deux dispatchs successifs de `Build MISES ! Android` sur cette ref avec `expected_sha`, `expected_version`, `expected_version_code`, `track=alpha` : d'abord `publish_to_play=false` (inspection, sans commit), puis `true` **si** le diagnostic est cohérent et la sortie est autorisée. Ne pas relancer sur un SHA différent.
+4. Contrôler le job `promote-alpha` du run aval : readback `alpha`, code attendu et `completed`. Contrôler ensuite dans la Console l'éventuelle revue/gestion des modifications, l'éligibilité des testeurs et une installation depuis leur compte. `completed` dans l'API ne prouve pas à lui seul l'installation ou l'accès effectif.
+
+La branche de préparation `hermes/play-alpha-promotion-20261012` n'est pas fusionnée à `main` automatiquement. Si la Console demande une action humaine, consigner l'erreur exacte sans mettre Production en ligne. Ne jamais joindre AAB, clé ou compte de service aux logs/PR publics.
