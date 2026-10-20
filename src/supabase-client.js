@@ -31,10 +31,39 @@ export const SUPABASE_APP_REDIRECT_URL = 'fr.acousmatictheatre.mises://auth-call
 export function authRedirectUrl(win = globalThis.window){
   return win?.MisesAndroid && typeof win.MisesAndroid.openAuthUrl === 'function' ? SUPABASE_APP_REDIRECT_URL : SUPABASE_EMAIL_REDIRECT_URL
 }
-export async function sendSupabaseMagicLink(email){
+/** Normalise une adresse saisie au clavier mobile : NFKC, invisibles retirés, espaces, minuscules. */
+export function normalizeEmail(raw){
+  return String(raw??'').normalize('NFKC').replace(/[\u0000-\u001f\u007f-\u009f\u00ad\u034f\u061c\u115f\u1160\u17b4\u17b5\u180b-\u180f\u200b-\u200f\u202a-\u202e\u2060-\u206f\u3164\ufe00-\ufe0f\ufeff\uffa0]/g,'').replace(/\s+/g,'').toLowerCase()
+}
+const EMAIL_RE=/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/
+export function validateEmail(raw){
+  const email=normalizeEmail(raw)
+  const ok=EMAIL_RE.test(email)&&!email.includes('..')&&email.length<=254
+  return {ok,email,message:ok?'':`Adresse refusée : « ${String(raw??'').trim()} ». Vérifie qu’il n’y a ni accent, ni espace, ni caractère en trop (format nom@domaine.fr).`}
+}
+/** Erreurs Supabase Auth → messages français clairs. */
+export function authErrorMessage(error){
+  const m=String(error?.message||error||'').toLowerCase(), code=String(error?.code||'').toLowerCase()
+  if(/invalid format|validate email|email_address_invalid/.test(m+code))return 'Adresse e-mail refusée : vérifie qu’il n’y a ni accent, ni espace.'
+  if(/provider is not enabled|unsupported provider/.test(m))return 'La connexion Google n’est pas activée. Utilise le lien par e-mail.'
+  if(/rate limit|too many|over_email_send_rate|429/.test(m+code))return 'Trop de demandes : attends quelques minutes avant de redemander un lien.'
+  if(/expired|invalid.*(otp|token|link)|otp_expired/.test(m+code))return 'Lien expiré ou déjà utilisé : redemande un nouveau lien.'
+  if(/code verifier|pkce|flow state/.test(m))return 'Ouvre le lien sur l’appareil où tu l’as demandé (même app ou même navigateur).'
+  if(/signups not allowed|signup.*disabled/.test(m))return 'Les inscriptions sont fermées pour l’instant.'
+  if(/redirect/.test(m))return 'Adresse de retour non autorisée dans Supabase (configuration des URL de redirection).'
+  if(/failed to fetch|network|load failed/.test(m))return 'Pas de connexion réseau : réessaie quand tu es en ligne.'
+  return 'Connexion impossible pour le moment. Réessaie dans quelques minutes.'
+}
+/** Fournisseur Google activé ? (GET /auth/v1/settings, clé publiable) — désactivé par défaut. */
+export async function googleProviderEnabled(fetchImpl=globalThis.fetch){
+  try{const r=await fetchImpl(`${SUPABASE_URL}/auth/v1/settings`,{headers:{apikey:SUPABASE_PUBLISHABLE_KEY}});if(!r.ok)return false;return (await r.json())?.external?.google===true}catch{return false}
+}
+export async function sendSupabaseMagicLink(raw){
+  const v=validateEmail(raw)
+  if(!v.ok) throw Object.assign(new Error(v.message),{code:'email_invalid_local'})
   const supabase=await loadClient()
   const {error}=await supabase.auth.signInWithOtp({
-    email:String(email).trim(),
+    email:v.email,
     options:{emailRedirectTo:authRedirectUrl(),shouldCreateUser:true}
   })
   if(error) throw error

@@ -1,2 +1,2 @@
-export const APP_VERSION = '0.4.0-beta.32'
-export const APP_VERSION_CODE = 41
+export const APP_VERSION = '0.4.0-beta.33'
+export const APP_VERSION_CODE = 42

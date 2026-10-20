@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// 0.4.0-beta.32 : actions secondaires repliées (« Plus d’actions », « Ambiances & jeux ») — ouvertes pour ces parcours.
+// 0.4.0-beta.33 : actions secondaires repliées (« Plus d’actions », « Ambiances & jeux ») — ouvertes pour ces parcours.
 test.beforeEach(async ({ page }) => { await page.addInitScript(() => { const t = setInterval(() => { const ds = document.querySelectorAll('.moreShortcuts,.secondaryTools'); if (ds.length) { ds.forEach(d => { d.open = true }); clearInterval(t) } }, 20) }) })
 
 
@@ -36,7 +36,7 @@ test('Mac mini-printer download is public, universal, and not tied to one comput
   await page.locator('#goalPrinter').evaluate(button=>button.click())
   await expect(page.locator('#printerDlg')).toBeVisible()
   const url=await page.locator('#macCompanionDownload').getAttribute('href')
-  expect(url).toBe('https://github.com/cdriccarboni/mise-qr-case-finder/releases/download/v0.4.0-beta.32/MISES-Mini-Printer-Mac-Universal.zip')
+  expect(url).toBe('https://github.com/cdriccarboni/mise-qr-case-finder/releases/download/v0.4.0-beta.33/MISES-Mini-Printer-Mac-Universal.zip')
   await expect(page.locator('#printerDlg')).toContainText('M1 / M4 / Intel')
   await expect(page.locator('#printerDlg')).toContainText('chaque Mac')
 })

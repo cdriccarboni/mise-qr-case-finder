@@ -22,7 +22,7 @@ test('un seul champ recherche, pas de cartouches Recherche/Rechercher redondants
     await expect(page.locator('.goalNav summary', { hasText: label })).toHaveCount(1)
   }
   await expect(page.locator('[data-action="scan"]')).toBeVisible()
-  // Actions secondaires regroupées dans « Plus d’actions » (audit 0.4.0-beta.32)
+  // Actions secondaires regroupées dans « Plus d’actions » (audit 0.4.0-beta.33)
   await page.locator('.moreShortcuts > summary').click()
   await expect(page.locator('[data-action="photo"]')).toBeVisible()
   await expect(page.locator('[data-action="inventory"]')).toBeVisible()

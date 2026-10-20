@@ -1,3 +1,9 @@
+## 0.4.0-beta.33 — 20 octobre 2026 (#45)
+
+- Connexion : bouton « Continuer avec Google » masqué tant que le fournisseur Google n’est pas activé dans Supabase (lu via `/auth/v1/settings`, désactivé par défaut).
+- E-mail normalisé avant envoi (NFKC, caractères invisibles et espaces retirés, minuscules) et validé ; adresse refusée affichée avec un message clair (ni accent, ni espace). Champ sans majuscule ni correction automatique.
+- Erreurs Supabase Auth traduites en messages français clairs (format, fournisseur désactivé, trop de demandes, lien expiré, autre appareil, réseau).
+
 ## 0.4.0-beta.32 — 20 octobre 2026 (#45)
 
 - Audit UX (P0, P1, P2) : page publique `?case=` autonome (sans accueil propriétaire) avec « Contenant inconnu » / « Inventaire non publié » / « Hors ligne » distincts, jamais « QR valide » sans vérification ; publication de l’inventaire en opt-in propriétaire (☁ → « Publier mon inventaire ») ; accueil : titre MISES! unique, version affichée une fois, parcours 1 · Créer un contenant → 2 · Ajouter des objets → 3 · Imprimer les étiquettes, autres actions dans « Plus d’actions », Ambiances & jeux regroupés ; carte de bienvenue (se connecter / créer son premier contenant) ; « ☁ Se connecter » hors connexion ; Étiquettes : état vide avec « Créer un contenant », Supprimer dans « ⋯ » avec confirmation, sous-titre sans jargon ; casse unifiée ; icônes ⚙ ? libellées ; code mort retiré.

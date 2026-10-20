@@ -3,7 +3,7 @@ import { mkdir } from 'node:fs/promises'
 import { exportBinder } from '../../src/data-import.js'
 import { fictionalData } from '../../scripts/fictional-data.mjs'
 
-// 0.4.0-beta.32 : actions secondaires repliées (« Plus d’actions », « Ambiances & jeux ») — ouvertes pour ces parcours.
+// 0.4.0-beta.33 : actions secondaires repliées (« Plus d’actions », « Ambiances & jeux ») — ouvertes pour ces parcours.
 test.beforeEach(async ({ page }) => { await page.addInitScript(() => { const t = setInterval(() => { const ds = document.querySelectorAll('.moreShortcuts,.secondaryTools'); if (ds.length) { ds.forEach(d => { d.open = true }); clearInterval(t) } }, 20) }) })
 
 
