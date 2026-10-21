@@ -6,6 +6,7 @@ on:
       - main
       - grok/mise-finalisation-20260927
       - chatgpt/mises-play-internal-0.4.0-beta.3
+      - release/play
     paths:
       - "android/**"
       - ".github/workflows/android.yml"
@@ -59,6 +60,15 @@ on:
           - internal
           - alpha
           - beta
+          - production
+      release_status:
+        description: "Statut de la release Play"
+        required: true
+        type: choice
+        default: draft
+        options:
+          - draft
+          - completed
 
 concurrency:
   group: mises-android-${{ github.event_name == 'workflow_dispatch' && inputs.publish_to_play && inputs.track || github.ref }}
@@ -213,7 +223,7 @@ jobs:
       - name: Require Play credentials when publishing
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_to_play }}
         env:
-          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
           if [ "${{ steps.play_signing.outputs.available }}" != "true" ]; then
             echo "::error::Clé d'upload MISES ! absente ou invalide."
@@ -228,7 +238,8 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_to_play && github.ref == 'refs/heads/main' }}
         env:
           PLAY_TRACK: ${{ inputs.track }}
-          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          PLAY_RELEASE_STATUS: ${{ inputs.release_status }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check --quiet google-api-python-client google-auth
@@ -275,7 +286,7 @@ jobs:
                   "releases": [{
                       "name": f"MISES ! {os.environ.get('APP_VERSION', 'release')}",
                       "versionCodes": [version_code],
-                      "status": "completed",
+                      "status": os.environ.get("PLAY_RELEASE_STATUS", "draft"),
                   }],
               },
           ).execute()
