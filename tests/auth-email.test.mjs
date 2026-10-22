@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { normalizeEmail, validateEmail, authErrorMessage, googleProviderEnabled } from '../src/supabase-client.js'
+import { normalizeEmail, validateEmail, authErrorMessage, googleProviderEnabled, signInWithSupabasePassword } from '../src/supabase-client.js'
 
 test('e-mail : NFKC, invisibles, espaces, majuscules', () => {
   assert.equal(normalizeEmail(' Cdric.Carboni@Gmail.com\u200b\u00a0'), 'cdric.carboni@gmail.com')
@@ -22,7 +22,14 @@ test('erreurs Supabase → français', () => {
   assert.match(authErrorMessage({ message: 'Email link is invalid or has expired' }), /expiré/)
   assert.match(authErrorMessage({ message: 'invalid request: both auth code and code verifier should be non-empty' }), /même appareil|appareil où/)
   assert.match(authErrorMessage(new Error('Failed to fetch')), /réseau/)
+  assert.equal(authErrorMessage({ code: 'invalid_credentials' }), 'E-mail ou mot de passe incorrect.')
+  assert.equal(authErrorMessage({ message: 'Invalid login credentials' }), 'E-mail ou mot de passe incorrect.')
+  assert.equal(authErrorMessage({ code: 'password_missing_local' }), 'Entre ton mot de passe.')
   assert.doesNotMatch(authErrorMessage({ message: 'weird' }), /weird/)
+})
+test('connexion par mot de passe : validation locale sans réseau', async () => {
+  await assert.rejects(signInWithSupabasePassword('adresse-invalide', 'mot-de-passe'), error => error?.code === 'email_invalid_local')
+  await assert.rejects(signInWithSupabasePassword('testeur@mises.fr', ''), error => error?.code === 'password_missing_local')
 })
 test('Google masqué sauf fournisseur activé (/auth/v1/settings, défaut : off)', async () => {
   const f = body => async () => ({ ok: true, json: async () => body })
@@ -32,5 +39,9 @@ test('Google masqué sauf fournisseur activé (/auth/v1/settings, défaut : off)
   const main = readFileSync('src/main.js', 'utf8')
   assert.match(main, /<button id="googleSupabaseLogin" type="button" class="ghost" hidden>/)
   assert.match(main, /id="supabaseEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false"/)
+  assert.match(main, /id="supabasePassword" type="password" autocomplete="current-password"/)
+  assert.match(main, /id="supabasePasswordLogin" type="button" class="ghost">Se connecter avec mot de passe<\/button>/)
+  assert.match(main, /const session=await signInWithSupabasePassword\(v\.email,password\)/)
+  assert.match(main, /await finishSupabaseAuthReturn\(session\)\n      await openSupabaseSync\(\)/)
   assert.match(main, /const v=validateEmail\(raw\);if\(!v\.ok\)\{status\.textContent=v\.message;return\}/)
 })
