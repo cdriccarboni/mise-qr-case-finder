@@ -30,15 +30,16 @@ test('le pont Android bloque la session et le chargement Google', async () => {
   delete globalThis.MisesAndroid
 })
 
-test('la politique publique cite Drive, le contact et les données réellement stockées', () => {
+test('la politique publique décrit Supabase, la suppression et les données réellement synchronisées', () => {
   const html = readFileSync(new URL('../public/privacy.html', import.meta.url), 'utf8')
-  assert.match(html, /Google Drive/)
+  assert.match(html, /Supabase/)
   assert.match(html, /cdric\.carboni@gmail\.com/)
-  assert.match(html, /IndexedDB/)
-  assert.match(html, /mémos sonores/)
+  assert.match(html, /mémos audio/)
+  assert.match(html, /photos/)
+  assert.match(html, /delete-account\.html/)
+  assert.match(html, /eu-north-1/)
+  assert.match(html, /Google Drive/)
   assert.match(html, /mises-data\.json/)
-  assert.match(html, /mise-data\.json/)
-  assert.match(html, /application Android/)
   assert.match(html, /Cédric Carboni/)
 })
 

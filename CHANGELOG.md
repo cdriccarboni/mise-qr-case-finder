@@ -1,3 +1,9 @@
+## Non publié — suppression de compte
+
+- Suppression définitive du compte MISES! depuis ☁ / compte, avec confirmation explicite, nettoyage local et page web de demande.
+- Espaces personnels supprimés ; espaces partagés transférés ou quittés sans effacer le travail de l’équipe.
+- Politique de confidentialité et déclaration Google Play mises à jour pour la synchronisation Supabase.
+
 ## 0.4.0-beta.34 — 22 octobre 2026 (versionCode 43)
 
 - Connexion e-mail + mot de passe (en plus du lien magique) pour l'accès testeurs Google Play.

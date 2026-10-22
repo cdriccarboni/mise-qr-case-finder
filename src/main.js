@@ -48,7 +48,8 @@ import { applyBackup, backupItemCount } from './backup.js'
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-client.js'
 import { activeLabelCases, archivedLabelCases, archiveCase, restoreCase, deleteCase, canDeleteCase, isProtectedCase, labelState } from './label-archive.js'
 import { fetchPublicInventory, publicNoticeHtml, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
-import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, signInWithSupabasePassword, supabaseSession, supabaseSignOut, signInWithGoogleSupabase, completeSupabaseAuthFromUrl, validateEmail, authErrorMessage, googleProviderEnabled, parseAuthReturn, cleanAuthUrl } from './supabase-client.js'
+import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, signInWithSupabasePassword, supabaseSession, supabaseSignOut, deleteSupabaseAccount, signInWithGoogleSupabase, completeSupabaseAuthFromUrl, validateEmail, authErrorMessage, googleProviderEnabled, parseAuthReturn, cleanAuthUrl } from './supabase-client.js'
+import { clearLocalAppData, confirmPhraseOk } from './account-deletion.js'
 import { syncMises, queuePhotoUpload, signedPhotoUrl, setPublicInventory, getPublicInventory } from './sync-core.js'
 import { parseCsvText, planInventoryImport, applyInventoryPlan, inventoryColumnMap } from './inventory-import.js'
 import { buildCentralIndex, centralSearch } from './central-search.js'
@@ -226,18 +227,40 @@ async function updateSupabaseStatus(){
     button.classList.toggle('connected',Boolean(session))
   }catch{button.hidden=false;button.textContent='☁ Se connecter'}
 }
+function openAccountDeletionDialog(){
+  const d=$('#modal')
+  d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Supprimer mon compte</b><small>Cette action est définitive.</small></div><button id="closeAccountDeletion" class="ghost" type="button" aria-label="Fermer">×</button></div><p>Ton compte MISES!, tes espaces personnels, leurs fiches, photos et mémos audio sur le serveur, ainsi que les données locales de cet appareil seront supprimés.</p><p>Dans un espace partagé, ton accès sera retiré et le contenu restera à l’équipe. Si tu en étais propriétaire, l’espace sera transmis à un autre membre.</p><label>Tapez SUPPRIMER pour confirmer<input id="accountDeletionPhrase" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SUPPRIMER"></label><div class="row"><button id="confirmAccountDeletion" class="danger" type="button" disabled>Supprimer définitivement mon compte</button><a href="./delete-account.html" target="_blank" rel="noopener">Supprimer mon compte (page web)</a></div><p id="accountDeletionStatus" class="hint" role="status"></p></div>`
+  d.showModal()
+  const phrase=$('#accountDeletionPhrase'),confirm=$('#confirmAccountDeletion'),status=$('#accountDeletionStatus')
+  $('#closeAccountDeletion').onclick=()=>d.close()
+  phrase.oninput=()=>{confirm.disabled=!confirmPhraseOk(phrase.value)}
+  confirm.onclick=async()=>{
+    confirm.disabled=true; status.textContent='Suppression du compte…'
+    try{
+      await deleteSupabaseAccount()
+      db.close()
+      await clearLocalAppData()
+      d.close();toast('Compte supprimé')
+      setTimeout(()=>location.reload(),450)
+    }catch(error){
+      status.textContent=error instanceof Error?error.message:'Suppression du compte impossible pour le moment.'
+      confirm.disabled=!confirmPhraseOk(phrase.value)
+    }
+  }
+}
 async function openSupabaseSync(){
   if(!supabaseConfigured){toast('Synchronisation indisponible');return}
   const session=await supabaseSession().catch(()=>null)
   if(session?.user) await ensureSupabaseAuthListener()
   const d=$('#modal')
   if(session?.user){
-    d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Synchronisation MISES!</b><small>${esc(session.user.email||'Compte connecté')}</small></div><button id="closeSupabaseSync" class="ghost" type="button">×</button></div><p>Les fiches restent locales et sont synchronisées en arrière-plan. Les photos sont stockées séparément et compressées côté appareil avant envoi.</p><div class="row"><button id="syncNow">Synchroniser maintenant</button><button id="supabaseSignOut" class="ghost" type="button">Déconnecter</button></div><p id="syncNowStatus" class="hint"></p><label class="check"><input id="publishInventory" type="checkbox" disabled><span><b>Publier mon inventaire</b><small>Quiconque scanne une de tes étiquettes voit le contenu du contenant (lecture seule, sans tes fiches privées).</small></span></label></div>`
+    d.innerHTML=`<div class="form"><div class="dialoghead"><div><b>Synchronisation MISES!</b><small>${esc(session.user.email||'Compte connecté')}</small></div><button id="closeSupabaseSync" class="ghost" type="button">×</button></div><p>Les fiches restent locales et sont synchronisées en arrière-plan. Les photos sont stockées séparément et compressées côté appareil avant envoi.</p><div class="row"><button id="syncNow">Synchroniser maintenant</button><button id="supabaseSignOut" class="ghost" type="button">Déconnecter</button></div><button id="deleteSupabaseAccount" class="danger" type="button">Supprimer mon compte</button><a href="./delete-account.html" target="_blank" rel="noopener">Supprimer mon compte (page web)</a><p id="syncNowStatus" class="hint"></p><label class="check"><input id="publishInventory" type="checkbox" disabled><span><b>Publier mon inventaire</b><small>Quiconque scanne une de tes étiquettes voit le contenu du contenant (lecture seule, sans tes fiches privées).</small></span></label></div>`
     d.showModal()
     getPublicInventory().then(v=>{const c=$('#publishInventory');if(c){c.checked=v;c.disabled=false}}).catch(()=>{})
     $('#publishInventory').onchange=async e=>{const c=e.target;c.disabled=true;try{await setPublicInventory(c.checked);publicInventoryCache=null;toast(c.checked?'Inventaire publié (lecture seule)':'Inventaire retiré de la page publique')}catch(error){c.checked=!c.checked;toast(`Publication impossible : ${error.message||error}`)}finally{c.disabled=false}}
     $('#closeSupabaseSync').onclick=()=>d.close()
     $('#supabaseSignOut').onclick=async()=>{await supabaseSignOut();d.close();await updateSupabaseStatus();toast('Compte MISES déconnecté')}
+    $('#deleteSupabaseAccount').onclick=openAccountDeletionDialog
     $('#syncNow').onclick=async()=>{
       const status=$('#syncNowStatus');status.textContent='Synchronisation…'
       try{

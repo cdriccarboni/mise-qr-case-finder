@@ -8,37 +8,43 @@
   <style>
     body{margin:0;background:#0b0b0d;color:#f5f5f2;font:16px/1.6 system-ui,-apple-system,sans-serif}
     main{max-width:760px;margin:auto;padding:32px 20px 64px}
-    h1,h2{line-height:1.15} h1{font-size:2.2rem} h2{margin-top:2rem}
-    p,li{color:#c7c7c3} a{color:#ff6b61}.box{padding:16px;border:1px solid #333;border-radius:14px;background:#121216}
+    h1,h2{line-height:1.15}h1{font-size:2.2rem}h2{margin-top:2rem}
+    p,li{color:#c7c7c3}a{color:#ff6b61}.box{padding:16px;border:1px solid #333;border-radius:14px;background:#121216}
   </style>
 </head>
 <body><main>
   <h1>Politique de confidentialité — MISES!</h1>
-  <p>Dernière mise à jour : 27 septembre 2026. Éditeur : Cédric Carboni.</p>
-  <div class="box">MISES! ne comporte ni publicité, ni mesure d’audience, ni outil de suivi. Le développeur ne reçoit pas la base de travail.</div>
+  <p>Dernière mise à jour : 22 octobre 2026. Éditeur : Cédric Carboni.</p>
+  <div class="box">MISES! ne comporte ni publicité, ni mesure d’audience, ni SDK de plantage, ni outil de suivi. Les données ne sont ni vendues ni partagées avec des tiers.</div>
 
-  <h2>Données sur l’appareil</h2>
-  <p>Objets, sons, relations objet-son, alias, mises, contenants, kits, sources, éléments à vérifier, corrections et réglages que vous ajoutez sont stockés localement dans IndexedDB. Les photos (JPEG réduit sur l’appareil) et les mémos sonores (fichier audio) sont enregistrés dans ces fiches, sous forme de données locales. L’affichage, le thème et, le cas échéant, un résumé de projet restent dans le stockage local du navigateur. Rien de cela n’est envoyé au développeur.</p>
+  <h2>Utilisation locale, sans compte</h2>
+  <p>MISES! fonctionne sans compte. Vos objets, sons, relations, mises, contenants, kits, notes, réglages, photos et mémos audio restent alors sur cet appareil, dans IndexedDB et le stockage local de l’application. Le développeur ne reçoit pas cette base locale.</p>
 
-  <h2>Caméra, micro, Bluetooth</h2>
-  <p>Ces accès ne sont demandés qu’au moment d’utiliser la fonction correspondante : scan d’un QR, photo, reconnaissance d’objets sur l’appareil, mémo sonore, dictée si le navigateur la propose, ou impression sur une imprimante Bluetooth déjà appairée. L’application ne recherche pas d’appareils Bluetooth autour de vous : elle propose seulement ceux déjà appairés.</p>
+  <h2>Compte et synchronisation facultatifs</h2>
+  <p>Vous pouvez choisir de créer ou de connecter un compte MISES! pour synchroniser votre travail. La connexion passe par Supabase Auth : lien magique par e-mail, e-mail et mot de passe, ou Google si ce fournisseur est activé.</p>
+  <p>Lorsque vous vous connectez et lancez une synchronisation, MISES! traite votre adresse e-mail, votre identifiant utilisateur, vos fiches, notes, inventaires, kits, photos et mémos audio. Ces données sont nécessaires au fonctionnement de la synchronisation et restent facultatives : sans compte, elles restent locales.</p>
+  <p>Supabase Inc. est notre sous-traitant d’hébergement pour l’authentification, la base de données et le stockage des fichiers. Le projet MISES! est hébergé dans l’Union européenne, région <code>eu-north-1</code> (Stockholm). Les échanges avec Supabase sont chiffrés en transit par HTTPS/TLS.</p>
 
-  <h2>Reconnaissance d’objets</h2>
-  <p>La détection photo utilise un modèle embarqué (COCO-SSD). L’image est analysée sur l’appareil. Elle n’est pas envoyée à un service d’analyse.</p>
+  <p>La bibliothèque de connexion Supabase est téléchargée depuis le CDN public <code>esm.sh</code> : cette requête technique ne contient pas vos fiches, photos ni mémos.</p>
+  <h2>Version navigateur : Google Drive (facultatif)</h2>
+  <p>Dans un navigateur, vous pouvez aussi connecter votre propre compte Google. MISES! enregistre alors une copie privée de votre base (photos et mémos audio inclus) dans <em>votre</em> Google Drive, fichier <code>mises-data.json</code> dans <code>_ART / MISES !</code>. Le développeur ne reçoit pas ce fichier. L’application Android n’utilise pas cette connexion Google Drive. Vous pouvez supprimer ce fichier depuis Google Drive et retirer l’accès dans votre compte Google.</p>
 
-  <h2>Synchronisation Google Drive (facultative)</h2>
-  <p>Dans un navigateur, vous pouvez connecter votre propre compte Google. MISES! lit alors votre adresse e-mail (et le nom de profil renvoyé par Google) pour afficher le compte connecté. Elle lit et écrit un fichier <code>mises-data.json</code> dans votre Google Drive, dans les dossiers « _ART » puis « MISES ! ». Un ancien fichier <code>mise-data.json</code> dans le dossier « MISE ! » reste en place : il est relu s’il n’existe pas encore de copie au nouveau nom, et il n’est pas supprimé. Ce fichier reprend la base locale : textes, photos et mémos sonores inclus, ainsi que les photos de contrôle de mise. Le jeton d’accès reste dans la session du navigateur. Le développeur n’a pas accès à ce Drive.</p>
-  <p>Un partage explicite crée un second fichier, limité à la sélection. Les photos et les mémos ne sont inclus que si vous cochez cette option. Les adresses que vous saisissez sont transmises à l’API Google Drive pour leur donner un accès en lecture ; Google peut leur envoyer un e-mail. Le traitement par Google est régi par la politique de confidentialité de Google.</p>
-  <p>Dans l’application Android 0.4.0-beta.3, cette connexion n’est pas proposée : Google bloque l’identification dans la fenêtre intégrée. L’application Android ne transmet donc pas la base, les photos, les mémos ni l’adresse e-mail à Google. Elle reste utilisable hors connexion. La synchronisation Drive, si vous la voulez, se fait dans Chrome ou un autre navigateur.</p>
+  <h2>Photos, caméra, micro et reconnaissance</h2>
+  <p>La caméra, le micro, la dictée ou l’impression Bluetooth ne sont demandés qu’au moment d’utiliser la fonction correspondante. La reconnaissance d’objets utilise un modèle embarqué sur l’appareil : les images ne sont pas envoyées à un service de reconnaissance. Une photo est envoyée à Supabase uniquement si vous choisissez de synchroniser le compte qui la contient.</p>
 
-  <h2>Partage</h2>
-  <p>Le menu Partager du système n’envoie des données que si vous lancez vous-même cette action et choisissez une application.</p>
+  <h2>Inventaire public et partage</h2>
+  <p>Le propriétaire d’un espace peut publier volontairement son inventaire pour une consultation publique par QR. Seuls des champs d’inventaire placés sur une liste blanche sont exposés ; ni adresse e-mail ni mémo audio ne sont publiés. Le menu Partager du système n’envoie des données que si vous déclenchez vous-même cette action et choisissez une application.</p>
 
-  <h2>Suppression</h2>
-  <p>Supprimez les éléments dans MISES!, ou effacez les données du site ou de l’application. Supprimez les copies présentes dans votre Google Drive, et révoquez l’accès sur <a href="https://myaccount.google.com/permissions">https://myaccount.google.com/permissions</a>. Le développeur n’en conserve pas de copie.</p>
+  <h2>Conservation et suppression</h2>
+  <p>Les données synchronisées sont conservées tant que votre compte existe. Vous pouvez demander ou effectuer la suppression de votre compte et de ses données depuis l’application. La procédure complète est disponible sur la <a href="delete-account.html">page de suppression de compte</a>.</p>
+  <p>Après la suppression, les espaces personnels, fiches, photos et mémos associés sont supprimés. Dans un espace partagé, le contenu reste à l’équipe et vos références d’auteur sont anonymisées. Les sauvegardes techniques de l’hébergeur sont effacées automatiquement à l’échéance de leur cycle.</p>
+  <p>Sans compte, vous pouvez supprimer les données locales en désinstallant l’application ou en effaçant ses données dans les réglages de votre appareil.</p>
+
+  <h2>Sauvegarde Android</h2>
+  <p>Android peut sauvegarder les données de l’application vers le compte Google de l’utilisateur si la sauvegarde système est activée. Le développeur ne reçoit pas cette sauvegarde.</p>
 
   <h2>Contact</h2>
   <p>Cédric Carboni — <a href="mailto:cdric.carboni@gmail.com">cdric.carboni@gmail.com</a></p>
-
   <p><a href="./">Retour à MISES!</a></p>
-</main></body></html>
+</main></body>
+</html>

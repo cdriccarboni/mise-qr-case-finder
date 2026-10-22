@@ -210,44 +210,37 @@ Conséquence, inchangée pour le web : scope restreint. En mode test OAuth, les 
 
 ## 8. Règles de confidentialité
 
-- Fichier : `public/privacy.html` (texte du 27/09/2026). Il cite Google Drive, `cdric.carboni@gmail.com`, IndexedDB, les photos, les mémos sonores, le fichier `mises-data.json` (l’ancien `mise-data.json` reste relu et n’est pas supprimé), et le fait que l’application Android ne transmet pas ces données.
+- Fichier : `public/privacy.html` (texte du 22/10/2026). Il décrit le stockage local sans compte et la synchronisation facultative par Supabase : Auth, base de données et stockage de fichiers, hébergés en UE (`eu-north-1`, Stockholm).
 - URL prévue : https://cdriccarboni.github.io/mise-qr-case-finder/privacy.html (constante `PRIVACY_URL` dans `src/about.js`, le dépôt n’est pas renommé)
-- **Partiel** : le 27/09/2026, cette URL répond HTTP 200 avec l’ancien texte (pas de Google Drive, pas d’adresse). Le workflow Pages ne déploie que `main`. Le nouveau texte sera en ligne seulement après merge de cette branche dans `main`. Ne pas coller l’URL dans la Console tant que le texte en ligne n’est pas celui du dépôt.
-
-Correspondance avec le code (**vérifié** par lecture, test unitaire sur les phrases du HTML) :
-
-| Ce que dit la page | Code |
-|---|---|
-| Base locale IndexedDB, pas envoyée au développeur | `src/data-bruitage.js` (`DATA_STORES`) + `kits` + `settings` dans IndexedDB (`src/main.js`) |
-| Photos JPEG réduites et mémos audio dans les fiches | `resizePhoto` (JPEG, côté appareil) ; `audioMemo` en data URL via `MediaRecorder` |
-| Synchro Drive facultative dans le navigateur : e-mail via userinfo, fichier `mises-data.json` sous `_ART` / `MISES !`, photos et mémos inclus. L’ancien `mise-data.json` dans « MISE ! » est relu s’il n’y a pas encore de copie, et il n’est pas supprimé. | `connectedGoogleProfile`, `privateStatePayload` = `readData` + `kits` (les champs photo et audio sont dans les objets) |
-| Partage : fichier séparé, médias seulement si la case est cochée, adresses envoyées à l’API Permissions | `sharePayload`, `createSharePackage`, `grantFileReader` (`sendNotificationEmail=true`) |
-| Android 0.2.3 : pas de connexion, pas d’envoi | `AndroidShellBridge`, blocage des hôtes Google dans `MainActivity` |
-| Reconnaissance sur l’appareil, image non envoyée | `src/local-vision.js` charge `models/coco-ssd`. `requestPhotoAnalysis` (`/api/staging-analyse`) n’est appelé par aucun écran. Playwright hors ligne vérifie qu’aucune requête vers cette route ne part |
-| Jeton en session navigateur | `sessionStorage`, clé `mises-google-oauth-session-v1` (copie de `mise-google-oauth-session-v1` si la nouvelle est absente) |
+- La page mentionne les données synchronisées, TLS/HTTPS, l’absence de publicité/analytics/SDK de crash, la reconnaissance locale, la publication publique volontaire en liste blanche et la suppression. Elle lie aussi `delete-account.html`.
+- Le workflow Pages ne déploie que `main` : ne renseigner les URL Play qu’après vérification de la version effectivement publiée.
 
 ## 9. Sécurité des données
 
-Les réponses ci-dessous décrivent **l’APK 0.2.3 (versionCode 5)**, pas le site web.
+Les réponses ci-dessous décrivent l’APK actuel avec synchronisation Supabase.
 
-**L'application collecte-t-elle ou partage-t-elle des données utilisateur ?** → **Non**.
+**L'application collecte-t-elle ou partage-t-elle des données utilisateur ?** → **Oui, collecte.**
 
-Dans cet APK, la connexion Google ne démarre pas et les hôtes Google sont bloqués. Photos, mémos, inventaire et adresse e-mail restent sur l’appareil. Le développeur n’a pas de serveur qui les reçoit. Le menu Partager du système n’agit que si l’utilisateur le lance.
+Le compte MISES! est facultatif. Avec un compte et une synchronisation déclenchée par l’utilisateur, l’application envoie les données ci-dessous vers Supabase. Sans compte, les données restent dans IndexedDB sur l’appareil.
 
-**Chiffrement en transit** : rien n’est transmis par l’APK vers un serveur de l’application. `usesCleartextTraffic=false` est présent si une requête HTTPS avait lieu. La question Play sur le chiffrement ne se pose que si la réponse « collecte » est Oui.
+**Chiffrement en transit** → **Oui.** Les échanges avec Supabase utilisent HTTPS/TLS ; `usesCleartextTraffic=false` reste activé.
 
-**Suppression** : dans l’app, ou en effaçant les données de l’application. Le développeur n’en a pas de copie. Pas de création de compte dans l’APK, donc pas d’URL de suppression de compte.
+**Les utilisateurs peuvent-ils demander la suppression ?** → **Oui.** Dans l’application et à l’URL https://cdriccarboni.github.io/mise-qr-case-finder/delete-account.html . Le blocage de suppression est **résolu par cette PR** ; le déploiement de l’Edge Function `delete-account` reste à faire avant soumission Play.
 
-| Type Play | Collecté par l’APK 0.2.3 | Partagé | Pourquoi |
-|---|---|---|---|
-| Adresse e-mail | Non | Non | userinfo n’est appelé que dans le navigateur, après connexion. L’APK ne lance pas cette connexion. |
-| Photos | Non | Non | stockées dans IndexedDB. Incluses dans `mises-data.json` seulement si l’utilisateur synchronise depuis un navigateur. |
-| Enregistrements vocaux | Non | Non | même règle que les photos (`audioMemo`). |
-| Fichiers et documents | Non | Non | import et base restent locaux. L’export JSON est un fichier que l’utilisateur enregistre lui-même. |
+| Catégorie Play | Type | Collecté | Partagé | Facultatif | Finalités |
+|---|---|---|---|---|---|
+| Infos personnelles | Adresse e-mail | Oui | Non | Oui (compte facultatif) | Fonctionnement de l’appli, gestion du compte |
+| Infos personnelles | ID utilisateur (UUID Supabase) | Oui | Non | Oui | Fonctionnement de l’appli, gestion du compte |
+| Photos et vidéos | Photos | Oui | Non | Oui (seulement si synchro) | Fonctionnement de l’appli |
+| Fichiers audio | Enregistrements vocaux ou sonores (mémos) | Oui | Non | Oui (seulement si synchro) | Fonctionnement de l’appli |
+| Activité dans l’appli | Autre contenu généré par l’utilisateur (fiches, notes, inventaire, kits) | Oui | Non | Oui | Fonctionnement de l’appli |
+| Localisation, contacts, finances, santé, messages, historique web, ID appareil, diagnostics/plantages, analytics | — | Non | Non | — | — |
 
-`allowBackup=true` : Android peut sauvegarder les données d’application vers le compte Google **de l’utilisateur**. Le développeur ne les reçoit pas. **À confirmer par Cédric** au moment du formulaire si la Console pose la question du backup.
-
-La version **navigateur** (hors APK), si l’utilisateur se connecte, envoie bien e-mail, base, photos et mémos vers le Drive de cet utilisateur, et les adresses de partage vers l’API Permissions. Ce n’est pas le comportement de l’APK à déclarer dans ce formulaire. Si une prochaine version Android rétablit Drive, il faudra changer cette section avant l’envoi.
+- **Partage = Non** : Supabase est un sous-traitant (« service provider ») qui traite pour le compte du développeur ; ce n’est pas un partage au sens Play. La publication d’inventaire et le menu Partager sont déclenchés par l’utilisateur.
+- Traitement éphémère : Non (stockage persistant).
+- Mot de passe : géré par Supabase Auth (haché) ; Play ne demande pas de le déclarer comme type à part.
+- Aucun SDK analytics, crash ou publicité n’est intégré.
+- `allowBackup=true` : Android peut sauvegarder les données d’application vers le compte Google de l’utilisateur. Le développeur ne les reçoit pas.
 
 Pratiques : « Engagement Familles » Non. « Examen de sécurité indépendant » Non.
 
