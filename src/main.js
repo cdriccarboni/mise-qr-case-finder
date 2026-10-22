@@ -48,7 +48,7 @@ import { applyBackup, backupItemCount } from './backup.js'
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-client.js'
 import { activeLabelCases, archivedLabelCases, archiveCase, restoreCase, deleteCase, canDeleteCase, isProtectedCase, labelState } from './label-archive.js'
 import { fetchPublicInventory, publicNoticeHtml, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
-import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, supabaseSession, supabaseSignOut, signInWithGoogleSupabase, completeSupabaseAuthFromUrl, validateEmail, authErrorMessage, googleProviderEnabled, parseAuthReturn, cleanAuthUrl } from './supabase-client.js'
+import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, signInWithSupabasePassword, supabaseSession, supabaseSignOut, signInWithGoogleSupabase, completeSupabaseAuthFromUrl, validateEmail, authErrorMessage, googleProviderEnabled, parseAuthReturn, cleanAuthUrl } from './supabase-client.js'
 import { syncMises, queuePhotoUpload, signedPhotoUrl, setPublicInventory, getPublicInventory } from './sync-core.js'
 import { parseCsvText, planInventoryImport, applyInventoryPlan, inventoryColumnMap } from './inventory-import.js'
 import { buildCentralIndex, centralSearch } from './central-search.js'
@@ -248,7 +248,7 @@ async function openSupabaseSync(){
     }
     return
   }
-  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Synchroniser MISES!</b><small>Compte personnel · sans Google</small></div><button value="cancel" class="ghost">×</button></div><p>Entre ton adresse e-mail. MISES enverra un lien de connexion sécurisé. Aucun mot de passe ni compte Google n’est nécessaire.</p><label>E-mail<input id="supabaseEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" required placeholder="ton@email.fr"></label><button id="googleSupabaseLogin" type="button" class="ghost" hidden>Continuer avec Google</button><button id="sendSupabaseLink">Recevoir le lien de connexion</button><p id="supabaseAuthStatus" class="hint"></p></form>`
+  d.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>Synchroniser MISES!</b><small>Compte personnel · sans Google</small></div><button value="cancel" class="ghost">×</button></div><p>Entre ton adresse e-mail. MISES enverra un lien de connexion sécurisé, ou utilise ton mot de passe si ton compte en a un.</p><label>E-mail<input id="supabaseEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" required placeholder="ton@email.fr"></label><label>Mot de passe (optionnel)<input id="supabasePassword" type="password" autocomplete="current-password"></label><button id="googleSupabaseLogin" type="button" class="ghost" hidden>Continuer avec Google</button><button id="supabasePasswordLogin" type="button" class="ghost">Se connecter avec mot de passe</button><button id="sendSupabaseLink">Recevoir le lien de connexion</button><p id="supabaseAuthStatus" class="hint"></p></form>`
   d.showModal()
   googleProviderEnabled().then(on=>{const b=$('#googleSupabaseLogin');if(b)b.hidden=!on})
   $('#googleSupabaseLogin')?.addEventListener('click',async e=>{e.preventDefault();const status=$('#supabaseAuthStatus');status.textContent='Ouverture de Google…';try{await signInWithGoogleSupabase();status.textContent='Termine la connexion Google : MISES! reprendra automatiquement.'}catch(error){status.textContent=authErrorMessage(error)}})
@@ -260,6 +260,18 @@ async function openSupabaseSync(){
     $('#supabaseEmail').value=v.email
     try{await sendSupabaseMagicLink(v.email);status.textContent=window.MisesAndroid?'Lien envoyé. Ouvre-le depuis ton e-mail : Android revient directement dans MISES!.':'Lien envoyé. Ouvre-le puis reviens dans MISES.'}
     catch(error){status.textContent=error?.code==='email_invalid_local'?error.message:authErrorMessage(error)}
+  }
+  $('#supabasePasswordLogin').onclick=async e=>{
+    e.preventDefault()
+    const raw=$('#supabaseEmail').value,password=$('#supabasePassword').value,status=$('#supabaseAuthStatus')
+    const v=validateEmail(raw);if(!v.ok){status.textContent=v.message;return}
+    $('#supabaseEmail').value=v.email
+    try{
+      const session=await signInWithSupabasePassword(v.email,password)
+      supabaseSyncAnnounce=true
+      await finishSupabaseAuthReturn(session)
+      await openSupabaseSync()
+    }catch(error){status.textContent=authErrorMessage(error)}
   }
 }
 async function runSupabaseSync(){
@@ -2322,18 +2334,22 @@ $('#restoreInput').onchange=async event=>{
 
 await settleArtProject()
 // Retour de connexion Supabase (lien magique / Google) : code PKCE échangé ICI, puis synchro automatique.
-async function finishSupabaseAuthReturn(){
+async function finishSupabaseAuthReturn(session=null){
   if(!supabaseConfigured)return
-  const href=location.href
-  if(parseAuthReturn(href)){
-    history.replaceState(null,'',cleanAuthUrl(href))
-    try{await completeSupabaseAuthFromUrl(href);supabaseSyncAnnounce=true;toast('☁ Connectée · synchronisation…')}
-    catch(error){toast(`☁ Connexion non terminée : ${authErrorMessage(error)}`)}
+  if(!session){
+    const href=location.href
+    if(parseAuthReturn(href)){
+      history.replaceState(null,'',cleanAuthUrl(href))
+      try{session=(await completeSupabaseAuthFromUrl(href)).session;supabaseSyncAnnounce=true;toast('☁ Connectée · synchronisation…')}
+      catch(error){toast(`☁ Connexion non terminée : ${authErrorMessage(error)}`)}
+    }
   }
   // Sans session enregistrée, ne charge pas le client Supabase (aucune requête réseau au démarrage).
-  let stored=false;try{stored=Object.keys(localStorage).some(k=>/^sb-.*-auth-token/.test(k))}catch{}
-  if(!stored)return
-  const session=await supabaseSession().catch(()=>null)
+  if(!session){
+    let stored=false;try{stored=Object.keys(localStorage).some(k=>/^sb-.*-auth-token/.test(k))}catch{}
+    if(!stored)return
+    session=await supabaseSession().catch(()=>null)
+  }
   if(session?.user){await ensureSupabaseAuthListener();await updateSupabaseStatus();scheduleSupabaseSync()}
 }
 setTimeout(()=>finishSupabaseAuthReturn(),0)
