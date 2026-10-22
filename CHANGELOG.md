@@ -1,3 +1,7 @@
+## 0.4.0-beta.34 — 22 octobre 2026 (versionCode 43)
+
+- Connexion e-mail + mot de passe (en plus du lien magique) pour l'accès testeurs Google Play.
+
 ## 0.4.0-beta.33 — 20 octobre 2026 (#45)
 
 - Connexion : bouton « Continuer avec Google » masqué tant que le fournisseur Google n’est pas activé dans Supabase (lu via `/auth/v1/settings`, désactivé par défaut).

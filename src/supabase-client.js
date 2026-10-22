@@ -44,6 +44,8 @@ export function validateEmail(raw){
 /** Erreurs Supabase Auth → messages français clairs. */
 export function authErrorMessage(error){
   const m=String(error?.message||error||'').toLowerCase(), code=String(error?.code||'').toLowerCase()
+  if(code==='password_missing_local')return 'Entre ton mot de passe.'
+  if(code==='invalid_credentials'||/invalid login credentials/.test(m))return 'E-mail ou mot de passe incorrect.'
   if(/invalid format|validate email|email_address_invalid/.test(m+code))return 'Adresse e-mail refusée : vérifie qu’il n’y a ni accent, ni espace.'
   if(/provider is not enabled|unsupported provider/.test(m))return 'La connexion Google n’est pas activée. Utilise le lien par e-mail.'
   if(/rate limit|too many|over_email_send_rate|429/.test(m+code))return 'Trop de demandes : attends quelques minutes avant de redemander un lien.'
@@ -67,6 +69,15 @@ export async function sendSupabaseMagicLink(raw){
     options:{emailRedirectTo:authRedirectUrl(),shouldCreateUser:true}
   })
   if(error) throw error
+}
+export async function signInWithSupabasePassword(rawEmail,password){
+  const v=validateEmail(rawEmail)
+  if(!v.ok) throw Object.assign(new Error(v.message),{code:'email_invalid_local'})
+  if(typeof password!=='string'||password.length===0) throw Object.assign(new Error('Entre ton mot de passe.'),{code:'password_missing_local'})
+  const supabase=await loadClient()
+  const {data,error}=await supabase.auth.signInWithPassword({email:v.email,password})
+  if(error) throw error
+  return data.session
 }
 /** Google via Supabase : Custom Tab sur Android (Google refuse les WebView), redirection normale en PWA. */
 export async function signInWithGoogleSupabase(){
