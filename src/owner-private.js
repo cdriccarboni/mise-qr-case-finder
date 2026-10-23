@@ -1,4 +1,6 @@
 /** Compte propriétaire autorisé pour le corpus Data Bruitage privé (sync Supabase). */
+import { normalizeObjectLink } from './object-link.js'
+
 export const OWNER_PRIVATE_EMAIL = 'cdric.carboni@gmail.com'
 
 export function normalizeEmail(value) {
@@ -7,6 +9,11 @@ export function normalizeEmail(value) {
 
 export function isOwnerPrivateAccount(email) {
   return normalizeEmail(email) === normalizeEmail(OWNER_PRIVATE_EMAIL)
+}
+
+/** Un seed privé peut contenir url ; seule sa forme est normalisée, jamais supprimée si valide. */
+export function normalizeOwnerSeedObject(seed) {
+  return normalizeObjectLink(seed)
 }
 
 /** Garde client : le pack privé ne doit être poussé/tiré que pour le compte propriétaire. */

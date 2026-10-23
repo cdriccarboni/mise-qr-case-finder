@@ -8,6 +8,7 @@ const PAPER = [255, 255, 255, 255]
 const GLYPHS = {
   ' ': [0, 0, 0, 0, 0, 0, 0],
   '!': [0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0, 0b00100],
+  ':': [0, 0b00100, 0b00100, 0, 0b00100, 0b00100, 0],
   '.': [0, 0, 0, 0, 0, 0b00100, 0b00100],
   '-': [0, 0, 0, 0b11111, 0, 0, 0],
   "'": [0b00100, 0b00100, 0, 0, 0, 0, 0],
@@ -92,7 +93,7 @@ export function paintMark(img, x, y, size, color) {
 }
 
 function foldLabel(value) {
-  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/°/g, '*').replace(/[^A-Z0-9 !.'*/-]/g, ' ').replace(/\s+/g, ' ').trim()
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/°/g, '*').replace(/[^A-Z0-9 !.'*:/-]/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
 function drawText(img, text, x, y, scale, color, align = 'left') {
@@ -140,7 +141,7 @@ export function renderLabelRgba(spec) {
   const width = 384
   const nameLines = wrap(spec.name || 'MISES', 3, 360)
   const isSpare = Boolean(spec.spare || spec.isSpare)
-  const extra = [spec.location, spec.category, isSpare && !/\bSPARE\b/i.test(spec.name||'') ? 'SPARE (SECOURS)' : ''].filter(Boolean)
+  const extra = [spec.linkText, spec.location, spec.category, isSpare && !/\bSPARE\b/i.test(spec.name||'') ? 'SPARE (SECOURS)' : ''].filter(Boolean)
   const height = 144 + nameLines.length * 28 + 320 + extra.length * 22 + 36
   const img = createImage(width, height, PAPER)
   blitWordmark(img, Math.round((width - WORDMARK_BITMAP.width) / 2), 16, INK)
@@ -161,7 +162,7 @@ export function renderLabelRgba(spec) {
     drawText(img,line,width/2,y,2,line.startsWith('SPARE')?[...spareTint,255]:INK,'center')
     y += 20
   }
-  return { rgba: img.rgba, width, height, qrText: spec.qrText }
+  return { rgba: img.rgba, width, height, qrText: spec.qrText, linkText: spec.linkText || '' }
 }
 
 function blitWordmark(img, x, y, color) {
