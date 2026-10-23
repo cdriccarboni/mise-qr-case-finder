@@ -8,6 +8,8 @@ button,input,select{font:inherit}
 button{border:1px solid #3a3a40;cursor:pointer;color:#fff;background:#c93b35;border-radius:7px;padding:.72rem .95rem;font-weight:700}
 button:active{transform:scale(.985)}
 .ghost{background:#24242a;color:#ddd}
+.danger{background:#a7232a;border-color:#e06767;color:#fff}
+.danger:disabled{cursor:not-allowed;opacity:.52}
 .link{background:transparent;padding:0;color:#f2766f}
 .muted,.hint,small{color:#999}
 header{max-width:980px;margin:auto;padding:1.2rem 1rem .5rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}

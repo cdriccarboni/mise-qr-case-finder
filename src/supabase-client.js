@@ -116,4 +116,12 @@ export async function supabaseSignOut(){
   const {error}=await supabase.auth.signOut()
   if(error) throw error
 }
+export async function deleteSupabaseAccount(client){
+  const supabase=client||await loadClient()
+  const {data:sessionData,error:sessionError}=await supabase.auth.getSession()
+  if(sessionError||!sessionData?.session) throw new Error('Connecte-toi avant de supprimer ton compte.')
+  const {error}=await supabase.functions.invoke('delete-account',{body:{confirm:'SUPPRIMER'}})
+  if(error) throw new Error('Suppression du compte impossible pour le moment. Réessaie dans quelques minutes.')
+  await supabase.auth.signOut({scope:'local'})
+}
 export { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY }
