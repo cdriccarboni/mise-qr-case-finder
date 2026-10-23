@@ -1,8 +1,10 @@
 /**
- * Étiquettes · Mes contenants : archiver / restaurer / supprimer (douce, synchronisée).
+ * Étiquettes · Mes contenants : archiver / restaurer ; suppression legacy compatible.
  * Aucun contenant n'est intégré au code public : chaque utilisateur crée les siens ; ceux du propriétaire
  * arrivent depuis SON espace Supabase (seed owner-only). Un contenant protégé (seed) peut être archivé,
- * jamais supprimé. « Supprimer » = marque `labelState:'deleted'` (pas d'effacement de données).
+ * jamais supprimé. `deleteCase` conserve son ancien marqueur pour les appelants
+ * historiques ; l'interface utilise désormais record-purge.js pour effacer la fiche
+ * locale et programmer une purge distante réelle.
  */
 export const isProtectedCase = c => Boolean(c?.protected || c?.builtin)
 export const labelState = c => c?.labelState === 'archived' || c?.labelState === 'deleted' ? c.labelState : 'active'

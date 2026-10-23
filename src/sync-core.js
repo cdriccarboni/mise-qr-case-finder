@@ -3,6 +3,7 @@ import { isOwnerPrivateAccount, normalizeOwnerSeedObject } from './owner-private
 import { supabaseClient, supabaseSession } from './supabase-client.js'
 import { decideSync, conflictEntry, appendConflicts, stripSyncMeta, localTime } from './sync-decision.js'
 import { photoRemotePath, QUEUE_ID, enqueuePhoto, markPhotoDone, markPhotoFailed, pendingPhotos } from './photos.js'
+import { DELETION_QUEUE_ID, deleteLocalRecord, deletionKey, processDeletionQueue, tombstoneAction } from './record-purge.js'
 
 const BUCKET='mises-photos'
 const SYNC_STORES=[...DATA_STORES,'kits','learnings'].filter(name=>name!=='settings')
@@ -168,13 +169,13 @@ async function pushRecord(supabase,spaceId,store,row,cloud,base,session){
   const payload=await preparePayload(supabase,spaceId,store,row)
   const lt=localTime(row), revision=(cloud?.revision||0)+1
   if(!cloud){
-    const {error}=await supabase.from('mises_records').insert({space_id:spaceId,store_name:store,record_id:row.id,payload,updated_by:session.user.id,updated_at:lt,revision:1})
+    const {error}=await supabase.from('mises_records').insert({space_id:spaceId,store_name:store,record_id:row.id,payload,updated_by:session.user.id,updated_at:lt,deleted_at:null,revision:1})
     if(error){ if(error.code==='23505') return {conflict:true}; throw error }
     return {revision:1,payload}
   }
   // Mise à jour conditionnelle : échoue (0 ligne) si quelqu'un a poussé entre-temps.
   const {data,error}=await supabase.from('mises_records')
-    .update({payload,updated_by:session.user.id,updated_at:lt,revision})
+    .update({payload,updated_by:session.user.id,updated_at:lt,deleted_at:null,revision})
     .eq('space_id',spaceId).eq('store_name',store).eq('record_id',row.id).eq('revision',cloud.revision||0)
     .select('revision')
   if(error) throw error
@@ -193,6 +194,20 @@ export async function syncMises(db,{onProgress=()=>{}}={}){
   let photos=await flushPhotoQueue(db,supabase,spaceId).catch(()=>0)
   const remote=await fetchAllRemoteRecords(supabase,spaceId)
   const remoteMap=new Map((remote||[]).map(r=>[`${r.store_name}::${r.record_id}`,r]))
+  const purgeAt=isoNow()
+  // Ancien état « supprimé » : transformer toute fiche locale ou distante restante
+  // en vraie suppression hors-ligne, avant la réconciliation normale.
+  for(const row of await db.getAll('cases')) if(row?.labelState==='deleted'){
+    await deleteLocalRecord(db,'cases',row.id,{now:purgeAt})
+  }
+  for(const cloud of remote) if(SYNC_STORES.includes(cloud.store_name)&&!cloud.deleted_at&&cloud?.payload?.labelState==='deleted'){
+    await deleteLocalRecord(db,cloud.store_name,cloud.record_id,{now:purgeAt})
+  }
+  // La liste initiale reste prioritaire tout au long de cette passe : une fiche
+  // supprimée ne peut pas être réimportée si le Storage est momentanément indisponible.
+  const deletionEntry=await db.get('settings',DELETION_QUEUE_ID)
+  const queuedDeletionKeys=new Set((deletionEntry?.queue||[]).map(item=>deletionKey(item.store,item.recordId)))
+  await processDeletionQueue(db,supabase,spaceId,remoteMap,{now:purgeAt,updatedBy:session.user.id})
   let pushed=0,pulled=0,step=0
   const conflicts=[]
   const total=SYNC_STORES.length
@@ -200,7 +215,24 @@ export async function syncMises(db,{onProgress=()=>{}}={}){
     const localRows=await db.getAll(store)
     for(const row of localRows){
       if(!shouldSync(store,row,session)) continue
-      const cloud=remoteMap.get(`${store}::${row.id}`)
+      const recordKey=deletionKey(store,row.id)
+      if(queuedDeletionKeys.has(recordKey)) continue
+      const cloud=remoteMap.get(recordKey)
+      const tombstone=tombstoneAction(row,cloud)
+      if(tombstone==='delete-local'){
+        await db.delete(store,row.id)
+        pulled++
+        continue
+      }
+      if(tombstone==='resurrect'){
+        const result=await pushRecord(supabase,spaceId,store,row,cloud,cloud.revision||0,session)
+        if(result.conflict){conflicts.push(conflictEntry(store,row,cloud));continue}
+        const now=isoNow()
+        await db.put(store,{...row,photos:result.payload.photos??row.photos,_syncRevision:result.revision,_syncedAt:localTime(row)>now?localTime(row):now})
+        pushed++
+        photos+=(result.payload.photoAssetPaths||[]).length
+        continue
+      }
       const decision=decideSync(row,cloud)
       const now=isoNow()
       if(decision.action==='push'){
@@ -220,7 +252,7 @@ export async function syncMises(db,{onProgress=()=>{}}={}){
       }
     }
     // Fiches distantes absentes localement
-    for(const cloud of remote) if(cloud.store_name===store&&!cloud.deleted_at&&!(await db.get(store,cloud.record_id))){
+    for(const cloud of remote) if(cloud.store_name===store&&!cloud.deleted_at&&!queuedDeletionKeys.has(deletionKey(store,cloud.record_id))&&!(await db.get(store,cloud.record_id))){
       const payload=store==='objects'?normalizeOwnerSeedObject(await hydratePhoto(supabase,cloud.payload)):await hydratePhoto(supabase,cloud.payload)
       await db.put(store,{...payload,_syncRevision:cloud.revision||0,_syncedAt:isoNow()})
       pulled++
@@ -231,6 +263,8 @@ export async function syncMises(db,{onProgress=()=>{}}={}){
     const log=await db.get('settings','sync-conflicts')
     await db.put('settings',{id:'sync-conflicts',entries:appendConflicts(log?.entries||[],conflicts),at:isoNow()})
   }
+  // Entretien opportuniste seulement : un refus RLS/hors-ligne ne doit jamais faire échouer la synchro des fiches.
+  if(typeof supabase.rpc==='function') try{await supabase.rpc('mises_purge_tombstones')}catch{}
   await db.put('settings',{id:'supabase-sync',spaceId,at:isoNow(),pushed,pulled,photos,conflicts:conflicts.length,status:conflicts.length?'conflicts':'ok'})
   return {ok:true,spaceId,pushed,pulled,photos,conflicts:conflicts.length}
 }

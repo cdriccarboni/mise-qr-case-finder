@@ -210,9 +210,9 @@ Conséquence, inchangée pour le web : scope restreint. En mode test OAuth, les 
 
 ## 8. Règles de confidentialité
 
-- Fichier : `public/privacy.html` (texte du 22/10/2026). Il décrit le stockage local sans compte et la synchronisation facultative par Supabase : Auth, base de données et stockage de fichiers, hébergés en UE (`eu-north-1`, Stockholm).
+- Fichier : `public/privacy.html` (texte du 23/10/2026). Il décrit le stockage local sans compte et la synchronisation facultative par Supabase : Auth, base de données et stockage de fichiers, hébergés en UE (`eu-north-1`, Stockholm).
 - URL prévue : https://cdriccarboni.github.io/mise-qr-case-finder/privacy.html (constante `PRIVACY_URL` dans `src/about.js`, le dépôt n’est pas renommé)
-- La page mentionne les données synchronisées, TLS/HTTPS, l’absence de publicité/analytics/SDK de crash, la reconnaissance locale, la publication publique volontaire en liste blanche et la suppression. Elle lie aussi `delete-account.html`.
+- La page mentionne les données synchronisées, TLS/HTTPS, l’absence de publicité/analytics/SDK de crash, la reconnaissance locale, la publication publique volontaire en liste blanche et la suppression. Elle lie aussi `delete-account.html`. `supabase-js` est inclus dans le bundle de l’application, sans CDN tiers.
 - Le workflow Pages ne déploie que `main` : ne renseigner les URL Play qu’après vérification de la version effectivement publiée.
 
 ## 9. Sécurité des données
@@ -226,6 +226,8 @@ Le compte MISES! est facultatif. Avec un compte et une synchronisation déclench
 **Chiffrement en transit** → **Oui.** Les échanges avec Supabase utilisent HTTPS/TLS ; `usesCleartextTraffic=false` reste activé.
 
 **Les utilisateurs peuvent-ils demander la suppression ?** → **Oui.** Dans l’application et à l’URL https://cdriccarboni.github.io/mise-qr-case-finder/delete-account.html . Le blocage de suppression est **résolu par cette PR** ; le déploiement de l’Edge Function `delete-account` reste à faire avant soumission Play.
+
+**Suppression partielle (fiche par fiche) : Oui.** Supprimer une fiche ou un contenant l’enlève immédiatement de l’appareil. À la synchronisation, les fichiers Storage sont retirés, puis le contenu de la ligne Supabase est vidé ; les métadonnées d’assets sont supprimées. Un tombstone technique sans contenu (identifiant, espace, date) reste 30 jours pour propager la suppression aux autres appareils. Il est ensuite retiré par le job quotidien `pg_cron` ; le RPC `mises_purge_tombstones()` effectue aussi ce nettoyage pour les espaces dont l’utilisateur est membre. Les mémos audio étant inclus dans le payload, ils disparaissent avec son vidage. Exception propriétaire : un tombstone correspondant à un seed `mises_owner_seeds` (compte propriétaire uniquement) est conservé, toujours vide, pour que `mises_claim_owner_seed()` ne réinsère pas la fiche.
 
 | Catégorie Play | Type | Collecté | Partagé | Facultatif | Finalités |
 |---|---|---|---|---|---|

@@ -1,3 +1,9 @@
+## 0.4.0-beta.36 — 23 octobre 2026 (versionCode 45)
+
+- Suppression réelle des fiches et contenants : retrait local immédiat, purge des photos Storage et des données/mémos Supabase à la synchronisation, tombstone technique vide limité à 30 jours.
+- `@supabase/supabase-js` est inclus dans le bundle ; plus aucun chargement depuis `esm.sh`.
+- Politique de confidentialité et dossier Play mis à jour pour la suppression fiche par fiche et les sauvegardes Supabase.
+
 ## 0.4.0-beta.35 — 22 octobre 2026 (versionCode 44)
 
 - Fiches objet : champ « Lien » (URL externe) et choix d'étiquette « QR du lien » / « QR de la fiche » (#61).
