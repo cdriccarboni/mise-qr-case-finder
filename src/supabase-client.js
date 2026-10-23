@@ -5,7 +5,8 @@ const SUPABASE_EMAIL_REDIRECT_URL = import.meta.env?.VITE_SUPABASE_EMAIL_REDIREC
 let clientPromise
 async function loadClient(){
   if(!clientPromise){
-    clientPromise = import(/* @vite-ignore */ 'https://esm.sh/@supabase/supabase-js@2.117.2')
+    // Import local différé : Vite génère un chunk pré-caché au lieu d'appeler un CDN.
+    clientPromise = import('@supabase/supabase-js')
       .then(({createClient}) => createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
         auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:false, flowType:'pkce' }
       }))

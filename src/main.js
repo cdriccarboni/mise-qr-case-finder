@@ -48,11 +48,12 @@ import { DEFAULT_INK, INK_PALETTE, applyInk, contrastOn, inkFromSettings, inkSet
 import { migrateLocalKeys, migrateSessionKeys, migrateDatabase, createStores, DB_NAME, DB_VERSION, LOCAL_KEYS, PROJECT_PREFIX } from './storage.js'
 import { applyBackup, backupItemCount } from './backup.js'
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from './supabase-client.js'
-import { activeLabelCases, archivedLabelCases, archiveCase, restoreCase, deleteCase, canDeleteCase, isProtectedCase, labelState } from './label-archive.js'
+import { activeLabelCases, archivedLabelCases, archiveCase, restoreCase, canDeleteCase, isProtectedCase, labelState } from './label-archive.js'
 import { fetchPublicInventory, publicNoticeHtml, publicContainerHtml, publicSearchHtml, publicPhotoUrl } from './public-inventory.js'
 import { supabaseClient, supabaseConfigured, sendSupabaseMagicLink, signInWithSupabasePassword, supabaseSession, supabaseSignOut, deleteSupabaseAccount, signInWithGoogleSupabase, completeSupabaseAuthFromUrl, validateEmail, authErrorMessage, googleProviderEnabled, parseAuthReturn, cleanAuthUrl } from './supabase-client.js'
 import { clearLocalAppData, confirmPhraseOk } from './account-deletion.js'
 import { syncMises, queuePhotoUpload, signedPhotoUrl, setPublicInventory, getPublicInventory } from './sync-core.js'
+import { deleteLocalRecord } from './record-purge.js'
 import { parseCsvText, planInventoryImport, applyInventoryPlan, inventoryColumnMap } from './inventory-import.js'
 import { buildCentralIndex, centralSearch } from './central-search.js'
 import { migrateObjectPhotos, addPhoto, compressImage } from './photos.js'
@@ -1369,7 +1370,7 @@ function openObject(p={}){
   <label>Statut<select id="fStatus">${[...OBJECT_STATUSES,...(o.status&&!OBJECT_STATUSES.some(([k])=>k===o.status)?[[o.status,o.status]]: [])].map(([key,label])=>`<option value="${key}" ${(o.status||'available')===key?'selected':''}>${esc(label)}</option>`).join('')}</select></label></div>
   <label>Tags / contexte<input id="fTags" value="${esc(unique([...(o.tags||[]),...(o.contexts||[])]).join(', '))}" placeholder="atelier, kit perso, #spectacle…"></label>
   ${(o.locationHistory||[]).length?`<details><summary>Historique de rangement</summary><div class="historyList">${(o.locationHistory||[]).slice().reverse().slice(0,12).map(h=>`<small>${esc(new Date(h.at).toLocaleString('fr-FR'))} · ${esc(caseName(caseBy(h.from)))} → ${esc(caseName(caseBy(h.to)))}</small>`).join('')}</div></details>`:''}
-  <div class="row"><button type="button" id="pickGallery" class="ghost">Importer photo</button><button type="button" id="pickCamera" class="ghost">Appareil photo</button><button id="saveObject">Enregistrer</button></div></form>`
+  <div class="row"><button type="button" id="pickGallery" class="ghost">Importer photo</button><button type="button" id="pickCamera" class="ghost">Appareil photo</button><button id="saveObject">Enregistrer</button>${current?'<button type="button" id="deleteObject" class="danger">Supprimer la fiche</button>':''}</div></form>`
   m.showModal()
   $('#pickGallery').onclick=()=>pickPhoto('galleryInput')
   $('#pickCamera').onclick=()=>pickPhoto('cameraInput')
@@ -1382,6 +1383,11 @@ function openObject(p={}){
     player.onerror=()=>{player.hidden=true;const note=$('#audioNote');if(note){note.hidden=false;note.textContent='Fichier sonore absent ou illisible.'}}
     if(o.audioMemo) player.src=o.audioMemo
   }
+  $('#deleteObject')?.addEventListener('click',async()=>{
+    if(!confirm(`Supprimer définitivement la fiche « ${o.name} » ?\n\nElle disparaît immédiatement de cet appareil. À la prochaine synchronisation, ses photos et son mémo sonore seront aussi supprimés du cloud.`)) return
+    await deleteLocalRecord(db,'objects',o.id)
+    scheduleDriveSync();scheduleSupabaseSync();m.close();await refresh();render();toast('Fiche supprimée')
+  })
   $('#saveObject').onclick=async e=>{
     e.preventDefault()
     const enteredUrl=$('#fUrl').value.trim(),url=normalizeExternalUrl(enteredUrl)
@@ -1774,7 +1780,14 @@ async function openBatchPrint({archived=false}={}){
   const save=async next=>{await db.put('cases',next);await refresh();render();scheduleSupabaseSync();openBatchPrint({archived})}
   $$('[data-archive-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.archiveOne);if(c){save(archiveCase(c));toast('Étiquette archivée (ID et QR conservés)')}})
   $$('[data-restore-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.restoreOne);if(c){save(restoreCase(c));toast('Étiquette restaurée')}})
-  $$('[data-delete-one]',d).forEach(b=>b.onclick=()=>{const c=caseBy(b.dataset.deleteOne);if(!c)return;if(!confirm(`Supprimer « ${caseName(c)} » (${c.id}) ? Elle disparaîtra de la liste.`))return;try{save(deleteCase(c,objects));toast('Étiquette supprimée')}catch(e){toast(e.message)}})
+  $$('[data-delete-one]',d).forEach(b=>b.onclick=async()=>{
+    const c=caseBy(b.dataset.deleteOne);if(!c)return
+    const allowed=canDeleteCase(c,objects)
+    if(!allowed.ok){toast(allowed.reason==='protected'?'Contenant protégé : archivable, jamais supprimable':'Contenant non vide');return}
+    if(!confirm(`Supprimer définitivement « ${caseName(c)} » (${c.id}) ?\n\nElle disparaît immédiatement de cet appareil. À la prochaine synchronisation, son contenu et ses photos seront supprimés du cloud.`))return
+    await deleteLocalRecord(db,'cases',c.id)
+    scheduleDriveSync();scheduleSupabaseSync();await refresh();render();openBatchPrint({archived});toast('Étiquette supprimée')
+  })
   const imgs=$$('[data-label-img]',d)
   for(let i=0;i<imgs.length;i++){const c=caseBy(imgs[i].dataset.labelImg);if(c)imgs[i].src=containerLabelImage(c);if(i%8===7)await new Promise(r=>setTimeout(r,0))}
   if(archived||!sorted.length)return
@@ -2134,7 +2147,7 @@ $('#goalQrSimple').onclick=()=>{setTab('cases');toast('Ouvre un contenant pour c
 $('#inventoryInput').onchange=e=>{const file=e.target.files?.[0];e.target.value='';if(file)runLocalPhoto(file,null,'inventory')}
 $('#handsPhotoInput').onchange=e=>{const file=e.target.files?.[0];e.target.value='';pendingExerciseMinutes=pendingExerciseMinutes||1;if(file)runLocalPhoto(file,null,'hands')}
 $('#universePhotoInput').onchange=e=>{const file=e.target.files?.[0];e.target.value='';if(file)runLocalPhoto(file,null,'universe')}
-$('#undoBtn').onclick=async()=>{const last=undoStack.pop();if(!last){$('#undoBtn').hidden=true;return}await db.delete(last.store,last.id);await refresh();render();$('#undoBtn').hidden=!undoStack.length;toast('Dernière création annulée')}
+$('#undoBtn').onclick=async()=>{const last=undoStack.pop();if(!last){$('#undoBtn').hidden=true;return}await deleteLocalRecord(db,last.store,last.id);scheduleDriveSync();scheduleSupabaseSync();await refresh();render();$('#undoBtn').hidden=!undoStack.length;toast('Dernière création annulée')}
 async function runVibe(prompt){
   const value=(prompt??$('#vibePrompt').value).trim()
   if(!value){toast('Décris un univers');return}

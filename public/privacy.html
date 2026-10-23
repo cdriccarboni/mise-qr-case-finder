@@ -14,7 +14,7 @@
 </head>
 <body><main>
   <h1>Politique de confidentialité — MISES!</h1>
-  <p>Dernière mise à jour : 22 octobre 2026. Éditeur : Cédric Carboni.</p>
+  <p>Dernière mise à jour : 23 octobre 2026. Éditeur : Cédric Carboni.</p>
   <div class="box">MISES! ne comporte ni publicité, ni mesure d’audience, ni SDK de plantage, ni outil de suivi. Les données ne sont ni vendues ni partagées avec des tiers.</div>
 
   <h2>Utilisation locale, sans compte</h2>
@@ -25,7 +25,6 @@
   <p>Lorsque vous vous connectez et lancez une synchronisation, MISES! traite votre adresse e-mail, votre identifiant utilisateur, vos fiches, notes, inventaires, kits, photos et mémos audio. Ces données sont nécessaires au fonctionnement de la synchronisation et restent facultatives : sans compte, elles restent locales.</p>
   <p>Supabase Inc. est notre sous-traitant d’hébergement pour l’authentification, la base de données et le stockage des fichiers. Le projet MISES! est hébergé dans l’Union européenne, région <code>eu-north-1</code> (Stockholm). Les échanges avec Supabase sont chiffrés en transit par HTTPS/TLS.</p>
 
-  <p>La bibliothèque de connexion Supabase est téléchargée depuis le CDN public <code>esm.sh</code> : cette requête technique ne contient pas vos fiches, photos ni mémos.</p>
   <h2>Version navigateur : Google Drive (facultatif)</h2>
   <p>Dans un navigateur, vous pouvez aussi connecter votre propre compte Google. MISES! enregistre alors une copie privée de votre base (photos et mémos audio inclus) dans <em>votre</em> Google Drive, fichier <code>mises-data.json</code> dans <code>_ART / MISES !</code>. Le développeur ne reçoit pas ce fichier. L’application Android n’utilise pas cette connexion Google Drive. Vous pouvez supprimer ce fichier depuis Google Drive et retirer l’accès dans votre compte Google.</p>
 
@@ -37,8 +36,14 @@
 
   <h2>Conservation et suppression</h2>
   <p>Les données synchronisées sont conservées tant que votre compte existe. Vous pouvez demander ou effectuer la suppression de votre compte et de ses données depuis l’application. La procédure complète est disponible sur la <a href="delete-account.html">page de suppression de compte</a>.</p>
-  <p>Après la suppression, les espaces personnels, fiches, photos et mémos associés sont supprimés. Dans un espace partagé, le contenu reste à l’équipe et vos références d’auteur sont anonymisées. Les sauvegardes techniques de l’hébergeur sont effacées automatiquement à l’échéance de leur cycle.</p>
+  <p>Après la suppression, les espaces personnels, fiches, photos et mémos associés sont supprimés. Dans un espace partagé, le contenu reste à l’équipe et vos références d’auteur sont anonymisées.</p>
   <p>Sans compte, vous pouvez supprimer les données locales en désinstallant l’application ou en effaçant ses données dans les réglages de votre appareil.</p>
+
+  <h2>Suppression d’une fiche</h2>
+  <p>La suppression d’une fiche ou d’un contenant la retire immédiatement de l’appareil. À la prochaine synchronisation, son contenu, ses photos et ses mémos audio sont effacés de Supabase : lignes de base de données et fichiers du stockage. Seul un marqueur technique sans contenu (identifiant, espace, date) est conservé pour que vos autres appareils suppriment aussi leur copie ; ce marqueur est supprimé automatiquement après 30 jours.</p>
+
+  <h2>Sauvegardes de l’hébergeur</h2>
+  <p>Le projet MISES! sur Supabase utilise le plan gratuit. Selon la <a href="https://supabase.com/docs/guides/platform/backups">documentation officielle de Supabase</a>, des sauvegardes automatiques quotidiennes de la base de données sont fournies pour les plans Pro, Team et Enterprise, pendant 7 à 30 jours. Ces sauvegardes de base de données ne contiennent pas les fichiers stockés via Storage, comme les photos.</p>
 
   <h2>Sauvegarde Android</h2>
   <p>Android peut sauvegarder les données de l’application vers le compte Google de l’utilisateur si la sauvegarde système est activée. Le développeur ne reçoit pas cette sauvegarde.</p>

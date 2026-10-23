@@ -19,11 +19,14 @@ test('contenant protégé (seed propriétaire) : archivable, jamais supprimable'
   assert.equal(archiveCase(p, T).labelState, 'archived')
   assert.equal(canDeleteCase(p).ok, false); assert.throws(() => deleteCase(p, [], T), /protégé/)
 })
-test('supprimer : seulement un contenant utilisateur vide ; suppression douce (aucune donnée effacée)', () => {
+test('API legacy : protège le contenant non vide ; l’UI emploie la purge réelle', () => {
   const c = { id: 'CASE-TEST', name: 'Test' }
   assert.throws(() => deleteCase(c, [{ id: 'o', caseId: 'CASE-TEST' }], T), /non vide/)
   const d = deleteCase(c, [], T)
-  assert.equal(d.labelState, 'deleted'); assert.equal(d.name, 'Test'); assert.deepEqual(activeLabelCases([d]), []); assert.deepEqual(archivedLabelCases([d]), [])
+  assert.equal(d.labelState, 'deleted'); assert.equal(d.name, 'Test')
+  const main = readFileSync('src/main.js', 'utf8')
+  assert.match(main, /await deleteLocalRecord\(db,'cases',c\.id\)/)
+  assert.match(main, /await deleteLocalRecord\(db,last\.store,last\.id\)/)
 })
 test('seed owner-only : appel RPC idempotent, silencieux sans seed ni réseau', async () => {
   const calls = []
