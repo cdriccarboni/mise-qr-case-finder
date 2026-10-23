@@ -1,5 +1,5 @@
 import { DATA_STORES } from './data-bruitage.js'
-import { isOwnerPrivateAccount } from './owner-private.js'
+import { isOwnerPrivateAccount, normalizeOwnerSeedObject } from './owner-private.js'
 import { supabaseClient, supabaseSession } from './supabase-client.js'
 import { decideSync, conflictEntry, appendConflicts, stripSyncMeta, localTime } from './sync-decision.js'
 import { photoRemotePath, QUEUE_ID, enqueuePhoto, markPhotoDone, markPhotoFailed, pendingPhotos } from './photos.js'
@@ -210,7 +210,7 @@ export async function syncMises(db,{onProgress=()=>{}}={}){
         pushed++
         photos+=(result.payload.photoAssetPaths||[]).length
       }else if(decision.action==='pull'){
-        const payload=await hydratePhoto(supabase,cloud.payload)
+        const payload=store==='objects'?normalizeOwnerSeedObject(await hydratePhoto(supabase,cloud.payload)):await hydratePhoto(supabase,cloud.payload)
         await db.put(store,{...payload,_syncRevision:cloud.revision||0,_syncedAt:localTime(payload)>now?localTime(payload):now})
         pulled++
       }else if(decision.action==='conflict'){
@@ -221,7 +221,7 @@ export async function syncMises(db,{onProgress=()=>{}}={}){
     }
     // Fiches distantes absentes localement
     for(const cloud of remote) if(cloud.store_name===store&&!cloud.deleted_at&&!(await db.get(store,cloud.record_id))){
-      const payload=await hydratePhoto(supabase,cloud.payload)
+      const payload=store==='objects'?normalizeOwnerSeedObject(await hydratePhoto(supabase,cloud.payload)):await hydratePhoto(supabase,cloud.payload)
       await db.put(store,{...payload,_syncRevision:cloud.revision||0,_syncedAt:isoNow()})
       pulled++
     }

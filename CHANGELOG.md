@@ -1,6 +1,7 @@
-## Non publié — suppression de compte
+## 0.4.0-beta.35 — 22 octobre 2026 (versionCode 44)
 
-- Suppression définitive du compte MISES! depuis ☁ / compte, avec confirmation explicite, nettoyage local et page web de demande.
+- Fiches objet : champ « Lien » (URL externe) et choix d'étiquette « QR du lien » / « QR de la fiche » (#61).
+- Suppression définitive du compte MISES! depuis ☁ / compte, avec confirmation explicite, nettoyage local et page web de demande (#62).
 - Espaces personnels supprimés ; espaces partagés transférés ou quittés sans effacer le travail de l’équipe.
 - Politique de confidentialité et déclaration Google Play mises à jour pour la synchronisation Supabase.
 

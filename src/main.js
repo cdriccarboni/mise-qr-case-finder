@@ -11,6 +11,8 @@ import { readProjectContext, makeControlSummary, makeProjectSummary, planProject
 import { artGoogleSession, requestGoogleSession, connectedGoogleProfile, loadPrivateState, savePrivateState, createSharePackage, loadSharePackage, androidGoogleSignInBlocked, googleSignInUnavailableMessage } from './google-sync.js'
 
 import { readData, enrichObjects, assignSoundFields, soundFields, PROVENANCE, provenanceLabel } from './data-bruitage.js'
+import { normalizeOwnerSeedObject } from './owner-private.js'
+import { normalizeExternalUrl, objectLabelQrTarget } from './object-link.js'
 import { openDataBruitage } from './data-ui.js'
 import { openLocalPhoto } from './vision-ui.js'
 import { APP_VERSION } from './version.js'
@@ -160,13 +162,14 @@ async function seedPersonal(){
   }
   const ids=[]
   for(const o of seed.objects||[]){
+    const seedObject=normalizeOwnerSeedObject(o)
     const item={
-      ...o,id:o.id,name:o.name,detectedName:'',
-      sounds:unique(soundsByObject.get(o.id)||[]),
-      tags:unique(o.aliases||[]),contexts:[],
+      ...seedObject,id:seedObject.id,name:seedObject.name,detectedName:'',
+      sounds:unique(soundsByObject.get(seedObject.id)||[]),
+      tags:unique(seedObject.aliases||[]),contexts:[],
       photo:'',source:'Data Bruitage · corpus agrégé',owned:true,
       status:o.status||'available',family:'À classer',
-      caseId:o.container_id||''
+      caseId:seedObject.container_id||''
     }
     await db.put('objects',item); ids.push(item.id)
   }
@@ -773,16 +776,23 @@ async function sendSystemPrint(dataUrl, jobName='MISES!'){
 }
 async function openEntityLabel(kind, entity, {next}={}){
   const name=kind==='case'?caseName(entity):(entity.name||'MISES!')
-  const spec={name, shortId:shortId(entity.id), id:entity.id, qrText:entityUrl(pageOrigin(), kind, entity.id), location:kind==='object'?caseName(caseBy(entity.caseId||entity.container_id)):'', category:entity.family||entity.type||kind, spare:Boolean(entity.spare), ink:getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()}
-  // Contenant : toujours l'étiquette approuvée (renderer « Étiquettes · Mes contenants », QR ?case=<id>).
-  const image=kind==='case'?containerLabelImage(entity):renderLabelDataUrl(spec)
   const d=$('#printDlg')
-  d.innerHTML=`<div class="labelPreview"><img alt="Étiquette ${esc(name)}" src="${image}"><small>${esc(name)} · ${esc(spec.shortId)}</small></div><div class="row"><button id="btPrint" type="button">${hasNativePrinter()?'Mini-imprimante Bluetooth':'Aide mini-imprimante'}</button><button id="saveLabelPng" class="ghost" type="button">Exporter PNG 384 px</button>${next?'<button id="labelNext" type="button">Objet suivant</button>':''}<button id="closePrint" class="ghost">Fermer</button></div><p class="hint">${hasNativePrinter()?'Android : uniquement le pilote Bluetooth de la mini-imprimante ; jamais Epson.':'Mac : impression directe via la petite application MISES Mini Printer ; jamais de dialogue Epson.'}</p>`
-  d.showModal()
-  $('#closePrint').onclick=()=>d.close()
-  $('#saveLabelPng').onclick=()=>downloadLabelPng(image,name)
-  $('#btPrint').onclick=()=>sendSystemPrint(image,name)
-  if(next) $('#labelNext').onclick=()=>{d.close();next()}
+  let qrChoice='link'
+  const renderPreview=()=>{
+    const target=kind==='object'?objectLabelQrTarget(entity,pageOrigin(),qrChoice):{choices:[],qrText:entityUrl(pageOrigin(),kind,entity.id),linkText:''}
+    qrChoice=target.choice||'record'
+    const spec={name,shortId:shortId(entity.id),id:entity.id,qrText:target.qrText,linkText:target.linkText,location:kind==='object'?caseName(caseBy(entity.caseId||entity.container_id)):'',category:entity.family||entity.type||kind,spare:Boolean(entity.spare),ink:getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()}
+    // Contenant : toujours l'étiquette approuvée (renderer « Étiquettes · Mes contenants », QR ?case=<id>).
+    const image=kind==='case'?containerLabelImage(entity):renderLabelDataUrl(spec)
+    d.innerHTML=`<div class="labelPreview"><img alt="Étiquette ${esc(name)}" src="${image}"><small>${esc(name)} · ${esc(spec.shortId)}</small></div>${target.choices.length?`<fieldset><legend>QR objet</legend><label class="check"><input data-qr-choice type="radio" name="print-qr-choice" value="link" ${qrChoice==='link'?'checked':''}> QR du lien</label><label class="check"><input data-qr-choice type="radio" name="print-qr-choice" value="record" ${qrChoice==='record'?'checked':''}> QR de la fiche</label></fieldset>`:''}<div class="row"><button id="btPrint" type="button">${hasNativePrinter()?'Mini-imprimante Bluetooth':'Aide mini-imprimante'}</button><button id="saveLabelPng" class="ghost" type="button">Exporter PNG 384 px</button>${next?'<button id="labelNext" type="button">Objet suivant</button>':''}<button id="closePrint" class="ghost">Fermer</button></div><p class="hint">${hasNativePrinter()?'Android : uniquement le pilote Bluetooth de la mini-imprimante ; jamais Epson.':'Mac : impression directe via la petite application MISES Mini Printer ; jamais de dialogue Epson.'}</p>`
+    $('#closePrint').onclick=()=>d.close()
+    $('#saveLabelPng').onclick=()=>downloadLabelPng(image,name)
+    $('#btPrint').onclick=()=>sendSystemPrint(image,name)
+    $$('[data-qr-choice]',d).forEach(input=>input.onchange=()=>{qrChoice=input.value;renderPreview()})
+    if(next) $('#labelNext').onclick=()=>{d.close();next()}
+  }
+  renderPreview()
+  if(!d.open)d.showModal()
 }
 function scopedCaseSearch(c,q){
   const items=objects.filter(o=>(o.caseId||o.container_id)===c.id)
@@ -851,7 +861,10 @@ function openPublicWorkshop(duration=30,participants=lastParticipantCount){
 }
 
 function openFreeLabel(context={}){
-  return openLabelEditor({context,printImage:(image,name)=>sendSystemPrint(image,name)})
+  const object=context.type==='object'?objectBy(context.id):null
+  const target=object?objectLabelQrTarget(object,pageOrigin()):null
+  const qrContext=target?.hasExternalUrl?{qrText:target.qrText,linkText:target.linkText,qrChoice:target.choice,qrChoices:target.choices,qrTargetForChoice:choice=>objectLabelQrTarget(object,pageOrigin(),choice)}:{}
+  return openLabelEditor({context:{...context,...qrContext},printImage:(image,name)=>sendSystemPrint(image,name)})
 }
 function currentIndexRows(){
   return buildGlobalIndex({objects,cases,kits,mises,publicFoley,seed})
@@ -1327,6 +1340,7 @@ function openObject(p={}){
   const current=p.id?objects.find(o=>o.id===p.id):null
   const o=current||{id:uid('obj'),name:p.name||'',nickname:p.nickname||'',spare:Boolean(p.spare),quantity:p.quantity||1,state:p.state||'Bon état',detectedName:'',sounds:p.sounds||[],hear:p.hear||'',imagine:p.imagine||'',device:p.device||'',notes:p.notes||'',tags:[],contexts:[],photo:p.photo||'',caseId:'',family:p.family||'À classer',source:p.source||'manuel',owned:p.owned??true,status:p.status||'available',provenance:p.provenance||(p.owned===false?'external':'user-document')}
   const shown=soundFields(current||o)
+  const externalUrl=normalizeExternalUrl(o.url)
   const m=$('#modal')
   m.innerHTML=`<form method="dialog" class="form"><div class="dialoghead"><div><b>${current?'Modifier':'Ajouter'} un objet</b><small>${esc(provenanceLabel(o.provenance||'user-document'))}</small></div><button value="cancel" class="ghost">×</button></div>
   ${o.photo?`<img class="photoPreview" src="${o.photo}">`:''}
@@ -1334,6 +1348,8 @@ function openObject(p={}){
   <p id="audioNote" class="hint" role="status" ${o.audioMemo?'hidden':''}>${o.audioMemo?'':'Aucun mémo sonore pour cette fiche.'}</p>
   <audio id="audioMemoPlayer" controls data-memo ${o.audioMemo?'':'hidden'}></audio>
   <label>Nom<input id="fName" value="${esc(o.name)}" placeholder="Ex : Micro bruitage"></label>
+  <label>Lien <input id="fUrl" type="url" inputmode="url" value="${esc(externalUrl)}" placeholder="https://exemple.local/"></label>
+  ${externalUrl?`<p><a href="${esc(externalUrl)}" target="_blank" rel="noopener">${esc(externalUrl)}</a></p>`:''}
   <div class="grid2">
     <label>Surnom / Alias (ex : ELVIS)<input id="fNickname" value="${esc(o.nickname||'')}" placeholder="ELVIS, PETITE DI, SPARE…"></label>
     <label class="check"><input id="fSpare" type="checkbox" ${o.spare||/\bspare\b/i.test(o.nickname||'')||/\bspare\b/i.test(o.name)?'checked':''}><span>Statut SPARE (secours)</span></label>
@@ -1368,6 +1384,8 @@ function openObject(p={}){
   }
   $('#saveObject').onclick=async e=>{
     e.preventDefault()
+    const enteredUrl=$('#fUrl').value.trim(),url=normalizeExternalUrl(enteredUrl)
+    if(enteredUrl&&!url){toast('Lien : utilise une URL http:// ou https://');return}
     const tags=$('#fTags').value.split(',').map(x=>x.trim()).filter(Boolean)
     const previousCase=current?(current.caseId||current.container_id||''):(o.caseId||o.container_id||''),nextCase=$('#fCase').value
     if(previousCase!==nextCase)o.locationHistory=[...(o.locationHistory||[]),{at:new Date().toISOString(),from:previousCase,to:nextCase,method:'fiche'}]
@@ -1388,6 +1406,7 @@ function openObject(p={}){
       notes:$('#fNotes').value.trim(),
       provenance:$('#fProvenance').value,
       status:$('#fStatus').value,
+      url,
       caseId:nextCase,container_id:nextCase,
       sounds:previousSounds,
       tags,contexts:tags,updatedAt:new Date().toISOString()

@@ -1,3 +1,5 @@
+import QRCode from 'qrcode'
+
 const STORE='mises-label-templates-v1'
 const RECENTS='mises-label-recents-v1'
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n))
@@ -20,7 +22,10 @@ function defaultModel(context={}){
   const name=context.name||context.label||''
   const blocks=[]
   if(name)blocks.push({id:uid('txt'),kind:'text',text:name,x:8,y:8,w:84,h:24,rotation:0,size:18,bold:true,italic:false,underline:false,align:'center',lineHeight:1.1,font:'system-ui'})
-  if(context.photo)blocks.push({...imageBlock(context.photo),x:20,y:38,w:60,h:52})
+  if(context.qrText){
+    blocks.push({id:uid('qr'),kind:'image',src:'',qrText:context.qrText,externalQr:true,x:7,y:38,w:36,h:56,rotation:0,fit:'contain'})
+    if(context.linkText)blocks.push({id:uid('txt'),kind:'text',text:context.linkText,externalLinkText:true,x:45,y:52,w:50,h:22,rotation:0,size:10,bold:false,italic:false,underline:false,align:'center',lineHeight:1.1,font:'system-ui'})
+  }else if(context.photo)blocks.push({...imageBlock(context.photo),x:20,y:38,w:60,h:52})
   return {id:uid('label'),name:name||'Étiquette',w:50,h:30,orientation:'horizontal',thermal:{enabled:false,threshold:145,invert:false,dither:false},blocks}
 }
 function textBlock(text='Texte'){return {id:uid('txt'),kind:'text',text,x:10,y:12,w:80,h:28,rotation:0,size:18,bold:false,italic:false,underline:false,align:'center',lineHeight:1.15,font:'system-ui'}}
@@ -74,7 +79,31 @@ function renderModel(canvas,model,{thermal=model.thermal?.enabled}={}){
   return canvas.toDataURL('image/png')
 }
 
+function ensureQrImage(block){
+  if(!block?.externalQr||!block.qrText)return
+  if(block._qrText===block.qrText&&block._image?.complete)return
+  if(block._qrText===block.qrText&&block._qrPromise)return block._qrPromise
+  const text=block.qrText
+  const pending=(async()=>{
+    const src=block.src||await QRCode.toDataURL(text,{width:480,margin:1,errorCorrectionLevel:'M'})
+    if(block.qrText!==text)return
+    block.src=src
+    if(block._image?.src===src&&block._image.complete)return
+    const image=new Image();block._image=image
+    await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=src})
+  })()
+  block._qrText=text;block._qrPromise=pending
+  pending.finally(()=>{if(block._qrPromise===pending)delete block._qrPromise}).catch(()=>{})
+  return pending
+}
+function hydrateQrCodes(model,refresh){
+  for(const block of model.blocks||[])if(block.externalQr&&block.qrText){
+    const pending=ensureQrImage(block)
+    if(pending)pending.then(refresh).catch(()=>{})
+  }
+}
 function hydrateImages(model,refresh){
+  hydrateQrCodes(model,refresh)
   for(const block of model.blocks||[])if(block.kind==='image'&&block.src&&!block._image){
     const img=new Image();block._image=img;img.onload=refresh;img.src=block.src
   }
@@ -82,7 +111,7 @@ function hydrateImages(model,refresh){
 
 export function openLabelEditor({context={},printImage}={}){
   const dialog=document.createElement('dialog');dialog.className='labelEditorDialog';document.body.append(dialog)
-  let model=defaultModel(context),selected=model.blocks[0]?.id||null,history=[],future=[]
+  let model=defaultModel(context),selected=model.blocks[0]?.id||null,history=[],future=[],qrChoice=context.qrChoice||'link'
   const push=()=>{history.push(clone({...model,blocks:model.blocks.map(({_image,...b})=>b)}));if(history.length>30)history.shift();future=[]}
   const selectedBlock=()=>model.blocks.find(b=>b.id===selected)
   const restore=snapshot=>{model=clone(snapshot);hydrateImages(model,draw);selected=model.blocks[0]?.id||null;draw()}
@@ -95,6 +124,7 @@ export function openLabelEditor({context={},printImage}={}){
         <label>Format<select data-preset>${LABEL_PRESETS.map(p=>`<option value="${p.id}">${p.label}</option>`).join('')}<option value="custom">Personnalisé</option></select></label>
         <div class="grid2"><label>Orientation<select data-orientation><option value="horizontal">Horizontal</option><option value="vertical">Vertical</option></select></label><label>Rotation globale<select data-global-rotation><option value="0">0°</option><option value="90">90°</option></select></label></div>
         <div class="grid2"><label>Largeur mm<input data-w type="number" min="15" max="150" value="${model.w}"></label><label>Hauteur mm<input data-h type="number" min="15" max="150" value="${model.h}"></label></div>
+        ${context.qrTargetForChoice?`<fieldset><legend>QR objet</legend>${(context.qrChoices||[]).map(choice=>`<label class="check"><input data-qr-choice type="radio" name="object-qr-choice" value="${choice}" ${choice===qrChoice?'checked':''}> ${choice==='link'?'QR du lien':'QR de la fiche'}</label>`).join('')}</fieldset>`:''}
         <div class="row"><button data-add-text type="button">+ Texte</button><button data-add-image type="button" class="ghost">+ Image</button><input data-image-file type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
         <div data-block-tools></div>
         <fieldset><legend>Rendu thermique</legend><label class="check"><input data-thermal type="checkbox"> Aperçu imprimé</label><label>Mode<select data-thermal-mode><option value="bw">Noir / blanc</option><option value="gray">Niveaux de gris</option></select></label><label>Seuil<input data-threshold type="range" min="40" max="220" value="145"></label><label class="check"><input data-dither type="checkbox"> Tramage</label><label class="check"><input data-invert type="checkbox"> Inverser</label></fieldset>
@@ -155,6 +185,20 @@ export function openLabelEditor({context={},printImage}={}){
     }
   }
   function draw(){hydrateImages(model,draw);renderModel(canvas,model);stage.style.aspectRatio=`${model.w}/${model.h}`;drawOverlay();blockTools()}
+  function setObjectQrChoice(choice){
+    const target=context.qrTargetForChoice?.(choice)
+    if(!target)return
+    qrChoice=target.choice;push()
+    let qr=model.blocks.find(block=>block.externalQr)
+    if(!qr){qr={id:uid('qr'),kind:'image',src:'',externalQr:true,x:7,y:38,w:36,h:56,rotation:0,fit:'contain'};model.blocks.push(qr)}
+    Object.assign(qr,{qrText:target.qrText,src:''});delete qr._image;delete qr._qrText
+    const link=model.blocks.find(block=>block.externalLinkText)
+    if(target.linkText){
+      if(link)link.text=target.linkText
+      else model.blocks.push({id:uid('txt'),kind:'text',text:target.linkText,externalLinkText:true,x:45,y:52,w:50,h:22,rotation:0,size:10,bold:false,italic:false,underline:false,align:'center',lineHeight:1.1,font:'system-ui'})
+    }else if(link)model.blocks=model.blocks.filter(block=>block!==link)
+    draw()
+  }
   $('[data-close]').onclick=$('[data-close-bottom]').onclick=()=>dialog.close()
   dialog.addEventListener('close',()=>dialog.remove(),{once:true})
   $('[data-preset]').onchange=e=>{if(e.target.value==='custom')return;const p=LABEL_PRESETS.find(x=>x.id===e.target.value);if(!p)return;push();model.w=p.w;model.h=p.h;$('[data-w]').value=p.w;$('[data-h]').value=p.h;$('[data-orientation]').value=p.w>=p.h?'horizontal':'vertical';draw()}
@@ -162,6 +206,7 @@ export function openLabelEditor({context={},printImage}={}){
   $('[data-global-rotation]').onchange=e=>{if(Number(e.target.value)===90){push();[model.w,model.h]=[model.h,model.w];for(const b of model.blocks)b.rotation=(Number(b.rotation)||0)+90;$('[data-w]').value=model.w;$('[data-h]').value=model.h;draw();e.target.value='0'}}
   $('[data-w]').onchange=e=>{push();model.w=clamp(Number(e.target.value)||50,15,150);draw()}
   $('[data-h]').onchange=e=>{push();model.h=clamp(Number(e.target.value)||30,15,150);draw()}
+  $$('[data-qr-choice]').forEach(input=>input.onchange=()=>setObjectQrChoice(input.value))
   $('[data-add-text]').onclick=()=>{push();const b=textBlock();model.blocks.push(b);selected=b.id;draw()}
   $('[data-add-image]').onclick=()=> $('[data-image-file]').click()
   $('[data-image-file]').onchange=async e=>{const f=e.target.files?.[0];e.target.value='';if(!f)return;push();const src=await readFile(f);const b=imageBlock(src);model.blocks.push(b);selected=b.id;hydrateImages(model,draw);draw()}
@@ -175,8 +220,9 @@ export function openLabelEditor({context={},printImage}={}){
   $('[data-reset]').onclick=()=>{push();model=defaultModel(context);selected=model.blocks[0]?.id||null;draw()}
   $('[data-save-template]').onclick=()=>{model.name=$('[data-template-name]').value.trim()||'Modèle';const clean=clone({...model,blocks:model.blocks.map(({_image,...b})=>b)});const list=load(STORE,[]).filter(x=>x.id!==clean.id);save(STORE,[clean,...list].slice(0,20));addRecent()}
   $('[data-load-template]').onclick=()=>{const all=[...load(STORE,[]),...load(RECENTS,[])];if(!all.length)return;const choice=prompt(all.map((x,i)=>`${i+1}. ${x.name||'Étiquette'}`).join('\n')+'\nNuméro à charger :','1');const item=all[Number(choice)-1];if(item){push();restore(item)}}
-  $('[data-export]').onclick=()=>{const src=renderModel(canvas,model,{thermal:model.thermal.enabled});addRecent();download(src)}
-  $('[data-print]').onclick=()=>{const src=renderModel(canvas,model,{thermal:true});addRecent();if(printImage)printImage(src,model.name||'Étiquette');else{const w=window.open('','_blank');w.document.write(`<img src="${src}" style="max-width:100%"><script>onload=()=>print()<\/script>`)}}
+  const waitForQr=()=>Promise.all(model.blocks.filter(block=>block.externalQr).map(ensureQrImage))
+  $('[data-export]').onclick=async()=>{try{await waitForQr()}catch{return}const src=renderModel(canvas,model,{thermal:model.thermal.enabled});addRecent();download(src)}
+  $('[data-print]').onclick=async()=>{try{await waitForQr()}catch{return}const src=renderModel(canvas,model,{thermal:true});addRecent();if(printImage)printImage(src,model.name||'Étiquette');else{const w=window.open('','_blank');w.document.write(`<img src="${src}" style="max-width:100%"><script>onload=()=>print()<\/script>`)}}
   hydrateImages(model,draw);draw();dialog.showModal()
   return dialog
 }
